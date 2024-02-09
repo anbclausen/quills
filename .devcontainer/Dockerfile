@@ -1,15 +1,16 @@
 FROM python:3.12.2-slim-bookworm
 
+# Install system packages
+RUN apt-get -qq update
+RUN apt-get -qq -y install git g++ cmake wget
 
 # Install Python packages
 RUN pip install poetry
 COPY pyproject.toml pyproject.toml
+RUN poetry config virtualenvs.in-project true
 RUN poetry install
 
 WORKDIR /dependencies
-
-RUN apt-get -qq update
-RUN apt-get -qq -y install git g++ cmake wget
 
 # Install and build Downward
 RUN git clone https://github.com/aibasel/downward.git downward
