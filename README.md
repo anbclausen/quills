@@ -14,6 +14,10 @@ poetry install
 
 You are now good to go. :)
 
+### Development tools
+
+The Black formatter is used for developing. Install the VS Code extension [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter).
+
 ## Usage
 
 To use qt, simply run
