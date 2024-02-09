@@ -16,4 +16,12 @@ You are now good to go. :)
 
 ## Usage
 
-Well, we need to write the tool first.
+To use qt, simply run
+
+```bash
+./qt [args]
+```
+
+### Arguments
+
+There are none as of yet.
