@@ -1,0 +1,9 @@
+#! /bin/sh
+if [ $# -ne 0 ]
+  then
+    shift
+    poetry run python src/main.py $@
+  else 
+    poetry run python src/main.py
+fi
+
