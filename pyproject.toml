@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "qt"
+version = "0.1.0"
+description = "An algorithm for depth-optimal layout synthesis of quantum circuits."
+authors = ["Anders B. Clausen <anbclausen@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
