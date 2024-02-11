@@ -12,7 +12,7 @@ class Solver:
         """
         Args
         ----
-        - command (`Callable[[str, str, str], str]`): Command to run the solver.
+        - command (`Callable[[str, str, str, str], str]`): Command to run the solver.
 
         Examples
         --------
