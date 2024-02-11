@@ -38,8 +38,8 @@ class Solver:
         if not os.path.exists(TMP_FOLDER):
             os.makedirs(TMP_FOLDER)
 
-        domain_file = os.path.join(TMP_FOLDER, "domain")
-        problem_file = os.path.join(TMP_FOLDER, "problem")
+        domain_file = os.path.join(TMP_FOLDER, "domain.pddl")
+        problem_file = os.path.join(TMP_FOLDER, "problem.pddl")
         output_file = os.path.join(TMP_FOLDER, "output")
 
         with open(domain_file, "w") as f:
@@ -61,3 +61,8 @@ class Solver:
         elapsed = end - start
 
         return solution, elapsed
+
+
+M_SEQUENTIAL_PLANS = Solver(
+    lambda domain, problem, output, time_limit_s: f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
+)
