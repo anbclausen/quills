@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
-from quantum_platform import Platform
+from platforms import Platform
 
 
 class Synthesizer(ABC):
