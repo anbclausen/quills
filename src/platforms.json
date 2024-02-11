@@ -1,0 +1,12 @@
+[
+    {
+        "name": "toy",
+        "number_of_qubits": 4,
+        "connectivity_graph": [
+            [0, 1], 
+            [1, 2], 
+            [2, 3], 
+            [3, 0]
+        ]
+    }
+]
