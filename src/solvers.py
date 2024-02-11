@@ -64,9 +64,9 @@ class Solver:
 
 
 M_SEQUENTIAL_PLANS = Solver(
-    lambda domain, problem, output, time_limit_s: f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
+    lambda dom, prob, out, tl: f"M -P 0 -o {out} -t {tl} {dom} {prob}"
 )
 
 MpC_SEQUENTIAL_PLANS = Solver(
-    lambda domain, problem, output, time_limit_s: f"MpC -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
+    lambda dom, prob, out, tl: f"MpC -P 0 -o {out} -t {tl} {dom} {prob}"
 )
