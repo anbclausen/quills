@@ -303,7 +303,9 @@ instance = PDDLInstance(
     ],
 )
 
-domain, problem = instance.compile()
 
-print(domain)
-print(problem)
+def test():
+    domain, problem = instance.compile()
+
+    print(domain)
+    print(problem)

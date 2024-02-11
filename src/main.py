@@ -1,5 +1,3 @@
-from qiskit import QuantumCircuit
+from src.test.test_pddl import test
 
-circuit = QuantumCircuit.from_qasm_file("benchmarks/toy_example.qasm")
-
-print(circuit)
+test()
