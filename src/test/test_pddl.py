@@ -1,4 +1,4 @@
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from src.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 
 
 class pqubit(object_):
@@ -303,4 +303,7 @@ instance = PDDLInstance(
     ],
 )
 
-print(instance.compile())
+domain, problem = instance.compile()
+
+print(domain)
+print(problem)

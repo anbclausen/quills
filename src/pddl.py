@@ -23,11 +23,16 @@ class PDDLPredicateInstance:
         self.name = name
         self.args = args
 
+    def __str__(self) -> str:
+        return f"({self.name} {' '.join(self.args)})"
+
 
 class PDDLPredicate:
     def __init__(self, function: Callable[..., None]):
         self.function = function
-        self.predicate_name = function.__name__
+        self.predicate_name = (
+            function.__name__ if function.__name__ != "not_" else "not"
+        )
         self.args = {
             name: class_.__name__ for name, class_ in function.__annotations__.items()
         }
@@ -36,9 +41,23 @@ class PDDLPredicate:
         argstrs = [str(arg) for arg in args]
         return PDDLPredicateInstance(self.predicate_name, argstrs)
 
+    def __str__(self) -> str:
+        args_grouped_by_type: dict[str, list[str]] = {}
+        for arg, type_ in self.args.items():
+            if type_ not in args_grouped_by_type:
+                args_grouped_by_type[type_] = []
+            args_grouped_by_type[type_].append(f"?{arg}")
+
+        arg_strings = [
+            " ".join(args) + " - " + type_
+            for type_, args in args_grouped_by_type.items()
+        ]
+
+        return f"({self.predicate_name} {" ".join(arg_strings)})"
+
 
 @PDDLPredicate
-def not_(predicate: PDDLPredicate):
+def not_(predicate: PDDLPredicateInstance):
     pass
 
 
@@ -50,9 +69,38 @@ class PDDLAction:
         ],
     ):
         self.function = function
+        self.name = function.__name__
+        self.args = {
+            name: class_.__name__ for name, class_ in function.__annotations__.items()
+        }
 
     def __call__(self, *args):
         return self.function(*args)
+
+    def __str__(self) -> str:
+        parameters_grouped_by_type: dict[str, list[str]] = {}
+        for arg, type_ in self.args.items():
+            if type_ not in parameters_grouped_by_type:
+                parameters_grouped_by_type[type_] = []
+            parameters_grouped_by_type[type_].append(f"?{arg}")
+
+        parameter_strings = [
+            " ".join(parameters) + " - " + type_
+            for type_, parameters in parameters_grouped_by_type.items()
+        ]
+
+        args = self.function.__annotations__
+
+        preconditions, effects = self.function(
+            *[type_(f"?{arg}") for arg, type_ in args.items()]
+        )
+
+        return f"""
+(:action {self.name}
+    :parameters ({' '.join(parameter_strings)})
+    :precondition ( and {" ".join(map(str, preconditions))})
+    :effect ( and {" ".join(map(str, effects))})
+)"""
 
 
 class PDDLInstance:
@@ -77,22 +125,79 @@ class PDDLInstance:
         self.actions = actions
 
     def compile(self) -> tuple[str, str]:
+        object_grouped_by_type: dict[str, list[PDDLType]] = {}
+        for obj in self.objects:
+            if obj.type_str() not in object_grouped_by_type:
+                object_grouped_by_type[obj.type_str()] = []
+            object_grouped_by_type[obj.type_str()].append(obj)
+
+        object_strings = [
+            " ".join(map(lambda o: o.name, objects)) + " - " + type_
+            for type_, objects in object_grouped_by_type.items()
+        ]
+
+        init_strings = [
+            str(predicate_instance) for predicate_instance in self.initial_state
+        ]
+
+        goal_strings = [
+            str(predicate_instance) for predicate_instance in self.goal_state
+        ]
+
         problem = f"""
 (define (problem {self.problem})
     (:domain {self.domain})
     (:objects
-        {" ".join(map(str, self.objects))}
+        {"\n        ".join(object_strings)}
+    )
+    
     )
     (:init
-        {" ".join(map(str, self.initial_state))}
+        {"\n        ".join(init_strings)}
     )
     (:goal
         (and
-            {" ".join(map(str, self.goal_state))}
+            {"\n            ".join(goal_strings)}
         )
     )
 )
 """
+        types_grouped_by_super_type: dict[str, list[Type[PDDLType]]] = {}
+        for type_ in self.types:
+            super_class = type_.__base__.__name__
+            if super_class not in types_grouped_by_super_type:
+                types_grouped_by_super_type[super_class] = []
+            types_grouped_by_super_type[super_class].append(type_)
 
-        # FIXME: Return the domain and problem as strings.
-        return "", ""
+        type_strings = [
+            " ".join(map(lambda t: t.__name__, types)) + " - " + super_type
+            for super_type, types in types_grouped_by_super_type.items()
+        ]
+
+        constants_grouped_by_type: dict[str, list[PDDLType]] = {}
+        for constant in self.constants:
+            if constant.type_str() not in constants_grouped_by_type:
+                constants_grouped_by_type[constant.type_str()] = []
+            constants_grouped_by_type[constant.type_str()].append(constant)
+
+        constant_strings = [
+            " ".join(map(lambda c: c.name, constants)) + " - " + type_
+            for type_, constants in constants_grouped_by_type.items()
+        ]
+
+        domain = f"""
+(define (domain {self.domain})
+    (:requirements :strips :typing :strips :negative-preconditions)
+    (: types
+        {"\n        ".join(type_strings)}
+    )
+    (: constants
+        {"\n        ".join(constant_strings)}
+    )
+    (: predicates
+        {"\n        ".join(map(str, self.predicates))}
+    )
+    {"\n    ".join(map(str, self.actions))}
+)
+"""
+        return domain, problem
