@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
 from platforms import Platform
+from solvers import Solver
 
 
 class Synthesizer(ABC):
@@ -9,7 +10,7 @@ class Synthesizer(ABC):
         self,
         logical_circuit: QuantumCircuit,
         platform: Platform,
-        solver: str,
+        solver: Solver,
     ) -> tuple[QuantumCircuit, float]:
         """
         Layout synthesis.
