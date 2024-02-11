@@ -1,81 +1,56 @@
-from typing import Type, TypeVar, Generic
+from typing import TypeVar, Generic, Callable, Any, Type
 
 
 class PDDLType:
-    type_name = None
-    super_type = None
-
     def __init__(self, name: str):
         self.name = name
 
 
-class PDDLObject(PDDLType):
-    type_name = "object"
+class object_(PDDLType):
+    pass
 
 
 T = TypeVar("T")
 
 
 class PDDLPredicate(Generic[T]):
-    predicate_name = None
-
     def __init__(self, parameters: T):
         self.parameters = parameters
 
 
-class PDDLAction(Generic[T]):
-    action_name = None
+not_ = PDDLPredicate[PDDLPredicate]
 
+
+class PDDLAction:
     def __init__(
-        self,
-        parameters: T,
-        preconditions: list[PDDLPredicate],
-        effects: list[PDDLPredicate],
+        self, function: Callable[..., tuple[list[PDDLPredicate], list[PDDLPredicate]]]
     ):
-        self.parameters = parameters
-        self.preconditions = preconditions
-        self.effects = effects
+        self.function = function
+
+    def __call__(self, *args):
+        return self.function(*args)
 
 
 class PDDLInstance:
-    def __init__(self):
+    def __init__(
+        self,
+        objects: list[PDDLType] = [],
+        types: list[Type[PDDLType]] = [],
+        constants: list[PDDLType] = [],
+        predicates: list[Type[PDDLPredicate]] = [],
+        initial_state: list[PDDLPredicate] = [],
+        goal_state: list[PDDLPredicate] = [],
+        actions: list[PDDLAction] = [],
+    ):
         self.domain = "Quantum"
         self.problem = "circuit"
-        self.objects = []
-        self.types = []
-        self.constants = []
-        self.predicates = []
-        self.initial_state = []
-        self.goal_state = []
-        self.actions = []
-
-    def with_types(self, types: list[Type[PDDLType]]):
-        self.types = types
-        return self
-
-    def with_objects(self, objects: list[PDDLType]):
         self.objects = objects
-        return self
-
-    def with_constants(self, constants: list[PDDLType]):
+        self.types = types
         self.constants = constants
-        return self
-
-    def with_predicates(self, predicates: list[Type[PDDLPredicate]]):
         self.predicates = predicates
-        return self
-
-    def with_initial_state(self, initial_state: list[PDDLPredicate]):
         self.initial_state = initial_state
-        return self
-
-    def with_goal_state(self, goal_state: list[PDDLPredicate]):
         self.goal_state = goal_state
-        return self
-
-    def with_actions(self, actions: list[PDDLAction]):
         self.actions = actions
-        return self
 
     def compile(self) -> tuple[str, str]:
         # FIXME: Return the domain and problem as strings.
