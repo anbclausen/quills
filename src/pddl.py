@@ -9,9 +9,6 @@ class PDDLType:
     def __str__(self) -> str:
         return self.name
 
-    def type_str(self) -> str:
-        return self.type_name
-
 
 class object_(PDDLType):
     def type_str(self) -> str:
@@ -96,11 +93,11 @@ class PDDLAction:
         )
 
         return f"""
-(:action {self.name}
-    :parameters ({' '.join(parameter_strings)})
-    :precondition ( and {" ".join(map(str, preconditions))})
-    :effect ( and {" ".join(map(str, effects))})
-)"""
+    (:action {self.name}
+        :parameters ({' '.join(parameter_strings)})
+        :precondition (and {" ".join(map(str, preconditions))})
+        :effect (and {" ".join(map(str, effects))})
+    )"""
 
 
 class PDDLInstance:
@@ -127,9 +124,9 @@ class PDDLInstance:
     def compile(self) -> tuple[str, str]:
         object_grouped_by_type: dict[str, list[PDDLType]] = {}
         for obj in self.objects:
-            if obj.type_str() not in object_grouped_by_type:
-                object_grouped_by_type[obj.type_str()] = []
-            object_grouped_by_type[obj.type_str()].append(obj)
+            if obj.type_name not in object_grouped_by_type:
+                object_grouped_by_type[obj.type_name] = []
+            object_grouped_by_type[obj.type_name].append(obj)
 
         object_strings = [
             " ".join(map(lambda o: o.name, objects)) + " - " + type_
@@ -150,8 +147,6 @@ class PDDLInstance:
     (:objects
         {"\n        ".join(object_strings)}
     )
-    
-    )
     (:init
         {"\n        ".join(init_strings)}
     )
@@ -164,7 +159,11 @@ class PDDLInstance:
 """
         types_grouped_by_super_type: dict[str, list[Type[PDDLType]]] = {}
         for type_ in self.types:
-            super_class = type_.__base__.__name__
+            super_class = (
+                type_.__base__.__name__
+                if type_.__base__.__name__ != "object_"
+                else "object"
+            )
             if super_class not in types_grouped_by_super_type:
                 types_grouped_by_super_type[super_class] = []
             types_grouped_by_super_type[super_class].append(type_)
@@ -176,9 +175,9 @@ class PDDLInstance:
 
         constants_grouped_by_type: dict[str, list[PDDLType]] = {}
         for constant in self.constants:
-            if constant.type_str() not in constants_grouped_by_type:
-                constants_grouped_by_type[constant.type_str()] = []
-            constants_grouped_by_type[constant.type_str()].append(constant)
+            if constant.type_name not in constants_grouped_by_type:
+                constants_grouped_by_type[constant.type_name] = []
+            constants_grouped_by_type[constant.type_name].append(constant)
 
         constant_strings = [
             " ".join(map(lambda c: c.name, constants)) + " - " + type_
@@ -188,13 +187,13 @@ class PDDLInstance:
         domain = f"""
 (define (domain {self.domain})
     (:requirements :strips :typing :strips :negative-preconditions)
-    (: types
+    (:types
         {"\n        ".join(type_strings)}
     )
-    (: constants
+    (:constants
         {"\n        ".join(constant_strings)}
     )
-    (: predicates
+    (:predicates
         {"\n        ".join(map(str, self.predicates))}
     )
     {"\n    ".join(map(str, self.actions))}
