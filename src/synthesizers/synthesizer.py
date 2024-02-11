@@ -3,9 +3,20 @@ from qiskit import QuantumCircuit
 from platforms import Platform
 from solvers import Solver
 
+DEFAULT_TIME_LIMIT_S = 1800
+
 
 class Synthesizer(ABC):
     @abstractmethod
+    def create_instance(
+        self, circuit: QuantumCircuit, platform: Platform
+    ) -> tuple[str, str]:
+        pass
+
+    @abstractmethod
+    def parse_solution(self, solution: str) -> QuantumCircuit:
+        pass
+
     def synthesize(
         self,
         logical_circuit: QuantumCircuit,
@@ -18,12 +29,15 @@ class Synthesizer(ABC):
         Args
         ----
         - logical_circuit (`QuantumCircuit`): Logical circuit.
-        - connectivity_graph (`list[tuple[int, int]]`): Connectivity graph.
-        - solver (`str`): String specifying the underlying solver.
+        - platform (`Platform`): The target platform.
+        - solver (`Solver`): The underlying solver.
 
         Returns
         --------
         - `QuantumCircuit`: Physical circuit.
         - `float`: Time taken to synthesize the physical circuit.
         """
-        pass
+        domain, problem = self.create_instance(logical_circuit, platform)
+        solution, time_taken = solver.solve(domain, problem, DEFAULT_TIME_LIMIT_S)
+        physical_circuit = self.parse_solution(solution)
+        return physical_circuit, time_taken
