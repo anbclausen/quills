@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
 from platforms import Platform
 from solvers import Solver
+from pddl import PDDLInstance
 
 DEFAULT_TIME_LIMIT_S = 1800
 
@@ -10,7 +11,7 @@ class Synthesizer(ABC):
     @abstractmethod
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
-    ) -> tuple[str, str]:
+    ) -> PDDLInstance:
         pass
 
     @abstractmethod
@@ -37,7 +38,8 @@ class Synthesizer(ABC):
         - `QuantumCircuit`: Physical circuit.
         - `float`: Time taken to synthesize the physical circuit.
         """
-        domain, problem = self.create_instance(logical_circuit, platform)
+        instance = self.create_instance(logical_circuit, platform)
+        domain, problem = instance.compile()
         solution, time_taken = solver.solve(domain, problem, DEFAULT_TIME_LIMIT_S)
         physical_circuit = self.parse_solution(solution)
         return physical_circuit, time_taken
