@@ -1,0 +1,41 @@
+(define (problem circuit)
+  (:domain Quantum)
+  (:objects
+    p1 p2 p3 p4 - pqubit
+  )
+  (:init
+    (connected p1 p2)
+    (connected p2 p1)
+    (connected p2 p3)
+    (connected p3 p2)
+    (connected p2 p4)
+    (connected p4 p2)
+    ;;(connected p3 p4) ;; deleting implies minimum 1 swap
+    ;;(connected p4 p3) ;; deleting implies minimum 1 swap
+    (next_depth d0 d1)
+    (next_depth d1 d2)
+    (next_depth d2 d3)
+    (next_depth d3 d4)
+    (next_depth d4 d5)
+    (next_depth d5 d6)
+    (next_swap_depth d1 d4)
+    (next_swap_depth d2 d5)
+    (next_swap_depth d3 d6)
+    (clock p1 d0)
+    (clock p2 d0)
+    (clock p3 d0)
+    (clock p4 d0)
+  )
+  (:goal
+    (and
+      (done g1)
+      (done g2)
+      (done g3)
+      (done g4)
+      (not (is_swapping p1))
+      (not (is_swapping p2))
+      (not (is_swapping p3))
+      (not (is_swapping p4))
+    )
+  )
+)
