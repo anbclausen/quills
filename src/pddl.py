@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from typing import Callable, Type, ParamSpec, Generic
 
 
 class PDDLType:
@@ -24,8 +24,11 @@ class PDDLPredicateInstance:
         return f"({self.name} {' '.join(self.args)})"
 
 
-class PDDLPredicate:
-    def __init__(self, function: Callable[..., None]):
+P = ParamSpec("P")
+
+
+class PDDLPredicate(Generic[P]):
+    def __init__(self, function: Callable[P, None]):
         self.function = function
         self.predicate_name = (
             function.__name__ if function.__name__ != "not_" else "not"
@@ -34,7 +37,7 @@ class PDDLPredicate:
             name: class_.__name__ for name, class_ in function.__annotations__.items()
         }
 
-    def __call__(self, *args):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> PDDLPredicateInstance:
         argstrs = [str(arg) for arg in args]
         return PDDLPredicateInstance(self.predicate_name, argstrs)
 
