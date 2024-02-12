@@ -52,11 +52,14 @@ class Solver:
             domain_file, problem_file, output_file, str(time_limit_s)
         )
         start = time.time()
-        subprocess.run(command.split(), stdout=subprocess.DEVNULL)
+        process = subprocess.run(command.split(), stdout=subprocess.DEVNULL)
         end = time.time()
 
-        with open(output_file, "r") as f:
-            solution = f.read()
+        if process.returncode == 0:
+            with open(output_file, "r") as f:
+                solution = f.read()
+        else:
+            solution = "No solution found."
 
         elapsed = end - start
 
