@@ -52,7 +52,7 @@ class Solver:
             domain_file, problem_file, output_file, str(time_limit_s)
         )
         start = time.time()
-        subprocess.run(command.split())
+        subprocess.run(command.split(), stdout=subprocess.DEVNULL)
         end = time.time()
 
         with open(output_file, "r") as f:
