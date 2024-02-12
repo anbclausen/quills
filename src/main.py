@@ -1,6 +1,7 @@
 import sys
 
-import test.test_incr as incr
+import test.test_incr as incr1
+import test.test_incr2 as incr2
 import test.test_opt as opt
 from solvers import M_SEQUENTIAL_PLANS, MpC_SEQUENTIAL_PLANS
 
@@ -8,8 +9,10 @@ synthesizer_arg = sys.argv[1]
 match synthesizer_arg:
     case "opt":
         domain, problem = opt.test()
-    case "incr":
-        domain, problem = incr.test()
+    case "incr1":
+        domain, problem = incr1.test()
+    case "incr2":
+        domain, problem = incr2.test()
     case _:
         raise ValueError(f"Unknown synthesizer '{synthesizer_arg}'")
 
