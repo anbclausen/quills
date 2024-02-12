@@ -26,6 +26,3 @@ ENV PATH="${PATH}:/dependencies/downward:/dependencies"
 # Make Madagascar executable
 RUN chmod +x M
 RUN chmod +x MpC
-
-# Make qt shell script runnable
-RUN chmod +x /workspaces/qt
