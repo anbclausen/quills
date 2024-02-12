@@ -2,6 +2,7 @@ import sys
 
 import test.test_incr as incr1
 import test.test_incr2 as incr2
+import test.test_incr3 as incr3
 import test.test_opt as opt
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -20,6 +21,8 @@ match synthesizer_arg:
         domain, problem = incr1.test()
     case "incr2":
         domain, problem = incr2.test()
+    case "incr3":
+        domain, problem = incr3.test()
     case _:
         raise ValueError(f"Unknown synthesizer '{synthesizer_arg}'")
 
