@@ -1,7 +1,7 @@
 from synthesizers.synthesizer import Synthesizer
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from pddl import PDDLInstance
 
 
 class PlanningSynthesizer(Synthesizer):
