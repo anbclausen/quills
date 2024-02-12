@@ -40,7 +40,7 @@ class Solver:
 
         domain_file = os.path.join(TMP_FOLDER, "domain.pddl")
         problem_file = os.path.join(TMP_FOLDER, "problem.pddl")
-        output_file = os.path.join(TMP_FOLDER, "output")
+        output_file = os.path.join(TMP_FOLDER, "output.txt")
 
         with open(domain_file, "w") as f:
             f.write(domain)
@@ -72,4 +72,12 @@ M_SEQUENTIAL_PLANS = Solver(
 
 MpC_SEQUENTIAL_PLANS = Solver(
     lambda dom, prob, out, tl: f"MpC -P 0 -o {out} -t {tl} {dom} {prob}"
+)
+
+FAST_DOWNWARD_MERGE_AND_SHRINK = Solver(
+    lambda dom, prob, out, tl: f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
+)
+
+FAST_DOWNWARD_LAMA = Solver(
+    lambda dom, prob, out, tl: f"fast-downward.py --alias lama-first --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
 )

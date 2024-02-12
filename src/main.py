@@ -3,7 +3,12 @@ import sys
 import test.test_incr as incr1
 import test.test_incr2 as incr2
 import test.test_opt as opt
-from solvers import M_SEQUENTIAL_PLANS, MpC_SEQUENTIAL_PLANS
+from solvers import (
+    M_SEQUENTIAL_PLANS,
+    MpC_SEQUENTIAL_PLANS,
+    FAST_DOWNWARD_MERGE_AND_SHRINK,
+    FAST_DOWNWARD_LAMA,
+)
 
 synthesizer_arg = sys.argv[1]
 match synthesizer_arg:
@@ -23,6 +28,10 @@ match solver_arg:
         solver = M_SEQUENTIAL_PLANS
     case "MpC":
         solver = MpC_SEQUENTIAL_PLANS
+    case "fd_ms":
+        solver = FAST_DOWNWARD_MERGE_AND_SHRINK
+    case "fd_lama":
+        solver = FAST_DOWNWARD_LAMA
     case _:
         raise ValueError(f"Unknown solver '{solver_arg}'")
 
