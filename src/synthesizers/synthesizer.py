@@ -24,6 +24,7 @@ class Synthesizer(ABC):
         platform: Platform,
         solver: Solver,
     ) -> tuple[QuantumCircuit, float]:
+        # TODO this should be an abstract class since incr synthesizer should call solve multiple times
         """
         Layout synthesis.
 
