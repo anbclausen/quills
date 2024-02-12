@@ -1,4 +1,4 @@
-from test.test_opt import test
+from test.test_incr import test
 from solvers import M_SEQUENTIAL_PLANS, MpC_SEQUENTIAL_PLANS
 
 domain, problem = test()
