@@ -6,6 +6,8 @@ import test.test_opt as opt
 from solvers import (
     M_SEQUENTIAL_PLANS,
     MpC_SEQUENTIAL_PLANS,
+    MpC_FORALL_STEPS,
+    MpC_EXISTS_STEPS,
     FAST_DOWNWARD_MERGE_AND_SHRINK,
     FAST_DOWNWARD_LAMA,
 )
@@ -28,6 +30,10 @@ match solver_arg:
         solver = M_SEQUENTIAL_PLANS
     case "MpC":
         solver = MpC_SEQUENTIAL_PLANS
+    case "MpC_all":
+        solver = MpC_FORALL_STEPS
+    case "MpC_exist":
+        solver = MpC_EXISTS_STEPS
     case "fd_ms":
         solver = FAST_DOWNWARD_MERGE_AND_SHRINK
     case "fd_lama":

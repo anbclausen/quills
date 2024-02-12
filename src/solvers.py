@@ -74,6 +74,14 @@ MpC_SEQUENTIAL_PLANS = Solver(
     lambda dom, prob, out, tl: f"MpC -P 0 -o {out} -t {tl} {dom} {prob}"
 )
 
+MpC_FORALL_STEPS = Solver(
+    lambda dom, prob, out, tl: f"MpC -P 1 -o {out} -t {tl} {dom} {prob}"
+)
+
+MpC_EXISTS_STEPS = Solver(
+    lambda dom, prob, out, tl: f"MpC -P 2 -o {out} -t {tl} {dom} {prob}"
+)
+
 FAST_DOWNWARD_MERGE_AND_SHRINK = Solver(
     lambda dom, prob, out, tl: f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
 )
