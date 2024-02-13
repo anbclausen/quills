@@ -111,10 +111,9 @@ print(f"Synthesizing with '{args.model}' using '{args.solver}'...")
 physical_circuit, initial_mapping, time = synthesizer.synthesize(
     input_circuit, platform, solver, time_limit
 )
-
 print(f"Synthesis took {time:.3f} seconds")
 print()
-print("Physical circuit")
+
+print("OUTPUT:")
 print(physical_circuit)
-print("Initial mapping")
-print(initial_mapping)
+print("with initial mapping", initial_mapping)
