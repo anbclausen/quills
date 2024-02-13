@@ -68,7 +68,7 @@ parser.add_argument(
     "--solver",
     type=str,
     help=f"the underlying solver: {', '.join(solvers.keys())}",
-    default="M_seq",
+    default="MpC_all",
 )
 
 
