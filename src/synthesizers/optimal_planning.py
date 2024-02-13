@@ -292,11 +292,19 @@ class OptimalPlanningSynthesizer(Synthesizer):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         # FIXME
         solution_without_nops = [
             line for line in solver_solution if not line.startswith("nop")
         ]
+
+        def get_gate_id(action: str) -> int:
+            if not action.startswith("apply_"):
+                raise ValueError(f"'{action}' is not a gate action")
+
+            gate_name = action.split("_")[-1]
+            return int(gate_name[1:])
+
         print(solution_without_nops)
         return QuantumCircuit(), {}
 
@@ -306,7 +314,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
         solution, time_taken = solver.solve(domain, problem, time_limit_s)

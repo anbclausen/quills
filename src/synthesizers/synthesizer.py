@@ -28,7 +28,7 @@ class Synthesizer(ABC):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         pass
 
     @abstractmethod
@@ -38,7 +38,7 @@ class Synthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
         # TODO this should be an abstract class since incr synthesizer should call solve multiple times
         """
         Layout synthesis.
@@ -52,7 +52,7 @@ class Synthesizer(ABC):
         Returns
         --------
         - `QuantumCircuit`: Physical circuit.
-        - `dict[PhysicalQubit, LogicalQubit]`: Initial mapping of physical qubits to logical qubits.
+        - `dict[LogicalQubit, PhysicalQubit]`: Initial mapping of logical qubits to physical qubits.
         - `float`: Time taken to synthesize the physical circuit.
         """
         pass
