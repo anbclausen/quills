@@ -1,11 +1,15 @@
-from synthesizers.synthesizer import (
+from src.synthesizers.synthesizer import (
     Synthesizer,
+    PhysicalQubit,
+    LogicalQubit,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
+    DEFAULT_TIME_LIMIT_S,
 )
-from platforms import Platform
+from src.platforms import Platform
 from qiskit import QuantumCircuit
 from src.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from src.solvers import Solver
 
 
 class PlanningSynthesizer(Synthesizer):
@@ -280,6 +284,23 @@ class PlanningSynthesizer(Synthesizer):
             ],
         )
 
-    def parse_solution(self, solution: str) -> QuantumCircuit:
+    def parse_solution(
+        self, original_circuit: QuantumCircuit, platform: Platform, solver_solution: str
+    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
         # FIXME
-        return QuantumCircuit()
+        print(solver_solution)
+        return QuantumCircuit(), {}
+
+    def synthesize(
+        self,
+        logical_circuit: QuantumCircuit,
+        platform: Platform,
+        solver: Solver,
+    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
+        instance = self.create_instance(logical_circuit, platform)
+        domain, problem = instance.compile()
+        solution, time_taken = solver.solve(domain, problem, DEFAULT_TIME_LIMIT_S)
+        physical_circuit, initial_mapping = self.parse_solution(
+            logical_circuit, platform, solution
+        )
+        return physical_circuit, initial_mapping, time_taken

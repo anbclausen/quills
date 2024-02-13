@@ -26,16 +26,17 @@ class Synthesizer(ABC):
 
     @abstractmethod
     def parse_solution(
-        self, solution: str
+        self, original_circuit: QuantumCircuit, platform: Platform, solver_solution: str
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
         pass
 
+    @abstractmethod
     def synthesize(
         self,
         logical_circuit: QuantumCircuit,
         platform: Platform,
         solver: Solver,
-    ) -> tuple[QuantumCircuit, float]:
+    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
         # TODO this should be an abstract class since incr synthesizer should call solve multiple times
         """
         Layout synthesis.
@@ -49,13 +50,10 @@ class Synthesizer(ABC):
         Returns
         --------
         - `QuantumCircuit`: Physical circuit.
+        - `dict[PhysicalQubit, LogicalQubit]`: Initial mapping of physical qubits to logical qubits.
         - `float`: Time taken to synthesize the physical circuit.
         """
-        instance = self.create_instance(logical_circuit, platform)
-        domain, problem = instance.compile()
-        solution, time_taken = solver.solve(domain, problem, DEFAULT_TIME_LIMIT_S)
-        physical_circuit = self.parse_solution(solution)
-        return physical_circuit, time_taken
+        pass
 
 
 def gate_line_dependency_mapping(
