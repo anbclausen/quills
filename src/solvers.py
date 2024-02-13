@@ -14,7 +14,7 @@ class Solver(ABC):
         pass
 
     @abstractmethod
-    def parse_solution(self, solution: str) -> str:
+    def parse_solution(self, solution: str) -> list[str]:
         pass
 
     def solve(self, domain: str, problem: str, time_limit_s: int) -> tuple[str, float]:
@@ -66,7 +66,7 @@ class M_SEQUENTIAL_PLANS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> str:
+    def parse_solution(self, solution: str) -> list[str]:
         raise NotImplementedError
 
 
@@ -74,7 +74,7 @@ class MpC_SEQUENTIAL_PLANS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> str:
+    def parse_solution(self, solution: str) -> list[str]:
         raise NotImplementedError
 
 
@@ -82,15 +82,19 @@ class MpC_FORALL_STEPS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 1 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> str:
-        raise NotImplementedError
+    def parse_solution(self, solution: str) -> list[str]:
+        lines = solution.split("\n")
+        stripped_lines = [line.split(": ")[1] for line in lines]
+        actions = [line.split(" ") for line in stripped_lines]
+        flattened_actions = [action for sublist in actions for action in sublist]
+        return flattened_actions
 
 
 class MpC_EXISTS_STEPS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 2 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> str:
+    def parse_solution(self, solution: str) -> list[str]:
         raise NotImplementedError
 
 
@@ -98,7 +102,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> str:
+    def parse_solution(self, solution: str) -> list[str]:
         raise NotImplementedError
 
 
@@ -106,5 +110,5 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> str:
+    def parse_solution(self, solution: str) -> list[str]:
         raise NotImplementedError
