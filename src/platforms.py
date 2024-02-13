@@ -11,4 +11,4 @@ class Platform:
         )
 
 
-TOY = Platform("toy", 4, {(0, 1), (1, 2), (2, 3), (3, 0)})
+TOY = Platform("toy", 4, {(0, 1), (1, 2), (1, 3)})
