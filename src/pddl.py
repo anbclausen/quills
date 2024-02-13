@@ -81,6 +81,11 @@ class _PDDLAction:
         self.args = {
             name: class_.__name__ for name, class_ in function.__annotations__.items()
         }
+        args = self.function.__annotations__
+
+        self.preconditions, self.effects = self.function(
+            *[type_(f"?{arg}") for arg, type_ in args.items()]
+        )
 
     def __call__(self, *args):
         return self.function(*args)
@@ -97,17 +102,11 @@ class _PDDLAction:
             for type_, parameters in parameters_grouped_by_type.items()
         ]
 
-        args = self.function.__annotations__
-
-        preconditions, effects = self.function(
-            *[type_(f"?{arg}") for arg, type_ in args.items()]
-        )
-
         return f"""
     (:action {self.name}
         :parameters ({' '.join(parameter_strings)})
-        :precondition (and {" ".join(map(str, preconditions))})
-        :effect (and {" ".join(map(str, effects))})
+        :precondition (and {" ".join(map(str, self.preconditions))})
+        :effect (and {" ".join(map(str, self.effects))})
     )"""
 
 
