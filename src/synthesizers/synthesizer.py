@@ -4,8 +4,6 @@ from platforms import Platform
 from solvers import Solver
 from pddl import PDDLInstance
 
-DEFAULT_TIME_LIMIT_S = 1800
-
 
 class LogicalQubit:
     def __init__(self, id: int):
@@ -36,6 +34,7 @@ class Synthesizer(ABC):
         logical_circuit: QuantumCircuit,
         platform: Platform,
         solver: Solver,
+        time_limit_s: int,
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
         # TODO this should be an abstract class since incr synthesizer should call solve multiple times
         """

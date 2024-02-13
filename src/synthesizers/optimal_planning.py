@@ -4,7 +4,6 @@ from src.synthesizers.synthesizer import (
     LogicalQubit,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
-    DEFAULT_TIME_LIMIT_S,
 )
 from src.platforms import Platform
 from qiskit import QuantumCircuit
@@ -296,10 +295,11 @@ class OptimalPlanningSynthesizer(Synthesizer):
         logical_circuit: QuantumCircuit,
         platform: Platform,
         solver: Solver,
+        time_limit_s: int,
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
-        solution, time_taken = solver.solve(domain, problem, DEFAULT_TIME_LIMIT_S)
+        solution, time_taken = solver.solve(domain, problem, time_limit_s)
         physical_circuit, initial_mapping = self.parse_solution(
             logical_circuit, platform, solution
         )
