@@ -102,7 +102,12 @@ print(f"Input circuit '{args.input}'")
 print(input_circuit)
 print()
 
-print(f"Synthesizing with '{args.model}' on '{args.platform}' using '{args.solver}'...")
+print(f"Platform '{args.platform}'")
+print(platform.connectivity_graph)
+print("TODO: draw nice graph")
+print()
+
+print(f"Synthesizing with '{args.model}' using '{args.solver}'...")
 physical_circuit, initial_mapping, time = synthesizer.synthesize(
     input_circuit, platform, solver, time_limit
 )
