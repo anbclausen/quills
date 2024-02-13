@@ -294,7 +294,10 @@ class OptimalPlanningSynthesizer(Synthesizer):
         solver_solution: list[str],
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
         # FIXME
-        print(solver_solution)
+        solution_without_nops = [
+            line for line in solver_solution if not line.startswith("nop")
+        ]
+        print(solution_without_nops)
         return QuantumCircuit(), {}
 
     def synthesize(
