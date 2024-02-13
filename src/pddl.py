@@ -27,12 +27,10 @@ class PDDLPredicateInstance:
 P = ParamSpec("P")
 
 
-class PDDLPredicate(Generic[P]):
-    def __init__(self, function: Callable[P, None]):
+class _PDDLPredicate(Generic[P]):
+    def __init__(self, function: Callable[P, None], name: str | None):
         self.function = function
-        self.predicate_name = (
-            function.__name__ if function.__name__ != "not_" else "not"
-        )
+        self.predicate_name = function.__name__ if name is None else name
         self.args = {
             name: class_.__name__ for name, class_ in function.__annotations__.items()
         }
@@ -56,20 +54,30 @@ class PDDLPredicate(Generic[P]):
         return f"({self.predicate_name} {" ".join(arg_strings)})"
 
 
-@PDDLPredicate
+def PDDLPredicate(
+    name: str | None = None,
+):
+    def decorator(function: Callable[P, None]):
+        return _PDDLPredicate(function, name)
+
+    return decorator
+
+
+@PDDLPredicate(name="not")
 def not_(predicate: PDDLPredicateInstance):
     pass
 
 
-class PDDLAction:
+class _PDDLAction:
     def __init__(
         self,
         function: Callable[
             ..., tuple[list[PDDLPredicateInstance], list[PDDLPredicateInstance]]
         ],
+        name: str | None,
     ):
         self.function = function
-        self.name = function.__name__
+        self.name = function.__name__ if name is None else name
         self.args = {
             name: class_.__name__ for name, class_ in function.__annotations__.items()
         }
@@ -103,16 +111,29 @@ class PDDLAction:
     )"""
 
 
+def PDDLAction(
+    name: str | None = None,
+):
+    def decorator(
+        function: Callable[
+            ..., tuple[list[PDDLPredicateInstance], list[PDDLPredicateInstance]]
+        ]
+    ):
+        return _PDDLAction(function, name)
+
+    return decorator
+
+
 class PDDLInstance:
     def __init__(
         self,
         objects: list[PDDLType] = [],
         types: list[Type[PDDLType]] = [],
         constants: list[PDDLType] = [],
-        predicates: list[PDDLPredicate] = [],
+        predicates: list[_PDDLPredicate] = [],
         initial_state: list[PDDLPredicateInstance] = [],
         goal_state: list[PDDLPredicateInstance] = [],
-        actions: list[PDDLAction] = [],
+        actions: list[_PDDLAction] = [],
     ):
         self.domain = "Quantum"
         self.problem = "circuit"
