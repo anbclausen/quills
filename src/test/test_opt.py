@@ -304,5 +304,7 @@ instance = PDDLInstance(
 )
 
 
-def test():
-    return instance.compile()
+domain, problem = instance.compile()
+
+print(domain)
+print(problem)
