@@ -44,3 +44,22 @@ class Synthesizer(ABC):
         solution, time_taken = solver.solve(domain, problem, DEFAULT_TIME_LIMIT_S)
         physical_circuit = self.parse_solution(solution)
         return physical_circuit, time_taken
+
+
+def gate_input_mapping(
+    circuit: QuantumCircuit,
+) -> dict[int, tuple[str, list[int]]]:
+    circuit_data = list(circuit.data)
+
+    mapping = {}
+    for i, instr in enumerate(circuit_data):
+        name = instr.operation.name
+        input_idxs = [qubit._index for qubit in instr.qubits]
+        if name is None:
+            raise ValueError(f"Gate at index {i} has no name.")
+
+        if any(idx is None for idx in input_idxs):
+            raise ValueError(f"Gate at index {i} has an input with no index.")
+
+        mapping[i] = (name, input_idxs)
+    return mapping
