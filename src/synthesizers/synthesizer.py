@@ -24,7 +24,10 @@ class Synthesizer(ABC):
 
     @abstractmethod
     def parse_solution(
-        self, original_circuit: QuantumCircuit, platform: Platform, solver_solution: str
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
         pass
 

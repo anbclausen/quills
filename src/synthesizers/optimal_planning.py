@@ -288,7 +288,10 @@ class OptimalPlanningSynthesizer(Synthesizer):
         )
 
     def parse_solution(
-        self, original_circuit: QuantumCircuit, platform: Platform, solver_solution: str
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
         # FIXME
         print(solver_solution)
@@ -304,7 +307,8 @@ class OptimalPlanningSynthesizer(Synthesizer):
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
         solution, time_taken = solver.solve(domain, problem, time_limit_s)
+        parsed_solution = solver.parse_solution(solution)
         physical_circuit, initial_mapping = self.parse_solution(
-            logical_circuit, platform, solution
+            logical_circuit, platform, parsed_solution
         )
         return physical_circuit, initial_mapping, time_taken
