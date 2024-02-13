@@ -12,7 +12,7 @@ from src.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from src.solvers import Solver
 
 
-class PlanningSynthesizer(Synthesizer):
+class OptimalPlanningSynthesizer(Synthesizer):
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
     ) -> PDDLInstance:
