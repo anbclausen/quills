@@ -254,7 +254,8 @@ class OptimalPlanningSynthesizer(Synthesizer):
 
         return PDDLInstance(
             types=[pqubit, lqubit, gate, depth],
-            constants=[*p, *l, *g, *d],
+            constants=[*l, *g, *d],
+            objects=[*p],
             predicates=[
                 occupied,
                 mapped,
