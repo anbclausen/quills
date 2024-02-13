@@ -85,7 +85,30 @@ platform = platforms[args.platform]
 solver = solvers[args.solver]
 time_limit = args.time_limit
 
+print("####################################################")
+print("#                           __                     #")
+print("#                   _______/  |_                   #")
+print("#                  / ____/\\   __\\                  #")
+print("#                 < <_|  | |  |                    #")
+print("#                  \\__   | |__|                    #")
+print("#                     |__|                         #")
+print("#                                                  #")
+print("#    A tool for depth-optimal layout synthesis.    #")
+print("####################################################")
+print()
+
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
+print(f"Input circuit '{args.input}'")
+print(input_circuit)
+print()
+
+print(f"Synthesizing with '{args.model}' on '{args.platform}' using '{args.solver}'...")
 physical_circuit, initial_mapping, time = synthesizer.synthesize(
     input_circuit, platform, solver, time_limit
 )
+
+print(f"Synthesis took {time:.3f} seconds")
+print("Physical circuit")
+print(physical_circuit)
+print("Initial mapping")
+print(initial_mapping)
