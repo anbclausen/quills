@@ -58,6 +58,11 @@ def gate_input_mapping(
         if name is None:
             raise ValueError(f"Gate at index {i} has no name.")
 
+        if len(input_idxs) > 1 and name != "cx":
+            raise ValueError(
+                f"Gate at index {i} is not a CX gate but has multiple inputs. qt can not handle multiple input gates other than CX."
+            )
+
         if any(idx is None for idx in input_idxs):
             raise ValueError(f"Gate at index {i} has an input with no index.")
 
