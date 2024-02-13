@@ -277,6 +277,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
                 *[next_depth(d[i], d[i + 1]) for i in range(maximum_depth - 1)],
+                *[next_swap_depth(d[i], d[i + 3]) for i in range(1, maximum_depth - 3)],
                 *[clock(pi, d[0]) for pi in p],
             ],
             goal_state=[
@@ -301,6 +302,8 @@ class OptimalPlanningSynthesizer(Synthesizer):
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
+        print(domain)
+        print(problem)
         solution, time_taken = solver.solve(domain, problem, time_limit_s)
         physical_circuit, initial_mapping = self.parse_solution(
             logical_circuit, platform, solution
