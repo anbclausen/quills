@@ -2,24 +2,20 @@ import os
 import subprocess
 import time
 
+from abc import ABC, abstractmethod
 from typing import Callable
 
 TMP_FOLDER = "tmp"
 
 
-class Solver:
-    def __init__(self, command: Callable[[str, str, str, str], str]):
-        """
-        Args
-        ----
-        - command (`Callable[[str, str, str, str], str]`): Command to run the solver.
+class Solver(ABC):
+    @abstractmethod
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        pass
 
-        Examples
-        --------
-        ```python
-        Solver(lambda domain, problem, output, time_limit_s: f"solver --domain {domain} --problem {problem} --output {output} --time-limit {time_limit_s}")
-        """
-        self.command = command
+    @abstractmethod
+    def parse_solution(self, solution: str) -> str:
+        pass
 
     def solve(self, domain: str, problem: str, time_limit_s: int) -> tuple[str, float]:
         """
@@ -66,26 +62,49 @@ class Solver:
         return solution, elapsed
 
 
-M_SEQUENTIAL_PLANS = Solver(
-    lambda dom, prob, out, tl: f"M -P 0 -o {out} -t {tl} {dom} {prob}"
-)
+class M_SEQUENTIAL_PLANS(Solver):
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
-MpC_SEQUENTIAL_PLANS = Solver(
-    lambda dom, prob, out, tl: f"MpC -P 0 -o {out} -t {tl} {dom} {prob}"
-)
+    def parse_solution(self, solution: str) -> str:
+        raise NotImplementedError
 
-MpC_FORALL_STEPS = Solver(
-    lambda dom, prob, out, tl: f"MpC -P 1 -o {out} -t {tl} {dom} {prob}"
-)
 
-MpC_EXISTS_STEPS = Solver(
-    lambda dom, prob, out, tl: f"MpC -P 2 -o {out} -t {tl} {dom} {prob}"
-)
+class MpC_SEQUENTIAL_PLANS(Solver):
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"MpC -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
-FAST_DOWNWARD_MERGE_AND_SHRINK = Solver(
-    lambda dom, prob, out, tl: f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
-)
+    def parse_solution(self, solution: str) -> str:
+        raise NotImplementedError
 
-FAST_DOWNWARD_LAMA_FIRST = Solver(
-    lambda dom, prob, out, tl: f"fast-downward.py --alias lama-first --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
-)
+
+class MpC_FORALL_STEPS(Solver):
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"MpC -P 1 -o {output} -t {time_limit_s} {domain} {problem}"
+
+    def parse_solution(self, solution: str) -> str:
+        raise NotImplementedError
+
+
+class MpC_EXISTS_STEPS(Solver):
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"MpC -P 2 -o {output} -t {time_limit_s} {domain} {problem}"
+
+    def parse_solution(self, solution: str) -> str:
+        raise NotImplementedError
+
+
+class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
+
+    def parse_solution(self, solution: str) -> str:
+        raise NotImplementedError
+
+
+class FAST_DOWNWARD_LAMA_FIRST(Solver):
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
+
+    def parse_solution(self, solution: str) -> str:
+        raise NotImplementedError

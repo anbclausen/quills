@@ -17,7 +17,7 @@ DEFAULT_TIME_LIMIT_S = 1800
 
 
 synthesizers = {
-    "plan_opt": OptimalPlanningSynthesizer,
+    "plan_opt": OptimalPlanningSynthesizer(),
 }
 
 platforms = {
@@ -25,12 +25,12 @@ platforms = {
 }
 
 solvers = {
-    "M_seq": M_SEQUENTIAL_PLANS,
-    "MpC_seq": MpC_SEQUENTIAL_PLANS,
-    "MpC_all": MpC_FORALL_STEPS,
-    "MpC_exist": MpC_EXISTS_STEPS,
-    "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK,
-    "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST,
+    "M_seq": M_SEQUENTIAL_PLANS(),
+    "MpC_seq": MpC_SEQUENTIAL_PLANS(),
+    "MpC_all": MpC_FORALL_STEPS(),
+    "MpC_exist": MpC_EXISTS_STEPS(),
+    "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
+    "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
 }
 
 parser = argparse.ArgumentParser(
@@ -80,7 +80,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-synthesizer = synthesizers[args.model]()
+synthesizer = synthesizers[args.model]
 platform = platforms[args.platform]
 solver = solvers[args.solver]
 time_limit = args.time_limit
