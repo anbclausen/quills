@@ -41,57 +41,57 @@ p3 = pqubit("p3")
 p4 = pqubit("p4")
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def occupied(p: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def mapped(l: lqubit, p: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def connected(p1: pqubit, p2: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def done(g: gate):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def clock(p: pqubit, d: depth):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def next_depth(d1: depth, d2: depth):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def next_swap_depth(d1: depth, d2: depth):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def is_swapping1(p1: pqubit, p2: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def is_swapping2(p1: pqubit, p2: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def is_swapping(p: pqubit):
     pass
 
 
-@PDDLAction
+@PDDLAction()
 def swap(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, d1: depth, d2: depth):
     preconditions = [
         mapped(l1, p1),
@@ -117,14 +117,14 @@ def swap(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, d1: depth, d2: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def swap_dummy1(p1: pqubit, p2: pqubit):
     preconditions = [is_swapping1(p1, p2)]
     effects = [not_(is_swapping1(p1, p2)), is_swapping2(p1, p2)]
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def swap_dummy2(p1: pqubit, p2: pqubit):
     preconditions = [is_swapping2(p1, p2)]
     effects = [
@@ -135,7 +135,7 @@ def swap_dummy2(p1: pqubit, p2: pqubit):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_gate_g1(p: pqubit, d1: depth, d2: depth):
     preconditions = [
         not_(done(g1)),
@@ -154,7 +154,7 @@ def apply_gate_g1(p: pqubit, d1: depth, d2: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_cnot_g2(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
     preconditions = [
         not_(done(g2)),
@@ -180,7 +180,7 @@ def apply_cnot_g2(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_cnot_g3(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
     preconditions = [
         not_(done(g3)),
@@ -207,7 +207,7 @@ def apply_cnot_g3(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_gate_g4(p: pqubit, d1: depth, d2: depth):
     preconditions = [
         not_(done(g4)),
@@ -221,7 +221,7 @@ def apply_gate_g4(p: pqubit, d1: depth, d2: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def nop(p: pqubit, d1: depth, d2: depth):
     preconditions = [next_depth(d1, d2), clock(p, d1), not_(is_swapping(p))]
     effects = [clock(p, d2), not_(clock(p, d1))]

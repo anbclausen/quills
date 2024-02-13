@@ -47,42 +47,42 @@ p3 = pqubit("p3")
 p4 = pqubit("p4")
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def occupied(p: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def mapped(l: lqubit, p: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def connected(p1: pqubit, p2: pqubit):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def done(g: gate):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def clock(d: depth):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def next_depth(d1: depth, d2: depth):
     pass
 
 
-@PDDLPredicate
+@PDDLPredicate()
 def is_busy(p: pqubit, d: depth):
     pass
 
 
-@PDDLAction
+@PDDLAction()
 def swap(
     l1: lqubit,
     l2: lqubit,
@@ -117,7 +117,7 @@ def swap(
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_gate_g1(p: pqubit, d: depth):
     preconditions = [
         clock(d),
@@ -129,7 +129,7 @@ def apply_gate_g1(p: pqubit, d: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_cnot_g2(p1: pqubit, p2: pqubit, d: depth):
     preconditions = [
         not_(done(g2)),
@@ -151,7 +151,7 @@ def apply_cnot_g2(p1: pqubit, p2: pqubit, d: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_cnot_g3(p1: pqubit, p2: pqubit, d: depth):
     preconditions = [
         not_(done(g3)),
@@ -174,7 +174,7 @@ def apply_cnot_g3(p1: pqubit, p2: pqubit, d: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def apply_gate_g4(p: pqubit, d: depth):
     preconditions = [
         not_(done(g4)),
@@ -186,21 +186,21 @@ def apply_gate_g4(p: pqubit, d: depth):
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def advance_depth(d1: depth, d2: depth):
     preconditions = [next_depth(d1, d2), clock(d1)]
     effects = [not_(clock(d1)), clock(d2)]
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def advance_depth_twice(d1: depth, d2: depth, d3: depth):
     preconditions = [next_depth(d1, d2), next_depth(d2, d3), clock(d1)]
     effects = [not_(clock(d1)), clock(d3)]
     return preconditions, effects
 
 
-@PDDLAction
+@PDDLAction()
 def advance_depth_thrice(d1: depth, d2: depth, d3: depth, d4: depth):
     preconditions = [
         next_depth(d1, d2),
