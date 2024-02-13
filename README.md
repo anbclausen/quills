@@ -20,13 +20,13 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 
 ## Usage
 
-```bash
+```
 usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] input
 
 Welcome to qt! A quantum circuit synthesis tool.
 
 positional arguments:
-  input                 the input file
+  input                 the path to the input file
 
 options:
   -h, --help            show this help message and exit
@@ -37,6 +37,5 @@ options:
   -p PLATFORM, --platform PLATFORM
                         the target platform: toy
   -s SOLVER, --solver SOLVER
-                        the underlying solver: M_seq, MpC_seq, MpC_all, MpC_exist,
-                        fd_ms, fd_lama_first
+                        the underlying solver: M_seq, MpC_seq, MpC_all, MpC_exist, fd_ms, fd_lama_first,
 ```

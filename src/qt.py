@@ -75,7 +75,7 @@ parser.add_argument(
 parser.add_argument(
     "input",
     type=str,
-    help="the input file",
+    help="the path to the input file",
 )
 
 args = parser.parse_args()
