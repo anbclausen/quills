@@ -86,6 +86,6 @@ FAST_DOWNWARD_MERGE_AND_SHRINK = Solver(
     lambda dom, prob, out, tl: f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
 )
 
-FAST_DOWNWARD_LAMA = Solver(
+FAST_DOWNWARD_LAMA_FIRST = Solver(
     lambda dom, prob, out, tl: f"fast-downward.py --alias lama-first --plan-file {out} --overall-time-limit {tl}s {dom} {prob}"
 )
