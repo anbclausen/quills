@@ -20,12 +20,23 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 
 ## Usage
 
-To use qt, simply run
-
 ```bash
-./qt [args]
+usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] input
+
+Welcome to qt! A quantum circuit synthesis tool.
+
+positional arguments:
+  input                 the input file
+
+options:
+  -h, --help            show this help message and exit
+  -t TIME_LIMIT, --time_limit TIME_LIMIT
+                        the time limit in seconds
+  -m MODEL, --model MODEL
+                        the synthesizer model to use: plan_opt
+  -p PLATFORM, --platform PLATFORM
+                        the target platform: toy
+  -s SOLVER, --solver SOLVER
+                        the underlying solver: M_seq, MpC_seq, MpC_all, MpC_exist,
+                        fd_ms, fd_lama_first
 ```
-
-### Arguments
-
-There are none as of yet.
