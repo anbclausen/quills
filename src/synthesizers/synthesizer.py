@@ -7,6 +7,16 @@ from pddl import PDDLInstance
 DEFAULT_TIME_LIMIT_S = 1800
 
 
+class LogicalQubit:
+    def __init__(self, id: int):
+        self.id = id
+
+
+class PhysicalQubit:
+    def __init__(self, id: int):
+        self.id = id
+
+
 class Synthesizer(ABC):
     @abstractmethod
     def create_instance(
@@ -15,7 +25,9 @@ class Synthesizer(ABC):
         pass
 
     @abstractmethod
-    def parse_solution(self, solution: str) -> QuantumCircuit:
+    def parse_solution(
+        self, solution: str
+    ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit]]:
         pass
 
     def synthesize(
