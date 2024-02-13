@@ -153,11 +153,12 @@ class OptimalPlanningSynthesizer(Synthesizer):
                             preconditions.append(not_(occupied(p2)))
                         elif one_gate_dependency:
                             earlier_gate = gate_direct_mapping[gate_id][0]
+
                             # find the line that the earlier gate is on
+                            _, earlier_gate_qubits = gate_line_mapping[earlier_gate]
+
                             occupied_line_id = (
-                                set(gate_qubits)
-                                .intersection(gate_direct_mapping[earlier_gate])
-                                .pop()
+                                set(gate_qubits).intersection(earlier_gate_qubits).pop()
                             )
                             occupied_line_index = gate_qubits.index(occupied_line_id)
 
@@ -197,11 +198,12 @@ class OptimalPlanningSynthesizer(Synthesizer):
                             effects.append(mapped(l[gate_qubits[1]], p2))
                         elif one_gate_dependency:
                             earlier_gate = gate_direct_mapping[gate_id][0]
+
                             # find the line that the earlier gate is on
+                            _, earlier_gate_qubits = gate_line_mapping[earlier_gate]
+
                             occupied_line_id = (
-                                set(gate_qubits)
-                                .intersection(gate_direct_mapping[earlier_gate])
-                                .pop()
+                                set(gate_qubits).intersection(earlier_gate_qubits).pop()
                             )
                             occupied_line_index = gate_qubits.index(occupied_line_id)
                             unoccupied_line_index = 1 - occupied_line_index
