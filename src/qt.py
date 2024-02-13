@@ -100,6 +100,7 @@ print()
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 print(f"Input circuit '{args.input}'")
 print(input_circuit)
+print(f"(depth {input_circuit.depth()})")
 print()
 
 print(f"Platform '{args.platform}'")
@@ -116,4 +117,11 @@ print()
 
 print("OUTPUT:")
 print(physical_circuit)
-print("with initial mapping", initial_mapping)
+
+num_of_swaps = sum(1 for gate in physical_circuit.data if gate[0].name == "swap")
+depth = physical_circuit.depth() + 2 * num_of_swaps
+print(f"(depth {depth})")
+initial_mapping_str = ", ".join(
+    f"l{logical.id} -> p{physical.id}" for logical, physical in initial_mapping.items()
+)
+print("with initial mapping", initial_mapping_str)

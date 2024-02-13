@@ -9,10 +9,16 @@ class LogicalQubit:
     def __init__(self, id: int):
         self.id = id
 
+    def __str__(self):
+        return f"l{self.id}"
+
 
 class PhysicalQubit:
     def __init__(self, id: int):
         self.id = id
+
+    def __str__(self):
+        return f"p{self.id}"
 
 
 class Synthesizer(ABC):
