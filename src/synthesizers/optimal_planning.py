@@ -303,8 +303,6 @@ class OptimalPlanningSynthesizer(Synthesizer):
     ) -> tuple[QuantumCircuit, dict[PhysicalQubit, LogicalQubit], float]:
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
-        print(domain)
-        print(problem)
         solution, time_taken = solver.solve(domain, problem, time_limit_s)
         physical_circuit, initial_mapping = self.parse_solution(
             logical_circuit, platform, solution
