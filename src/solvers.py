@@ -17,6 +17,10 @@ class Solver(ABC):
     def parse_solution(self, solution: str) -> list[str]:
         pass
 
+    @abstractmethod
+    def check_solution(self, solution: str) -> bool:
+        pass
+
     def solve(self, domain: str, problem: str, time_limit_s: int) -> tuple[str, float]:
         """
         Solve a problem.
@@ -71,6 +75,9 @@ class M_SEQUENTIAL_PLANS(Solver):
         actions = [line.split(": ")[1] for line in lines]
         return actions
 
+    def check_solution(self, solution: str) -> bool:
+        raise NotImplementedError
+
 
 class MpC_SEQUENTIAL_PLANS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
@@ -80,6 +87,9 @@ class MpC_SEQUENTIAL_PLANS(Solver):
         lines = solution.strip().split("\n")
         actions = [line.split(": ")[1] for line in lines]
         return actions
+
+    def check_solution(self, solution: str) -> bool:
+        raise NotImplementedError
 
 
 class MpC_FORALL_STEPS(Solver):
@@ -93,6 +103,9 @@ class MpC_FORALL_STEPS(Solver):
         flattened_actions = [action for sublist in actions for action in sublist]
         return flattened_actions
 
+    def check_solution(self, solution: str) -> bool:
+        return solution != "No solution found."
+
 
 class MpC_EXISTS_STEPS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
@@ -104,6 +117,9 @@ class MpC_EXISTS_STEPS(Solver):
         actions = [line.split(" ") for line in stripped_lines]
         flattened_actions = [action for sublist in actions for action in sublist]
         return flattened_actions
+
+    def check_solution(self, solution: str) -> bool:
+        raise NotImplementedError
 
 
 class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
@@ -118,6 +134,9 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
         actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
         return actions
 
+    def check_solution(self, solution: str) -> bool:
+        raise NotImplementedError
+
 
 class FAST_DOWNWARD_LAMA_FIRST(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
@@ -130,3 +149,7 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
         actions_as_parts = [line.split(" ") for line in without_parentheses]
         actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
         return actions
+
+    def check_solution(self, solution: str) -> bool:
+        raise NotImplementedError
+
