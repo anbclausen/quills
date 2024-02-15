@@ -67,7 +67,9 @@ class M_SEQUENTIAL_PLANS(Solver):
         return f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_solution(self, solution: str) -> list[str]:
-        raise NotImplementedError
+        lines = solution.strip().split("\n")
+        actions = [line.split(": ")[1] for line in lines]
+        return actions
 
 
 class MpC_SEQUENTIAL_PLANS(Solver):
