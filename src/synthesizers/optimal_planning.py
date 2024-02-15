@@ -357,7 +357,9 @@ class OptimalPlanningSynthesizer(Synthesizer):
             elif action.startswith("swap("):
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
-                physical_circuit.swap(control, target)
+                physical_circuit.cx(control, target)
+                physical_circuit.cx(target, control)
+                physical_circuit.cx(control, target)
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:

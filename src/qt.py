@@ -118,9 +118,7 @@ print()
 print("OUTPUT:")
 print(physical_circuit)
 
-num_of_swaps = sum(1 for gate in physical_circuit.data if gate[0].name == "swap")
-depth = physical_circuit.depth() + 2 * num_of_swaps
-print(f"(depth {depth})")
+print(f"(depth {physical_circuit.depth()})")
 initial_mapping_str = ", ".join(
     f"l{logical.id} -> p{physical.id}" for logical, physical in initial_mapping.items()
 )
