@@ -1,14 +1,16 @@
-from src.synthesizers.synthesizer import (
+from synthesizers.synthesizer import (
     Synthesizer,
-    PhysicalQubit,
-    LogicalQubit,
+    SynthesizerTimeout,
+    SynthesizerNoSolution,
+    SynthesizerSolution,
+    SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
 )
-from src.platforms import Platform
+from platforms import Platform
 from qiskit import QuantumCircuit
-from src.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
-from src.solvers import Solver
+from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from solvers import Solver, SolverSolution, SolverTimeout, SolverNoSolution
 
 
 class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
@@ -280,21 +282,34 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
+    ) -> SynthesizerOutput:
         circuit_depth = logical_circuit.depth()
         total_time = 0
         for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
             print(f"Depth: {depth}")
-            instance = self.create_instance(logical_circuit, platform, depth)
+            instance = self.create_instance(
+                logical_circuit, platform, maximum_depth=depth
+            )
             domain, problem = instance.compile()
+
             print("Solving")
-            solution, time_taken = solver.solve(domain, problem, time_limit_s)
+            time_left = int(time_limit_s - total_time)
+            solution, time_taken = solver.solve(domain, problem, time_left)
             total_time += time_taken
             print(f"Solution: {solution}")
-            if solver.check_solution(solution):
-                parsed_solution = solver.parse_solution(solution)
-                physical_circuit, initial_mapping = self.parse_solution(
-                    logical_circuit, platform, parsed_solution
-                )
-                return physical_circuit, initial_mapping, total_time
-        return QuantumCircuit(), {}, 0
+
+            match solution:
+                case SolverTimeout():
+                    return SynthesizerTimeout()
+                case SolverNoSolution():
+                    continue
+                case SolverSolution(actions):
+                    physical_circuit, initial_mapping = self.parse_solution(
+                        logical_circuit, platform, actions
+                    )
+                    return SynthesizerSolution(
+                        physical_circuit, initial_mapping, total_time
+                    )
+                case _:
+                    raise ValueError(f"Unexpected solution: {solution}")
+        return SynthesizerNoSolution()

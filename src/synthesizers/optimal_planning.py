@@ -1,15 +1,21 @@
-from src.synthesizers.synthesizer import (
+from synthesizers.synthesizer import (
     Synthesizer,
-    PhysicalQubit,
-    LogicalQubit,
+    SynthesizerOutput,
+    SynthesizerSolution,
+    SynthesizerTimeout,
+    SynthesizerNoSolution,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
 )
-from src.platforms import Platform
+from platforms import Platform
 from qiskit import QuantumCircuit
-from qiskit.circuit import QuantumRegister
-from src.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
-from src.solvers import Solver
+from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from solvers import (
+    Solver,
+    SolverSolution,
+    SolverTimeout,
+    SolverNoSolution,
+)
 
 
 class OptimalPlanningSynthesizer(Synthesizer):
@@ -294,12 +300,22 @@ class OptimalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
+    ) -> SynthesizerOutput:
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
         solution, time_taken = solver.solve(domain, problem, time_limit_s)
-        parsed_solution = solver.parse_solution(solution)
-        physical_circuit, initial_mapping = self.parse_solution(
-            logical_circuit, platform, parsed_solution
-        )
-        return physical_circuit, initial_mapping, time_taken
+
+        match solution:
+            case SolverTimeout():
+                return SynthesizerTimeout()
+            case SolverNoSolution():
+                return SynthesizerNoSolution()
+            case SolverSolution(actions):
+                physical_circuit, initial_mapping = self.parse_solution(
+                    logical_circuit, platform, actions
+                )
+                return SynthesizerSolution(
+                    physical_circuit, initial_mapping, time_taken
+                )
+            case _:
+                raise ValueError(f"Unexpected solution: {solution}")

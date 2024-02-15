@@ -21,6 +21,43 @@ class PhysicalQubit:
         return f"p_{self.id}"
 
 
+class SynthesizerOutput:
+    pass
+
+
+class SynthesizerTimeout(SynthesizerOutput):
+    def __str__(self):
+        return "Timeout."
+
+
+class SynthesizerNoSolution(SynthesizerOutput):
+    def __str__(self):
+        return "No solution found."
+
+
+class SynthesizerSolution(SynthesizerOutput):
+    __match_args__ = ("circuit", "initial_mapping", "time")
+
+    def __init__(
+        self,
+        circuit: QuantumCircuit,
+        mapping: dict[LogicalQubit, PhysicalQubit],
+        time: float,
+    ):
+        self.circuit = circuit
+        self.initial_mapping = mapping
+        self.time = time
+
+    def __str__(self):
+        initial_mapping_str = ", ".join(
+            sorted(
+                f"{logical} -> {physical}"
+                for logical, physical in self.initial_mapping.items()
+            )
+        )
+        return f"{self.circuit}\n(depth {self.circuit.depth()})\nwith initial mapping: {initial_mapping_str}\nSynthesis took {self.time:.3f} seconds"
+
+
 class Synthesizer(ABC):
     @abstractmethod
     def create_instance(
@@ -125,8 +162,7 @@ class Synthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
-        # TODO this should be an abstract class since incr synthesizer should call solve multiple times
+    ) -> SynthesizerOutput:
         """
         Layout synthesis.
 

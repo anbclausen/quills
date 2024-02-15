@@ -6,6 +6,32 @@ from abc import ABC, abstractmethod
 
 TMP_FOLDER = "tmp"
 
+class SolverOutput:
+    def __init__(self) -> None:
+        pass
+
+class SolverSolution(SolverOutput):
+    __match_args__ = ("actions",)
+    def __init__(self, actions: list[str]):
+        self.actions = actions
+
+    def __str__(self):
+        return "\n".join(self.actions)
+    
+class SolverNoSolution(SolverOutput):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def __str__(self):
+        return "No solution found."
+    
+class SolverTimeout(SolverOutput):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    def __str__(self):
+        return "Timeout."
+
 
 class Solver(ABC):
     @abstractmethod
@@ -13,13 +39,10 @@ class Solver(ABC):
         pass
 
     @abstractmethod
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         pass
 
-    def check_solution(self, solution: str) -> bool:
-        return solution != "No solution found."
-
-    def solve(self, domain: str, problem: str, time_limit_s: int) -> tuple[str, float]:
+    def solve(self, domain: str, problem: str, time_limit_s: int) -> tuple[SolverOutput, float]:
         """
         Solve a problem.
 
@@ -53,22 +76,26 @@ class Solver(ABC):
         process = subprocess.run(command.split(), stdout=subprocess.DEVNULL)
         end = time.time()
 
-        if process.returncode == 0:
-            with open(output_file, "r") as f:
-                solution = f.read()
-        else:
-            solution = "No solution found."
-
         elapsed = end - start
 
-        return solution, elapsed
+        if elapsed >= time_limit_s:
+            return SolverTimeout(), elapsed
+
+        if process.returncode != 0:
+            return SolverNoSolution(), elapsed
+
+        with open(output_file, "r") as f:
+            solution = f.read()
+
+        actions = self.parse_actions(solution)
+        return SolverSolution(actions), elapsed
 
 
 class M_SEQUENTIAL_PLANS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         actions = [line.split(": ")[1] for line in lines]
         return actions
@@ -78,7 +105,7 @@ class MpC_SEQUENTIAL_PLANS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         actions = [line.split(": ")[1] for line in lines]
         return actions
@@ -88,7 +115,7 @@ class MpC_FORALL_STEPS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 1 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         stripped_lines = [line.split(": ")[1] for line in lines]
         actions = [line.split(" ") for line in stripped_lines]
@@ -100,7 +127,7 @@ class MpC_EXISTS_STEPS(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 2 -o {output} -t {time_limit_s} {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         stripped_lines = [line.split(": ")[1] for line in lines]
         actions = [line.split(" ") for line in stripped_lines]
@@ -112,7 +139,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         without_cost_line = lines[:-1]
         without_parentheses = [line[1:-1] for line in without_cost_line]
@@ -125,7 +152,7 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
-    def parse_solution(self, solution: str) -> list[str]:
+    def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         without_cost_line = lines[:-1]
         without_parentheses = [line[1:-1] for line in without_cost_line]

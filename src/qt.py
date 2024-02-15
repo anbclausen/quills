@@ -1,14 +1,14 @@
 import argparse
 from qiskit import QuantumCircuit
 
-from src.synthesizers.optimal_planning import OptimalPlanningSynthesizer
-from src.synthesizers.vector_clock_incremental_planning import (
+from synthesizers.optimal_planning import OptimalPlanningSynthesizer
+from synthesizers.vector_clock_incremental_planning import (
     VectorClockIncrementalPlanningSynthesizer,
 )
-from src.synthesizers.global_clock_incremental_planning import (
+from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
 )
-from src.platforms import TOY
+from platforms import TOY
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -117,17 +117,5 @@ print("TODO: draw nice graph")
 print()
 
 print(f"Synthesizing with '{args.model}' using '{args.solver}'...")
-physical_circuit, initial_mapping, time = synthesizer.synthesize(
-    input_circuit, platform, solver, time_limit
-)
-print(f"Synthesis took {time:.3f} seconds")
-print()
-
-print("OUTPUT:")
-print(physical_circuit)
-
-print(f"(depth {physical_circuit.depth()})")
-initial_mapping_str = ", ".join(
-    sorted(f"{logical} -> {physical}" for logical, physical in initial_mapping.items())
-)
-print("with initial mapping", initial_mapping_str)
+output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
+print(output)
