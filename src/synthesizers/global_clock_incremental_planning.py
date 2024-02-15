@@ -307,8 +307,12 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                     physical_circuit, initial_mapping = self.parse_solution(
                         logical_circuit, platform, actions
                     )
+                    physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
+                        logical_circuit, platform, actions, swaps_as_cnots=True
+                    )
+                    depth = physical_circuit_with_cnots_as_swap.depth()
                     return SynthesizerSolution(
-                        physical_circuit, initial_mapping, total_time
+                        physical_circuit, initial_mapping, total_time, depth
                     )
                 case _:
                     raise ValueError(f"Unexpected solution: {solution}")

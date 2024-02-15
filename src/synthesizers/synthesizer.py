@@ -43,10 +43,12 @@ class SynthesizerSolution(SynthesizerOutput):
         circuit: QuantumCircuit,
         mapping: dict[LogicalQubit, PhysicalQubit],
         time: float,
+        depth: int,
     ):
         self.circuit = circuit
         self.initial_mapping = mapping
         self.time = time
+        self.depth = depth
 
     def __str__(self):
         initial_mapping_str = ", ".join(
@@ -55,7 +57,7 @@ class SynthesizerSolution(SynthesizerOutput):
                 for logical, physical in self.initial_mapping.items()
             )
         )
-        return f"{self.circuit}\n(depth {self.circuit.depth()})\nwith initial mapping: {initial_mapping_str}\nSynthesis took {self.time:.3f} seconds"
+        return f"{self.circuit}\n(depth {self.depth})\nwith initial mapping: {initial_mapping_str}\nSynthesis took {self.time:.3f} seconds"
 
 
 class Synthesizer(ABC):
@@ -73,6 +75,7 @@ class Synthesizer(ABC):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
+        swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         """
         Parse the solver solution of the layout synthesis problem.
@@ -140,9 +143,12 @@ class Synthesizer(ABC):
             elif action.startswith("swap("):
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
-                physical_circuit.cx(control, target)
-                physical_circuit.cx(target, control)
-                physical_circuit.cx(control, target)
+                if swaps_as_cnots:
+                    physical_circuit.cx(control, target)
+                    physical_circuit.cx(target, control)
+                    physical_circuit.cx(control, target)
+                else:
+                    physical_circuit.swap(control, target)
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:

@@ -314,8 +314,12 @@ class OptimalPlanningSynthesizer(Synthesizer):
                 physical_circuit, initial_mapping = self.parse_solution(
                     logical_circuit, platform, actions
                 )
+                physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
+                    logical_circuit, platform, actions, swaps_as_cnots=True
+                )
+                depth = physical_circuit_with_cnots_as_swap.depth()
                 return SynthesizerSolution(
-                    physical_circuit, initial_mapping, time_taken
+                    physical_circuit, initial_mapping, time_taken, depth
                 )
             case _:
                 raise ValueError(f"Unexpected solution: {solution}")
