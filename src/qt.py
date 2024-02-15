@@ -2,8 +2,8 @@ import argparse
 from qiskit import QuantumCircuit
 
 from synthesizers.optimal_planning import OptimalPlanningSynthesizer
-from synthesizers.vector_clock_incremental_planning import (
-    VectorClockIncrementalPlanningSynthesizer,
+from synthesizers.local_clock_incremental_planning import (
+    LocalClockIncrementalPlanningSynthesizer,
 )
 from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
@@ -24,8 +24,8 @@ DEFAULT_TIME_LIMIT_S = 1800
 
 synthesizers = {
     "plan_opt": OptimalPlanningSynthesizer(),
-    "plan_incr_vector_clock": VectorClockIncrementalPlanningSynthesizer(),
-    "plan_incr_global_clock": GlobalClockIncrementalPlanningSynthesizer(),
+    "plan_incr_lc": LocalClockIncrementalPlanningSynthesizer(),
+    "plan_incr_gc": GlobalClockIncrementalPlanningSynthesizer(),
 }
 
 platforms = {

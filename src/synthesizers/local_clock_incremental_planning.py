@@ -18,7 +18,7 @@ from solvers import (
 )
 
 
-class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
+class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
     def create_instance(
         self,
         circuit: QuantumCircuit,
