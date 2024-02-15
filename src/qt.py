@@ -2,6 +2,7 @@ import argparse
 from qiskit import QuantumCircuit
 
 from src.synthesizers.optimal_planning import OptimalPlanningSynthesizer
+from src.synthesizers.vector_clock_incremental_planning import VectorClockIncrementalPlanningSynthesizer
 from src.platforms import TOY
 
 from solvers import (
@@ -18,6 +19,7 @@ DEFAULT_TIME_LIMIT_S = 1800
 
 synthesizers = {
     "plan_opt": OptimalPlanningSynthesizer(),
+    "plan_incr_vector_clock": VectorClockIncrementalPlanningSynthesizer(),
 }
 
 platforms = {
