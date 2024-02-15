@@ -17,10 +17,11 @@ class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
         self,
         circuit: QuantumCircuit,
         platform: Platform,
-        maximum_depth: int | None = None,
+        max_depth: int | None = None,
     ) -> PDDLInstance:
 
-        if maximum_depth == None:
+
+        if max_depth == None:
             raise ValueError(
                 "'max_depth' should always be given for incremental encodings"
             )
@@ -28,6 +29,8 @@ class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
         num_pqubits = platform.qubits
         num_lqubits = circuit.num_qubits
         num_gates = circuit.size()
+        # Added one to off-set that the last depth cannot have any gates
+        maximum_depth = max_depth + 1
 
         class pqubit(object_):
             pass
