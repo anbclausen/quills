@@ -24,7 +24,10 @@ class PhysicalQubit:
 class Synthesizer(ABC):
     @abstractmethod
     def create_instance(
-        self, circuit: QuantumCircuit, platform: Platform
+        self,
+        circuit: QuantumCircuit,
+        platform: Platform,
+        **kwargs,
     ) -> PDDLInstance:
         pass
 
