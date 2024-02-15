@@ -97,7 +97,11 @@ class MpC_EXISTS_STEPS(Solver):
         return f"MpC -P 2 -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_solution(self, solution: str) -> list[str]:
-        raise NotImplementedError
+        lines = solution.strip().split("\n")
+        stripped_lines = [line.split(": ")[1] for line in lines]
+        actions = [line.split(" ") for line in stripped_lines]
+        flattened_actions = [action for sublist in actions for action in sublist]
+        return flattened_actions
 
 
 class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
