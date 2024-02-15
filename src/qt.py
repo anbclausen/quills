@@ -2,8 +2,12 @@ import argparse
 from qiskit import QuantumCircuit
 
 from src.synthesizers.optimal_planning import OptimalPlanningSynthesizer
-from src.synthesizers.vector_clock_incremental_planning import VectorClockIncrementalPlanningSynthesizer
-from src.synthesizers.global_clock_incremental_planning import GlobalClockIncrementalPlanningSynthesizer
+from src.synthesizers.vector_clock_incremental_planning import (
+    VectorClockIncrementalPlanningSynthesizer,
+)
+from src.synthesizers.global_clock_incremental_planning import (
+    GlobalClockIncrementalPlanningSynthesizer,
+)
 from src.platforms import TOY
 
 from solvers import (

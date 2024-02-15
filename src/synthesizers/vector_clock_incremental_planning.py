@@ -19,9 +19,11 @@ class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         maximum_depth: int | None = None,
     ) -> PDDLInstance:
-        
+
         if maximum_depth == None:
-            raise ValueError("'max_depth' should always be given for incremental encodings")
+            raise ValueError(
+                "'max_depth' should always be given for incremental encodings"
+            )
 
         num_pqubits = platform.qubits
         num_lqubits = circuit.num_qubits
@@ -350,7 +352,7 @@ class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
         circuit_depth = logical_circuit.depth()
         total_time = 0
-        for depth in range(circuit_depth, 4*circuit_depth+1, 1):
+        for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
             print(f"Depth: {depth}")
             instance = self.create_instance(logical_circuit, platform, depth)
             domain, problem = instance.compile()
