@@ -120,6 +120,6 @@ print(physical_circuit)
 
 print(f"(depth {physical_circuit.depth()})")
 initial_mapping_str = ", ".join(
-    f"l{logical.id} -> p{physical.id}" for logical, physical in initial_mapping.items()
+    f"{logical} -> {physical}" for logical, physical in initial_mapping.items()
 )
 print("with initial mapping", initial_mapping_str)

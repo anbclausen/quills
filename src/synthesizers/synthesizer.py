@@ -10,7 +10,7 @@ class LogicalQubit:
         self.id = id
 
     def __str__(self):
-        return f"l{self.id}"
+        return f"q_{self.id}"
 
 
 class PhysicalQubit:
@@ -18,7 +18,7 @@ class PhysicalQubit:
         self.id = id
 
     def __str__(self):
-        return f"p{self.id}"
+        return f"p_{self.id}"
 
 
 class Synthesizer(ABC):

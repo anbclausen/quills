@@ -7,7 +7,7 @@ from src.synthesizers.synthesizer import (
 )
 from src.platforms import Platform
 from qiskit import QuantumCircuit
-from qiskit.circuit import CircuitInstruction
+from qiskit.circuit import QuantumRegister
 from src.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from src.solvers import Solver
 
@@ -302,7 +302,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
         ]
 
         initial_mapping = {}
-        physical_circuit = QuantumCircuit(platform.qubits)
+        physical_circuit = QuantumCircuit(QuantumRegister(platform.qubits, "p"))
         gate_logical_mapping = gate_line_dependency_mapping(original_circuit)
 
         def add_to_initial_mapping_if_not_present(
