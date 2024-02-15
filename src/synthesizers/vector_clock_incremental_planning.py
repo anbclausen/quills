@@ -350,7 +350,7 @@ class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit], float]:
         circuit_depth = logical_circuit.depth()
         total_time = 0
-        for depth in range(circuit_depth, 3*circuit_depth, 1):
+        for depth in range(circuit_depth, 4*circuit_depth+1, 1):
             print(f"Depth: {depth}")
             instance = self.create_instance(logical_circuit, platform, depth)
             domain, problem = instance.compile()
@@ -364,5 +364,4 @@ class VectorClockIncrementalPlanningSynthesizer(Synthesizer):
                     logical_circuit, platform, parsed_solution
                 )
                 return physical_circuit, initial_mapping, total_time
-        # TODO: decide a format for "there is no solution"
         return QuantumCircuit(), {}, 0
