@@ -37,6 +37,16 @@ class Synthesizer(ABC):
         platform: Platform,
         solver_solution: list[str],
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+        """
+        Parse the solver solution of the layout synthesis problem.
+
+        This method has a default implementation that requires:
+        - all unary gates actions are named `apply_gate_g{id}(q{id}, ...)`
+        - all CX gates actions are named `apply_cx_g{id}(?, ?, q_control{id}, q_target{id}, ...)`
+        - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)`
+        - no other actions matter in how the physical circuit is constructed
+
+        """
         initial_mapping = {}
         physical_circuit = QuantumCircuit(platform.qubits)
         gate_logical_mapping = gate_line_dependency_mapping(original_circuit)
