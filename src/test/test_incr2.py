@@ -181,6 +181,7 @@ def apply_gate_g4(p: pqubit, d: depth):
         mapped(l3, p),
         clock(d),
         not_(is_busy(p, d)),
+        done(g3),
     ]
     effects = [done(g4), is_busy(p, d)]
     return preconditions, effects
