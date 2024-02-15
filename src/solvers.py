@@ -111,7 +111,11 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
         return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_solution(self, solution: str) -> list[str]:
-        raise NotImplementedError
+        lines = solution.strip().split("\n")
+        without_parentheses = [line[1:-1] for line in lines]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
+        return actions
 
 
 class FAST_DOWNWARD_LAMA_FIRST(Solver):
