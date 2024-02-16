@@ -12,3 +12,4 @@ class Platform:
 
 
 TOY = Platform("toy", 4, {(0, 1), (1, 2), (1, 3)})
+TENERIFE = Platform("tenerife", 5, {(1, 0), (2, 0), (2, 1), (3, 2), (3, 4), (4, 2)})

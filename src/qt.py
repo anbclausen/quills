@@ -8,7 +8,7 @@ from synthesizers.local_clock_incremental_planning import (
 from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
 )
-from platforms import TOY
+from platforms import TOY, TENERIFE
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -30,6 +30,7 @@ synthesizers = {
 
 platforms = {
     "toy": TOY,
+    "tenerife": TENERIFE,
 }
 
 solvers = {

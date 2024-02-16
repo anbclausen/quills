@@ -164,8 +164,8 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                             # preconds for the line that has not had any gates yet
                             preconditions.append(not_(occupied(unoccupied_qubit)))
                         else:
-                            preconditions.append(
-                                *[done(g[dep]) for dep in gate_direct_mapping[gate_id]]
+                            preconditions.extend(
+                                [done(g[dep]) for dep in gate_direct_mapping[gate_id]]
                             )
                             control_qubit = l[gate_qubits[0]]
                             target_qubit = l[gate_qubits[1]]
@@ -235,7 +235,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
 
                         if no_gate_dependency:
                             effects.append(occupied(p))
-                            effects.append(*[mapped(l[i], p) for i in gate_qubits])
+                            effects.extend([mapped(l[i], p) for i in gate_qubits])
 
                         return preconditions, effects
 
