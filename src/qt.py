@@ -51,7 +51,7 @@ parser.add_argument(
     "-t",
     "--time_limit",
     type=int,
-    help="the time limit in seconds",
+    help=f"the time limit in seconds, default is {DEFAULT_TIME_LIMIT_S}s",
     default=DEFAULT_TIME_LIMIT_S,
 )
 
