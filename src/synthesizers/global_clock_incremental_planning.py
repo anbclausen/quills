@@ -211,12 +211,13 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                             )
                             occupied_line_index = gate_qubits.index(occupied_line_id)
                             unoccupied_line_index = 1 - occupied_line_index
+                            unoccupied_line_id = gate_qubits[unoccupied_line_index]
 
                             unoccupied_qubit = p2 if occupied_line_index == 0 else p1
 
                             effects.append(occupied(unoccupied_qubit))
                             effects.append(
-                                mapped(l[unoccupied_line_index], unoccupied_qubit)
+                                mapped(l[unoccupied_line_id], unoccupied_qubit)
                             )
 
                         return preconditions, effects
