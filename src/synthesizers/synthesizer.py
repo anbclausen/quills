@@ -12,6 +12,17 @@ class LogicalQubit:
     def __str__(self):
         return f"q_{self.id}"
 
+    def __eq__(self, other):
+        if isinstance(other, LogicalQubit):
+            return self.id == other.id
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.id)
+
 
 class PhysicalQubit:
     def __init__(self, id: int):
