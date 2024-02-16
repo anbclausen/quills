@@ -21,8 +21,8 @@ class OutputChecker:
         input_line_gates = line_gate_mapping(input_circuit)
         output_line_gates = line_gate_mapping(output_circuit)
 
-        print(f"input: {input_line_gates}")
-        print(f"output: {output_line_gates}")
+        # print(f"input: {input_line_gates}")
+        # print(f"output: {output_line_gates}")
 
         """
         Circuit equivalence checks:
@@ -61,7 +61,7 @@ class OutputChecker:
             # also keep track of the longest list of lists of gates
             if len(split_gates) > longest_list_length:
                 longest_list_length = len(split_gates)
-        print(f"split: {output_line_gates_split}, longest: {longest_list_length}")
+        # print(f"split: {output_line_gates_split}, longest: {longest_list_length}")
 
         # now reconstruct the lists by respecting the SWAPs
         output_line_gates_no_swaps = {key: [] for key in output_line_gates.keys()}
@@ -92,7 +92,7 @@ class OutputChecker:
                 else:
                     # if it is not, just put the gates on the given line
                     output_line_gates_no_swaps[line].extend(gate_list)
-        print(f"swaps removed: {output_line_gates_no_swaps}")
+        # print(f"swaps removed: {output_line_gates_no_swaps}")
 
         # now check for equivalence with the input
         for line, gates in input_line_gates.items():
