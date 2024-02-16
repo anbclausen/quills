@@ -1,5 +1,6 @@
 import argparse
 from qiskit import QuantumCircuit
+from synthesizers.synthesizer import remove_all_non_cx_gates
 
 from synthesizers.optimal_planning import OptimalPlanningSynthesizer
 from synthesizers.local_clock_incremental_planning import (
@@ -109,7 +110,8 @@ print()
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 print(f"Input circuit '{args.input}'")
 print(input_circuit)
-print(f"(depth {input_circuit.depth()})")
+input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
+print(f"(depth {input_circuit.depth()}, cx-depth {input_circuit_only_cx.depth()})")
 print()
 
 print(f"Platform '{args.platform}'")

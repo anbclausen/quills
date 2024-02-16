@@ -6,6 +6,7 @@ from synthesizers.synthesizer import (
     SynthesizerNoSolution,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
+    remove_all_non_cx_gates,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
@@ -351,8 +352,12 @@ class OptimalPlanningSynthesizer(Synthesizer):
                     logical_circuit, platform, actions, swaps_as_cnots=True
                 )
                 depth = physical_circuit_with_cnots_as_swap.depth()
+                physical_with_only_cnots = remove_all_non_cx_gates(
+                    physical_circuit_with_cnots_as_swap
+                )
+                cx_depth = physical_with_only_cnots.depth()
                 return SynthesizerSolution(
-                    physical_circuit, initial_mapping, time_taken, depth
+                    physical_circuit, initial_mapping, time_taken, depth, cx_depth
                 )
             case _:
                 raise ValueError(f"Unexpected solution: {solution}")

@@ -44,11 +44,13 @@ class SynthesizerSolution(SynthesizerOutput):
         mapping: dict[LogicalQubit, PhysicalQubit],
         time: float,
         depth: int,
+        cx_depth: int,
     ):
         self.circuit = circuit
         self.initial_mapping = mapping
         self.time = time
         self.depth = depth
+        self.cx_depth = cx_depth
 
     def __str__(self):
         initial_mapping_str = ", ".join(
@@ -57,7 +59,7 @@ class SynthesizerSolution(SynthesizerOutput):
                 for logical, physical in self.initial_mapping.items()
             )
         )
-        return f"{self.circuit}\n(depth {self.depth})\nwith initial mapping: {initial_mapping_str}\nSynthesis took {self.time:.3f} seconds"
+        return f"{self.circuit}\n(depth {self.depth}, cx-depth {self.cx_depth})\nwith initial mapping: {initial_mapping_str}\nSynthesis took {self.time:.3f} seconds"
 
 
 class Synthesizer(ABC):
@@ -277,3 +279,16 @@ def gate_direct_dependency_mapping(circuit: QuantumCircuit) -> dict[int, list[in
                 break
 
     return mapping
+
+
+def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
+    """
+    Remove all non-CX gates from the circuit.
+    """
+    num_qubits = circuit.num_qubits
+    new_circuit = QuantumCircuit(num_qubits)
+    for instr in circuit.data:
+        if instr[0].name == "cx":
+            new_circuit.append(instr[0], instr[1])
+
+    return new_circuit
