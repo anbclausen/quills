@@ -2,6 +2,7 @@ import argparse
 from qiskit import QuantumCircuit
 from synthesizers.synthesizer import remove_all_non_cx_gates
 
+from synthesizers.synthesizer import SynthesizerOutput, SynthesizerSolution
 from synthesizers.optimal_planning import OptimalPlanningSynthesizer
 from synthesizers.local_clock_incremental_planning import (
     LocalClockIncrementalPlanningSynthesizer,
@@ -9,7 +10,9 @@ from synthesizers.local_clock_incremental_planning import (
 from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
 )
+
 from platforms import TOY, TENERIFE
+from output_checker import OutputChecker
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -122,3 +125,10 @@ print()
 print(f"Synthesizing with '{args.model}' using '{args.solver}'...")
 output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
 print(output)
+
+if isinstance(output, SynthesizerSolution):
+    correct_output = OutputChecker.check(input_circuit, output.circuit, output.initial_mapping, platform)
+    if correct_output:
+        print("Output check succeeded")
+    else:
+        print("Output check failed")
