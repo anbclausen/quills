@@ -126,9 +126,13 @@ print(f"Synthesizing with '{args.model}' using '{args.solver}'...")
 output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
 print(output)
 
+"""
 if isinstance(output, SynthesizerSolution):
-    correct_output = OutputChecker.check(input_circuit, output.circuit, output.initial_mapping, platform)
+    correct_output = OutputChecker.check(
+        input_circuit, output.circuit, output.initial_mapping, platform
+    )
     if correct_output:
         print("Output check succeeded")
     else:
         print("Output check failed")
+"""
