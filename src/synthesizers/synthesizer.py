@@ -220,9 +220,10 @@ def gate_line_dependency_mapping(
         if name is None:
             raise ValueError(f"Gate at index {i} has no name.")
 
-        if len(input_idxs) > 1 and name != "cx":
+        # FIXME
+        if len(input_idxs) > 1 and name != "cx" and name != "swap":
             raise ValueError(
-                f"Gate at index {i} is not a CX gate but has multiple inputs. qt can not handle multiple input gates other than CX."
+                f"Gate at index {i} is not a CX but has multiple inputs. qt can not handle multiple input gates other than CX."
             )
 
         if any(idx is None for idx in input_idxs):
@@ -292,3 +293,44 @@ def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
             new_circuit.append(instr[0], instr[1])
 
     return new_circuit
+
+
+def line_gate_mapping(
+    circuit: QuantumCircuit,
+) -> dict[int, list[str]]:
+    """
+    Returns a mapping of qubits to the names of the gates that are executed on that qubit in order.
+    CX gates are named 'cx0' or 'cx1' depending on if they are the control or target qubit.
+    SWAP gates are named 'swapi' where 'i' is the qubit on the other side of the SWAP.
+
+    Example
+    -------
+    Given circuit:
+         ┌───┐
+    q_0: ┤ X ├──■──
+         ├───┤┌─┴─┐
+    q_1: ┤ X ├┤ X ├
+         └───┘├───┤
+    q_2: ──■──┤ X ├
+         ┌─┴─┐└───┘
+    q_3: ┤ X ├─────
+         └───┘
+
+    The mapping would be:
+    `{0: ['x','cx0'], 1: ['x','cx1'], 2: ['cx0','x'], 3: ['cx1']}`
+    """
+    gate_line_mapping = gate_line_dependency_mapping(circuit)
+    mapping = {}
+
+    for _, (name, lines) in gate_line_mapping.items():
+        for i, line in enumerate(lines):
+            if not line in mapping.keys():
+                mapping[line] = []
+            if name == "cx":
+                mapping[line].append(name + str(i))
+            elif name == "swap":
+                mapping[line].append(name + str(lines[i - 1]))
+            else:
+                mapping[line].append(name)
+
+    return mapping
