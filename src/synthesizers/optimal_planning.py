@@ -234,14 +234,6 @@ class OptimalPlanningSynthesizer(Synthesizer):
                                 .pop()
                             )
 
-                            occupied_physical_qubit = (
-                                p1
-                                if gate_logical_qubits.index(
-                                    gate_occupied_logical_qubit
-                                )
-                                == 0
-                                else p2
-                            )
                             unoccupied_physical_qubit = (
                                 p2
                                 if gate_logical_qubits.index(

@@ -136,8 +136,9 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
         gate_direct_mapping = gate_direct_dependency_mapping(circuit)
 
         gate_actions = []
-        for gate_id, (gate_type, gate_qubits) in gate_line_mapping.items():
+        for gate_id, (gate_type, gate_logical_qubits) in gate_line_mapping.items():
             no_gate_dependency = gate_direct_mapping[gate_id] == []
+            direct_predecessor_gates = gate_direct_mapping[gate_id]
 
             match gate_type:
                 case "cx":
@@ -158,33 +159,52 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                             preconditions.append(not_(occupied(p1)))
                             preconditions.append(not_(occupied(p2)))
                         elif one_gate_dependency:
-                            earlier_gate = gate_direct_mapping[gate_id][0]
-
-                            # find the line that the earlier gate is on
-                            _, earlier_gate_qubits = gate_line_mapping[earlier_gate]
-
-                            occupied_line_id = (
-                                set(gate_qubits).intersection(earlier_gate_qubits).pop()
+                            earlier_gate = direct_predecessor_gates[0]
+                            _, earlier_gate_logical_qubits = gate_line_mapping[
+                                earlier_gate
+                            ]
+                            gate_occupied_logical_qubit = (
+                                set(gate_logical_qubits)
+                                .intersection(earlier_gate_logical_qubits)
+                                .pop()
                             )
-                            occupied_line_index = gate_qubits.index(occupied_line_id)
 
-                            occupied_qubit = p1 if occupied_line_index == 0 else p2
-                            unoccupied_qubit = p2 if occupied_line_index == 0 else p1
+                            occupied_physical_qubit = (
+                                p1
+                                if gate_logical_qubits.index(
+                                    gate_occupied_logical_qubit
+                                )
+                                == 0
+                                else p2
+                            )
+                            unoccupied_physical_qubit = (
+                                p2
+                                if gate_logical_qubits.index(
+                                    gate_occupied_logical_qubit
+                                )
+                                == 0
+                                else p1
+                            )
 
                             # preconds for the line that the earlier gate is on
                             preconditions.append(done(g[earlier_gate]))
                             preconditions.append(
-                                mapped(l[occupied_line_id], occupied_qubit)
+                                mapped(
+                                    l[gate_occupied_logical_qubit],
+                                    occupied_physical_qubit,
+                                )
                             )
 
                             # preconds for the line that has not had any gates yet
-                            preconditions.append(not_(occupied(unoccupied_qubit)))
+                            preconditions.append(
+                                not_(occupied(unoccupied_physical_qubit))
+                            )
                         else:
                             preconditions.extend(
                                 [done(g[dep]) for dep in gate_direct_mapping[gate_id]]
                             )
-                            control_qubit = l[gate_qubits[0]]
-                            target_qubit = l[gate_qubits[1]]
+                            control_qubit = l[gate_logical_qubits[0]]
+                            target_qubit = l[gate_logical_qubits[1]]
 
                             preconditions.append(mapped(control_qubit, p1))
                             preconditions.append(mapped(target_qubit, p2))
@@ -198,26 +218,39 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                         if no_gate_dependency:
                             effects.append(occupied(p1))
                             effects.append(occupied(p2))
-                            effects.append(mapped(l[gate_qubits[0]], p1))
-                            effects.append(mapped(l[gate_qubits[1]], p2))
+                            effects.append(mapped(l[gate_logical_qubits[0]], p1))
+                            effects.append(mapped(l[gate_logical_qubits[1]], p2))
                         elif one_gate_dependency:
-                            earlier_gate = gate_direct_mapping[gate_id][0]
-
-                            # find the line that the earlier gate is on
-                            _, earlier_gate_qubits = gate_line_mapping[earlier_gate]
-
-                            occupied_line_id = (
-                                set(gate_qubits).intersection(earlier_gate_qubits).pop()
+                            earlier_gate = direct_predecessor_gates[0]
+                            _, earlier_gate_logical_qubits = gate_line_mapping[
+                                earlier_gate
+                            ]
+                            gate_occupied_logical_qubit = (
+                                set(gate_logical_qubits)
+                                .intersection(earlier_gate_logical_qubits)
+                                .pop()
                             )
-                            occupied_line_index = gate_qubits.index(occupied_line_id)
-                            unoccupied_line_index = 1 - occupied_line_index
-                            unoccupied_line_id = gate_qubits[unoccupied_line_index]
 
-                            unoccupied_qubit = p2 if occupied_line_index == 0 else p1
+                            unoccupied_physical_qubit = (
+                                p2
+                                if gate_logical_qubits.index(
+                                    gate_occupied_logical_qubit
+                                )
+                                == 0
+                                else p1
+                            )
 
-                            effects.append(occupied(unoccupied_qubit))
+                            gate_unoccupied_logical_qubit = gate_logical_qubits[
+                                1
+                                - gate_logical_qubits.index(gate_occupied_logical_qubit)
+                            ]
+
+                            effects.append(occupied(unoccupied_physical_qubit))
                             effects.append(
-                                mapped(l[unoccupied_line_id], unoccupied_qubit)
+                                mapped(
+                                    l[gate_unoccupied_logical_qubit],
+                                    unoccupied_physical_qubit,
+                                )
                             )
 
                         return preconditions, effects
@@ -226,6 +259,8 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
 
                     @PDDLAction(name=f"apply_gate_g{gate_id}")
                     def apply_gate(p: pqubit, d: depth):
+                        logical_qubit = l[gate_logical_qubits[0]]
+
                         preconditions = [
                             clock(d),
                             not_(done(g[gate_id])),
@@ -235,12 +270,9 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                         if no_gate_dependency:
                             preconditions.append(not_(occupied(p)))
                         else:
-                            preconditions.append(
-                                *[done(g[dep]) for dep in gate_direct_mapping[gate_id]]
-                            )
-                            preconditions.append(
-                                *[mapped(l[i], p) for i in gate_qubits]
-                            )
+                            direct_predecessor_gate = g[direct_predecessor_gates[0]]
+                            preconditions.append(done(direct_predecessor_gate))
+                            preconditions.append(mapped(logical_qubit, p))
 
                         effects = [
                             done(g[gate_id]),
@@ -249,7 +281,7 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
 
                         if no_gate_dependency:
                             effects.append(occupied(p))
-                            effects.extend([mapped(l[i], p) for i in gate_qubits])
+                            effects.append(mapped(logical_qubit, p))
 
                         return preconditions, effects
 
