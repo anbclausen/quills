@@ -31,6 +31,17 @@ class PhysicalQubit:
     def __str__(self):
         return f"p_{self.id}"
 
+    def __eq__(self, other):
+        if isinstance(other, PhysicalQubit):
+            return self.id == other.id
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.id)
+
 
 class SynthesizerOutput:
     pass
@@ -231,10 +242,9 @@ def gate_line_dependency_mapping(
         if name is None:
             raise ValueError(f"Gate at index {i} has no name.")
 
-        # FIXME
         if len(input_idxs) > 1 and name != "cx" and name != "swap":
             raise ValueError(
-                f"Gate at index {i} is not a CX but has multiple inputs. qt can not handle multiple input gates other than CX."
+                f"Gate at index {i} is not a CX or SWAP but has multiple inputs. qt can not handle multiple input gates other than CX or SWAP."
             )
 
         if any(idx is None for idx in input_idxs):
@@ -308,11 +318,12 @@ def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
 
 def line_gate_mapping(
     circuit: QuantumCircuit,
-) -> dict[int, list[str]]:
+) -> dict[int, list[tuple[int, str]]]:
     """
-    Returns a mapping of qubits to the names of the gates that are executed on that qubit in order.
-    CX gates are named 'cx0' or 'cx1' depending on if they are the control or target qubit.
+    Returns a mapping of qubits to the ids and names of the gates that are executed on that qubit in order.
     SWAP gates are named 'swapi' where 'i' is the qubit on the other side of the SWAP.
+    CX gates are named 'cx0-i' or 'cx1-i' depending on if they are the control or target qubit,
+    where 'i' is the qubit on the other side of the CX.
 
     Example
     -------
@@ -328,20 +339,21 @@ def line_gate_mapping(
          └───┘
 
     The mapping would be:
-    `{0: ['x','cx0'], 1: ['x','cx1'], 2: ['cx0','x'], 3: ['cx1']}`
+    `{0: [(0, 'x'),(3, 'cx0-1')], 1: [(1, 'x'),(3, 'cx1-0')], 2: [(2, 'cx0-3'),(4, 'x')], 3: [(2, 'cx1-2')]}`
     """
     gate_line_mapping = gate_line_dependency_mapping(circuit)
     mapping = {}
 
-    for _, (name, lines) in gate_line_mapping.items():
+    for gate, (name, lines) in gate_line_mapping.items():
         for i, line in enumerate(lines):
             if not line in mapping.keys():
                 mapping[line] = []
-            if name == "cx":
-                mapping[line].append(name + str(i))
-            elif name == "swap":
-                mapping[line].append(name + str(lines[i - 1]))
+            if name == "swap":
+                gate_name = f"{name}{lines[i-1]}"
+            elif name == "cx":
+                gate_name = f"{name}{i}-{lines[i-1]}"
             else:
-                mapping[line].append(name)
+                gate_name = name
+            mapping[line].append((gate, gate_name))
 
     return mapping
