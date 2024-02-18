@@ -68,8 +68,10 @@ class OutputChecker:
                 if gate_name.startswith("swap") or gate_name.startswith("cx"):
                     # do connectivity check
                     other_line = int(gate_name[4:])
-                    if not platform.connectivity_graph:
-                        print(line.id, other_line)
+                    if not (line.id, other_line) in platform.connectivity_graph:
+                        print(
+                            f"Connectivity check failed: ({line, other_line}) not in platform"
+                        )
                         return False
 
                     # for binary gates, flush and reset the list if necessary
@@ -180,21 +182,36 @@ class OutputChecker:
             # for a qubit in the input find the corresponding qubit in
             # the reconstructed output according to the initial mapping
             mapped_line = initial_mapping[line]
-            mapped_line_gates = output_line_gates_no_swaps[mapped_line]
+            mapped_line_gates = list(
+                map(operator.itemgetter(1), output_line_gates_no_swaps[mapped_line])
+            )
 
             # if the number of gates does not match something is wrong
             if len(mapped_line_gates) != len(gates):
+                print("Wrong output gate found")
+                print(f"These lists of gates should be identical:")
+                print(f"Input line: {line}")
+                print(gates)
+                print(f"Output line: {mapped_line}")
+                print(mapped_line_gates)
                 return False
 
             # if the types of the gates do not match something is wrong
             for i, gate_name in enumerate(gates):
-                _, output_gate_name = mapped_line_gates[i]
+                output_gate_name = mapped_line_gates[i]
+                success = True
                 if gate_name.startswith("swap") and output_gate_name != "swap":
-                    return False
+                    success = False
                 elif gate_name.startswith("cx"):
                     if gate_name[:3] != output_gate_name:
-                        return False
+                        success = False
                 elif gate_name != output_gate_name:
+                    success = False
+                if not success:
+                    print("Wrong output gate found")
+                    print("These gates should be identical:")
+                    print(f"Input line: {line}, gate {i}: {gate_name}")
+                    print(f"Output line: {mapped_line}, gate {i}: {output_gate_name}")
                     return False
 
         # nothing wrong was found, so the circuits are equivalent
