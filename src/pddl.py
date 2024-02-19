@@ -242,13 +242,13 @@ class PDDLInstance:
     (:types
         {"\n        ".join(type_strings)}
     )
-    {functions_string}
     (:constants
         {"\n        ".join(constant_strings)}
     )
     (:predicates
         {"\n        ".join(map(str, self.predicates))}
     )
+    {functions_string}
     {"\n    ".join(map(str, self.actions))}
 )
 """
