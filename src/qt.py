@@ -21,6 +21,8 @@ from solvers import (
     MpC_EXISTS_STEPS,
     FAST_DOWNWARD_MERGE_AND_SHRINK,
     FAST_DOWNWARD_LAMA_FIRST,
+    OPTIMAL,
+    SATISFYING,
 )
 
 DEFAULT_TIME_LIMIT_S = 1800
@@ -81,7 +83,7 @@ parser.add_argument(
     "--solver",
     type=str,
     help=f"the underlying solver: {', '.join(solvers.keys())}",
-    default="MpC_all",
+    default="fd_ms",
 )
 
 
@@ -110,6 +112,12 @@ print("#    A tool for depth-optimal layout synthesis.    #")
 print("####################################################")
 print()
 
+optimal_planner = args.model in ["plan_opt"]
+if optimal_planner and solver.solver_class != OPTIMAL:
+    raise ValueError(
+        f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal"
+    )
+
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 print(f"Input circuit '{args.input}'")
 print(input_circuit)
@@ -122,7 +130,9 @@ print(platform.connectivity_graph)
 print("TODO: draw nice graph")
 print()
 
-print(f"Synthesizing with '{args.model}' using '{args.solver}'...")
+print(
+    f"Synthesizing with '{args.model}' using '{args.solver}' ({solver.solver_class})..."
+)
 output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
 print(output)
 

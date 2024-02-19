@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 
 TMP_FOLDER = "tmp"
 
+OPTIMAL = "optimal"
+SATISFYING = "satisfying"
+
 class SolverOutput:
     def __init__(self) -> None:
         pass
@@ -92,6 +95,8 @@ class Solver(ABC):
 
 
 class M_SEQUENTIAL_PLANS(Solver):
+    solver_class = SATISFYING
+
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
@@ -102,6 +107,8 @@ class M_SEQUENTIAL_PLANS(Solver):
 
 
 class MpC_SEQUENTIAL_PLANS(Solver):
+    solver_class = SATISFYING
+
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
 
@@ -112,6 +119,8 @@ class MpC_SEQUENTIAL_PLANS(Solver):
 
 
 class MpC_FORALL_STEPS(Solver):
+    solver_class = SATISFYING
+
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 1 -o {output} -t {time_limit_s} {domain} {problem}"
 
@@ -124,6 +133,8 @@ class MpC_FORALL_STEPS(Solver):
 
 
 class MpC_EXISTS_STEPS(Solver):
+    solver_class = SATISFYING
+
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"MpC -P 2 -o {output} -t {time_limit_s} {domain} {problem}"
 
@@ -136,6 +147,8 @@ class MpC_EXISTS_STEPS(Solver):
 
 
 class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
+    solver_class = OPTIMAL
+
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
@@ -149,6 +162,8 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
 
 
 class FAST_DOWNWARD_LAMA_FIRST(Solver):
+    solver_class = SATISFYING
+
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
