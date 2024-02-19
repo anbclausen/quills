@@ -97,15 +97,24 @@ class _PDDLAction:
                 parameters_grouped_by_type[type_] = []
             parameters_grouped_by_type[type_].append(f"?{arg}")
 
-        parameter_strings = [
+        parameters_with_type = [
             " ".join(parameters) + " - " + type_
             for type_, parameters in parameters_grouped_by_type.items()
         ]
 
+        parameters = (
+            f":parameters ({' '.join(parameters_with_type)})" if self.args != {} else ""
+        )
+        preconditions = (
+            f":precondition (and {" ".join(map(str, self.preconditions))})"
+            if self.preconditions != []
+            else ""
+        )
+
         return f"""
     (:action {self.name}
-        :parameters ({' '.join(parameter_strings)})
-        :precondition (and {" ".join(map(str, self.preconditions))})
+        {parameters}
+        {preconditions}
         :effect (and {" ".join(map(str, self.effects))})
     )"""
 
