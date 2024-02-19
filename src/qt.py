@@ -21,8 +21,8 @@ from solvers import (
     MpC_EXISTS_STEPS,
     FAST_DOWNWARD_MERGE_AND_SHRINK,
     FAST_DOWNWARD_LAMA_FIRST,
+    FAST_DOWNWARD_BJOLP,
     OPTIMAL,
-    SATISFYING,
 )
 
 DEFAULT_TIME_LIMIT_S = 1800
@@ -46,6 +46,7 @@ solvers = {
     "MpC_exist": MpC_EXISTS_STEPS(),
     "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
     "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
+    "fd_bjolp": FAST_DOWNWARD_BJOLP(),
 }
 
 parser = argparse.ArgumentParser(
