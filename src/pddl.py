@@ -68,6 +68,18 @@ def not_(predicate: PDDLPredicateInstance):
     pass
 
 
+class PDDLIncreaseCostFunctionPredicateInstance(PDDLPredicateInstance):
+    def __init__(self, amount: int):
+        self.amount = amount
+
+    def __str__(self) -> str:
+        return f"(increase (total-cost) {self.amount})"
+
+
+def increase_cost(amount: int) -> PDDLIncreaseCostFunctionPredicateInstance:
+    return PDDLIncreaseCostFunctionPredicateInstance(amount)
+
+
 class _PDDLAction:
     def __init__(
         self,
@@ -142,6 +154,7 @@ class PDDLInstance:
         initial_state: list[PDDLPredicateInstance] = [],
         goal_state: list[PDDLPredicateInstance] = [],
         actions: list[_PDDLAction] = [],
+        cost_function: bool = False,
     ):
         self.domain = "Quantum"
         self.problem = "circuit"
@@ -152,6 +165,7 @@ class PDDLInstance:
         self.initial_state = initial_state
         self.goal_state = goal_state
         self.actions = actions
+        self.cost_function = cost_function
 
     def compile(self) -> tuple[str, str]:
         object_grouped_by_type: dict[str, list[PDDLType]] = {}
@@ -173,6 +187,8 @@ class PDDLInstance:
             str(predicate_instance) for predicate_instance in self.goal_state
         ]
 
+        metric_string = f"(:metric minimize (total-cost))" if self.cost_function else ""
+
         problem = f"""
 (define (problem {self.problem})
     (:domain {self.domain})
@@ -181,12 +197,14 @@ class PDDLInstance:
     )
     (:init
         {"\n        ".join(init_strings)}
+        {"\n        (= (total-cost) 0)" if self.cost_function else ""}
     )
     (:goal
         (and
             {"\n            ".join(goal_strings)}
         )
     )
+    {metric_string}
 )
 """
         types_grouped_by_super_type: dict[str, list[Type[PDDLType]]] = {}
@@ -216,12 +234,15 @@ class PDDLInstance:
             for type_, constants in constants_grouped_by_type.items()
         ]
 
+        functions_string = f"(:functions (total-cost))" if self.cost_function else ""
+
         domain = f"""
 (define (domain {self.domain})
-    (:requirements :strips :typing :strips :negative-preconditions)
+    (:requirements :strips :typing :negative-preconditions {":action-costs" if self.cost_function else ""})
     (:types
         {"\n        ".join(type_strings)}
     )
+    {functions_string}
     (:constants
         {"\n        ".join(constant_strings)}
     )
