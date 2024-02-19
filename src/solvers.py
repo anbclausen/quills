@@ -87,8 +87,12 @@ class Solver(ABC):
         if process.returncode != 0:
             return SolverNoSolution(), elapsed
 
-        with open(output_file, "r") as f:
-            solution = f.read()
+        try: 
+            with open(output_file, "r") as f:
+                solution = f.read()
+        except FileNotFoundError:
+            with open(f"{output_file}.1", "r") as f:
+                solution = f.read()
 
         actions = self.parse_actions(solution)
         return SolverSolution(actions), elapsed
@@ -180,6 +184,20 @@ class FAST_DOWNWARD_BJOLP(Solver):
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         return f"fast-downward.py --alias seq-opt-bjolp --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        without_cost_line = lines[:-1]
+        without_parentheses = [line[1:-1] for line in without_cost_line]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
+        return actions
+    
+class FAST_DOWNWARD_STONE_SOUP(Solver):
+    solver_class = SATISFYING
+
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+        return f"fast-downward.py --alias seq-sat-fdss-2023 --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
