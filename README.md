@@ -45,3 +45,13 @@ options:
 ```
 ./qt benchmarks/toy_example.qasm -t 120 -m plan_opt -p toy -s fd_bjolp
 ```
+
+## Experiments
+
+To run all combinations of the synthesizer model and solver on all experiments, run
+
+```
+./experiments
+```
+
+Output will be written to terminal and to `tmp/experiments.txt`.
