@@ -64,9 +64,19 @@ class Solver(ABC):
         if not os.path.exists(TMP_FOLDER):
             os.makedirs(TMP_FOLDER)
 
+        
+
         domain_file = os.path.join(TMP_FOLDER, "domain.pddl")
         problem_file = os.path.join(TMP_FOLDER, "problem.pddl")
         output_file = os.path.join(TMP_FOLDER, "output.txt")
+
+        output_file_exists = os.path.exists(output_file)
+        if output_file_exists:
+            os.remove(output_file)
+        
+        alternative_output_file_exists = os.path.exists(f"{output_file}.1")
+        if alternative_output_file_exists:
+            os.remove(f"{output_file}.1")
 
         with open(domain_file, "w") as f:
             f.write(domain)
