@@ -78,15 +78,20 @@ class Solver(ABC):
             domain_file, problem_file, output_file, str(time_limit_s)
         )
         start = time.time()
-        process = subprocess.run(command.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            subprocess.run(command.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=time_limit_s + 1)
+        except subprocess.TimeoutExpired:
+            return SolverTimeout(), time_limit_s
         end = time.time()
 
         elapsed = end - start
 
-        if elapsed >= time_limit_s:
+        if elapsed >= time_limit_s - 1:
             return SolverTimeout(), elapsed
+        
+        no_solution_produced = not os.path.exists(output_file) and not os.path.exists(f"{output_file}.1")
 
-        if process.returncode != 0:
+        if no_solution_produced:
             return SolverNoSolution(), elapsed
 
         try: 
