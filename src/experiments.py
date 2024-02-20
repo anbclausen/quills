@@ -78,7 +78,10 @@ for input_file, platform_name in EXPERIMENTS:
         f"Results for 'benchmarks/{input_file}' on '{platform_name}':"
     )
     for (synthesizer_name, solver_name), time in results.items():
-        print_and_write_to_file(f"  '{synthesizer_name}' on '{solver_name}': {time}")
+        time_str = time if isinstance(time, str) else f"{time:.3f}s"
+        print_and_write_to_file(
+            f"  '{synthesizer_name}' on '{solver_name}': {time_str}"
+        )
     print_and_write_to_file(
         "##############################################################"
     )
