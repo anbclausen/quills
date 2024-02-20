@@ -13,7 +13,7 @@ from datetime import datetime
 
 EXPERIMENT_TIME_LIMIT_S = 30
 OUTPUT_FILE = "tmp/experiments.txt"
-EXPERIMENTS = [("toy_example.qasm", "toy"), ("adder.qasm", "tenerife")]
+EXPERIMENTS = [("adder.qasm", "tenerife")]
 
 
 def print_and_write_to_file(line: str):

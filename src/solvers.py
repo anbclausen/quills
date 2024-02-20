@@ -80,7 +80,6 @@ class Solver(ABC):
 
         sas_file_exists = os.path.exists("output.sas")
         if sas_file_exists:
-            print("Removing output.sas")
             os.remove("output.sas")
 
         with open(domain_file, "w") as f:
