@@ -2,7 +2,7 @@ import argparse
 from qiskit import QuantumCircuit
 from synthesizers.synthesizer import remove_all_non_cx_gates
 
-from synthesizers.synthesizer import SynthesizerOutput, SynthesizerSolution
+from synthesizers.synthesizer import SynthesizerSolution
 from synthesizers.optimal_planning import OptimalPlanningSynthesizer
 from synthesizers.local_clock_incremental_planning import (
     LocalClockIncrementalPlanningSynthesizer,
@@ -29,6 +29,7 @@ from solvers import (
     FAST_DOWNWARD_LAMA_FIRST,
     FAST_DOWNWARD_BJOLP,
     FAST_DOWNWARD_STONE_SOUP,
+    SCORPION,
     OPTIMAL,
 )
 
@@ -57,6 +58,7 @@ solvers = {
     "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
     "fd_bjolp": FAST_DOWNWARD_BJOLP(),
     "fd_stone_soup": FAST_DOWNWARD_STONE_SOUP(),
+    "scorpion": SCORPION(),
 }
 
 parser = argparse.ArgumentParser(

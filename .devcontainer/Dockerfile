@@ -23,7 +23,6 @@ RUN wget https://research.ics.aalto.fi/software/sat/madagascar/MpC
 # Install Scorpion
 RUN git clone https://github.com/ipc2023-classical/planner25.git scorpion
 RUN cd scorpion && ./build.py
-RUN echo 'alias scorpion="python /dependencies/scorpion/fast-downward.py"' > ~/.bashrc
 
 # Add dependencies to path
 ENV PATH="${PATH}:/dependencies/downward:/dependencies"
