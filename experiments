@@ -1,4 +1,2 @@
 #! /bin/sh
 poetry run python src/experiments.py
-
-
