@@ -38,7 +38,7 @@ class SolverTimeout(SolverOutput):
 
 class Solver(ABC):
     solver_class: str
-    
+
     @abstractmethod
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         pass
@@ -78,7 +78,7 @@ class Solver(ABC):
             domain_file, problem_file, output_file, str(time_limit_s)
         )
         start = time.time()
-        process = subprocess.run(command.split(), stdout=subprocess.DEVNULL)
+        process = subprocess.run(command.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         end = time.time()
 
         elapsed = end - start
