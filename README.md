@@ -16,7 +16,7 @@ You are now good to go. :)
 
 ### Development tools
 
-The Python extension and the Black formatter are used for developing. Install the VS Code extensions [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) and [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter).
+The Black formatter is used for developing. Install the VS Code extension [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter).
 
 ## Usage
 
