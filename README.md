@@ -39,3 +39,9 @@ options:
   -s SOLVER, --solver SOLVER
                         the underlying solver: M_seq, MpC_seq, MpC_all, MpC_exist, fd_ms, fd_lama_first,
 ```
+
+## Examples
+
+```
+./qt benchmarks/toy_example.qasm -t 120 -m plan_opt -p toy -s fd_bjolp
+```
