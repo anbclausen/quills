@@ -20,7 +20,12 @@ RUN cd downward && python build.py
 RUN wget https://research.ics.aalto.fi/software/sat/madagascar/M
 RUN wget https://research.ics.aalto.fi/software/sat/madagascar/MpC
 
-# Add Downward and Madagascar to PATH
+# Install Scorpion
+RUN git clone https://github.com/ipc2023-classical/planner25.git scorpion
+RUN cd scorpion && ./build.py
+RUN echo 'alias scorpion="python /dependencies/scorpion/fast-downward.py"' > ~/.bashrc
+
+# Add dependencies to path
 ENV PATH="${PATH}:/dependencies/downward:/dependencies"
 
 # Add qt as python path
