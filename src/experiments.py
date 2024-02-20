@@ -11,7 +11,7 @@ from solvers import SATISFYING
 from configs import synthesizers, platforms, solvers, OPTIMAL_SYNTHESIZERS
 from datetime import datetime
 
-EXPERIMENT_TIME_LIMIT_S = 120
+EXPERIMENT_TIME_LIMIT_S = 30
 OUTPUT_FILE = "tmp/experiments.txt"
 EXPERIMENTS = [("toy_example.qasm", "toy"), ("adder.qasm", "tenerife")]
 
@@ -68,7 +68,9 @@ for input_file, platform_name in EXPERIMENTS:
                 results[(synthesizer_name, solver_name)] = "NS"
             case SynthesizerTimeout():
                 results[(synthesizer_name, solver_name)] = "TO"
-        print_and_write_to_file("  Done!")
+        print_and_write_to_file(
+            f"  Done in {results[(synthesizer_name, solver_name)]}(s)."
+        )
     print_and_write_to_file(
         "##############################################################"
     )
