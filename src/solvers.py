@@ -37,6 +37,8 @@ class SolverTimeout(SolverOutput):
 
 
 class Solver(ABC):
+    solver_class: str
+    
     @abstractmethod
     def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
         pass

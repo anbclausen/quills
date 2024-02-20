@@ -1,65 +1,18 @@
 import argparse
 from qiskit import QuantumCircuit
 from synthesizers.synthesizer import remove_all_non_cx_gates
-
 from synthesizers.synthesizer import SynthesizerSolution
-from synthesizers.optimal_planning import OptimalPlanningSynthesizer
-from synthesizers.local_clock_incremental_planning import (
-    LocalClockIncrementalPlanningSynthesizer,
-)
-from synthesizers.global_clock_incremental_planning import (
-    GlobalClockIncrementalPlanningSynthesizer,
-)
-from synthesizers.gl_incr_irv1_planning import (
-    GlobalClockIncrementalIrV1PlanningSynthesizer,
-)
-from synthesizers.gl_incr_irv2_planning import (
-    GlobalClockIncrementalIrV2PlanningSynthesizer,
-)
-
-from platforms import TOY, TENERIFE
 from output_checker import OutputChecker
-
 from solvers import (
-    M_SEQUENTIAL_PLANS,
-    MpC_SEQUENTIAL_PLANS,
-    MpC_FORALL_STEPS,
-    MpC_EXISTS_STEPS,
-    FAST_DOWNWARD_MERGE_AND_SHRINK,
-    FAST_DOWNWARD_LAMA_FIRST,
-    FAST_DOWNWARD_BJOLP,
-    FAST_DOWNWARD_STONE_SOUP,
-    SCORPION,
     OPTIMAL,
 )
-
-DEFAULT_TIME_LIMIT_S = 1800
-
-
-synthesizers = {
-    "plan_opt": OptimalPlanningSynthesizer(),
-    "plan_incr_lc": LocalClockIncrementalPlanningSynthesizer(),
-    "plan_incr_gc": GlobalClockIncrementalPlanningSynthesizer(),
-    "plan_incr_gc_irv1": GlobalClockIncrementalIrV1PlanningSynthesizer(),
-    "plan_incr_gc_irv2": GlobalClockIncrementalIrV2PlanningSynthesizer(),
-}
-
-platforms = {
-    "toy": TOY,
-    "tenerife": TENERIFE,
-}
-
-solvers = {
-    "M_seq": M_SEQUENTIAL_PLANS(),
-    "MpC_seq": MpC_SEQUENTIAL_PLANS(),
-    "MpC_all": MpC_FORALL_STEPS(),
-    "MpC_exist": MpC_EXISTS_STEPS(),
-    "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
-    "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
-    "fd_bjolp": FAST_DOWNWARD_BJOLP(),
-    "fd_stone_soup": FAST_DOWNWARD_STONE_SOUP(),
-    "scorpion": SCORPION(),
-}
+from configs import (
+    synthesizers,
+    platforms,
+    solvers,
+    OPTIMAL_SYNTHESIZERS,
+    DEFAULT_TIME_LIMIT_S,
+)
 
 parser = argparse.ArgumentParser(
     description="Welcome to qt! A quantum circuit synthesis tool.", prog="./qt"
@@ -125,7 +78,7 @@ print("#    A tool for depth-optimal layout synthesis.    #")
 print("####################################################")
 print()
 
-optimal_planner = args.model in ["plan_opt"]
+optimal_planner = args.model in OPTIMAL_SYNTHESIZERS
 if optimal_planner and solver.solver_class != OPTIMAL:
     raise ValueError(
         f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal"
