@@ -10,6 +10,12 @@ from synthesizers.local_clock_incremental_planning import (
 from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
 )
+from synthesizers.gl_incr_irv1_planning import (
+    GlobalClockIncrementalIrV1PlanningSynthesizer,
+)
+from synthesizers.gl_incr_irv2_planning import (
+    GlobalClockIncrementalIrV2PlanningSynthesizer,
+)
 
 from platforms import TOY, TENERIFE
 from output_checker import OutputChecker
@@ -33,6 +39,8 @@ synthesizers = {
     "plan_opt": OptimalPlanningSynthesizer(),
     "plan_incr_lc": LocalClockIncrementalPlanningSynthesizer(),
     "plan_incr_gc": GlobalClockIncrementalPlanningSynthesizer(),
+    "plan_incr_gc_irv1": GlobalClockIncrementalIrV1PlanningSynthesizer(),
+    "plan_incr_gc_irv2": GlobalClockIncrementalIrV2PlanningSynthesizer(),
 }
 
 platforms = {
