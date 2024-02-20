@@ -87,7 +87,7 @@ class Solver(ABC):
         elapsed = end - start
 
         if elapsed >= time_limit_s - 1:
-            return SolverTimeout(), elapsed
+            return SolverTimeout(), time_limit_s
         
         no_solution_produced = not os.path.exists(output_file) and not os.path.exists(f"{output_file}.1")
 
