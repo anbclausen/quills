@@ -215,8 +215,12 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                                     occupied_physical_qubit,
                                 )
                             )
-                            preconditions.append(not_(busy(l[gate_occupied_logical_qubit])))
-                            preconditions.append(not_(is_swapping(l[gate_occupied_logical_qubit])))
+                            preconditions.append(
+                                not_(busy(l[gate_occupied_logical_qubit]))
+                            )
+                            preconditions.append(
+                                not_(is_swapping(l[gate_occupied_logical_qubit]))
+                            )
 
                             # preconds for the line that has not had any gates yet
                             preconditions.append(
@@ -344,10 +348,7 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                 *[next_depth(d[i], d[i + 1]) for i in range(maximum_depth - 1)],
                 clock(d[0]),
             ],
-            goal_state=[
-                *[done(gi) for gi in g],
-                *[not_(is_swapping(lq)) for lq in l]
-            ],
+            goal_state=[*[done(gi) for gi in g], *[not_(is_swapping(lq)) for lq in l]],
         )
 
     def synthesize(
@@ -366,8 +367,8 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
             )
             domain, problem = instance.compile()
 
-            print("Solving")
             time_left = int(time_limit_s - total_time)
+            print(f"Solving with {time_left}s left...")
             solution, time_taken = solver.solve(domain, problem, time_left)
             total_time += time_taken
             print(f"Solution: {solution}")

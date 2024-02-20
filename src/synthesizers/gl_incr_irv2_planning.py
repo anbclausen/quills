@@ -366,8 +366,8 @@ class GlobalClockIncrementalIrV2PlanningSynthesizer(Synthesizer):
             )
             domain, problem = instance.compile()
 
-            print("Solving")
             time_left = int(time_limit_s - total_time)
+            print(f"Solving with {time_left}s left...")
             solution, time_taken = solver.solve(domain, problem, time_left)
             total_time += time_taken
             print(f"Solution: {solution}")
