@@ -1,5 +1,6 @@
 import argparse
 from qiskit import QuantumCircuit
+from qiskit import qasm2
 from synthesizers.synthesizer import remove_all_non_cx_gates
 
 from synthesizers.synthesizer import SynthesizerOutput, SynthesizerSolution
@@ -19,6 +20,7 @@ from synthesizers.gl_incr_irv2_planning import (
 
 from platforms import TOY, TENERIFE
 from output_checker import OutputChecker
+from simulator import Simulator
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -155,3 +157,11 @@ if isinstance(output, SynthesizerSolution):
         print("Output check succeeded")
     else:
         print("Output check failed")
+
+    shots = 10000
+    circ = QuantumCircuit.from_qasm_file("benchmarks/no_swap.qasm")
+    Simulator.simulate(circ, platform, shots, "no_swap")
+    circ = QuantumCircuit.from_qasm_file("benchmarks/nonopt_depth.qasm")
+    Simulator.simulate(circ, platform, shots, "nonopt")
+    circ = QuantumCircuit.from_qasm_file("benchmarks/opt_depth.qasm")
+    Simulator.simulate(circ, platform, shots, "opt")
