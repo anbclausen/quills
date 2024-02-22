@@ -368,7 +368,11 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
             domain, problem = instance.compile()
 
             time_left = int(time_limit_s - total_time)
-            solution, time_taken = solver.solve(domain, problem, time_left)
+            min_plan_length = depth + logical_circuit.size()
+            max_plan_length = (
+                depth + logical_circuit.num_qubits * depth
+            )
+            solution, time_taken = solver.solve(domain, problem, time_left, min_plan_length, max_plan_length)
             total_time += time_taken
 
             match solution:

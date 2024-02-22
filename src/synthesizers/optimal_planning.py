@@ -331,7 +331,12 @@ class OptimalPlanningSynthesizer(Synthesizer):
     ) -> SynthesizerOutput:
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
-        solution, time_taken = solver.solve(domain, problem, time_limit_s)
+        min_plan_length = logical_circuit.size()
+        maximum_depth = 4 * logical_circuit.size()
+        max_plan_length = (
+            logical_circuit.num_qubits * maximum_depth
+        )
+        solution, time_taken = solver.solve(domain, problem, time_limit_s, min_plan_length, max_plan_length)
 
         match solution:
             case SolverTimeout():
