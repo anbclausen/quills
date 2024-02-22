@@ -81,10 +81,12 @@ class SynthesizerSolution(SynthesizerOutput):
                 for logical, physical in self.initial_mapping.items()
             )
         )
-        return f"{self.circuit}\n(depth {self.depth}, cx-depth {self.cx_depth})\nwith initial mapping: {initial_mapping_str}\nSynthesis took {self.time:.3f} seconds"
+        return f"Done! Took {self.time:.3f} seconds.\n{self.circuit}\n(depth {self.depth}, cx-depth {self.cx_depth})\nwith initial mapping: {initial_mapping_str}"
 
 
 class Synthesizer(ABC):
+    description: str = "No description."
+
     @abstractmethod
     def create_instance(
         self,

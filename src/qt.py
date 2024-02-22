@@ -14,6 +14,9 @@ from configs import (
     DEFAULT_TIME_LIMIT_S,
 )
 
+BOLD_START = "\033[1m"
+BOLD_END = "\033[0m"
+
 parser = argparse.ArgumentParser(
     description="Welcome to qt! A quantum circuit synthesis tool.", prog="./qt"
 )
@@ -85,29 +88,44 @@ if optimal_planner and solver.solver_class != OPTIMAL:
     )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
-print(f"Input circuit '{args.input}'")
+
+print(f"{BOLD_START}INPUT CIRCUIT{BOLD_END}")
+print(f"'{args.input}'")
 print(input_circuit)
 input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
 print(f"(depth {input_circuit.depth()}, cx-depth {input_circuit_only_cx.depth()})")
 print()
 
+print(f"{BOLD_START}PLATFORM{BOLD_END}")
 print(
-    f"Platform '{args.platform}': {platform.description} ({platform.qubits} qubits)"
+    f"'{args.platform}': {platform.description} ({platform.qubits} qubits)"
     f"{platform.connectivity_graph_drawing if platform.connectivity_graph_drawing else ''}"
 )
 print()
 
+print(f"{BOLD_START}SYNTHESIZER{BOLD_END}")
+print(f"'{args.model}': {synthesizer.description}")
+print()
+
+print(f"{BOLD_START}SOLVER{BOLD_END}")
+print(f"'{args.solver}': {solver.description}")
+print()
+
+print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing with '{args.model}' using '{args.solver}' ({solver.solver_class})..."
+    f"Synthesizing... ",
+    end="",
 )
 output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
 print(output)
+print()
 
+print(f"{BOLD_START}CHECKS{BOLD_END}")
 if isinstance(output, SynthesizerSolution):
     correct_output = OutputChecker.check(
         input_circuit, output.circuit, output.initial_mapping, platform
     )
     if correct_output:
-        print("Output check succeeded")
+        print("✓ Output circuit is correct")
     else:
-        print("Output check failed")
+        print("✗ Output circuit is not correct ✗")

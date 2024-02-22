@@ -38,6 +38,7 @@ class SolverTimeout(SolverOutput):
 
 class Solver(ABC):
     solver_class: str
+    description: str = "No description."
 
     @abstractmethod
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
