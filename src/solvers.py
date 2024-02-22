@@ -224,6 +224,20 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
         actions_as_parts = [line.split(" ") for line in without_parentheses]
         actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
         return actions
+    
+class FAST_DOWNWARD_LAMA(Solver):
+    solver_class = SATISFYING
+
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"fast-downward.py --alias lama --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        without_cost_line = lines[:-1]
+        without_parentheses = [line[1:-1] for line in without_cost_line]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
+        return actions
 
 class FAST_DOWNWARD_BJOLP(Solver):
     solver_class = OPTIMAL
