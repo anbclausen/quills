@@ -1,5 +1,6 @@
 from synthesizers.synthesizer import Synthesizer
 from synthesizers.optimal_planning import OptimalPlanningSynthesizer
+from synthesizers.optimal_planning_v2 import OptimalPlanningSynthesizerV2
 from synthesizers.local_clock_incremental_planning import (
     LocalClockIncrementalPlanningSynthesizer,
 )
@@ -36,6 +37,7 @@ OPTIMAL_SYNTHESIZERS = ["plan_opt"]
 
 synthesizers: dict[str, Synthesizer] = {
     "plan_opt": OptimalPlanningSynthesizer(),
+    "plan_opt_v2": OptimalPlanningSynthesizerV2(),
     "plan_incr_lc": LocalClockIncrementalPlanningSynthesizer(),
     "plan_incr_gc": GlobalClockIncrementalPlanningSynthesizer(),
     "plan_incr_gc_irv1": GlobalClockIncrementalIrV1PlanningSynthesizer(),
