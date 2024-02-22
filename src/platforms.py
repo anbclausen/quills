@@ -23,7 +23,8 @@ TOY = Platform(
     4,
     {(0, 1), (1, 2), (1, 3)},
     description="A simple proprietary platform designed to require one swap for 'benchmarks/toy_example.qasm'.",
-    connectivity_graph_drawing="""0 - 1 - 3
+    connectivity_graph_drawing="""
+0 - 1 - 3
     |
     2""",
 )
@@ -32,7 +33,8 @@ TENERIFE = Platform(
     5,
     {(1, 0), (2, 0), (2, 1), (3, 2), (3, 4), (4, 2)},
     description="IBM Q Tenerife.",
-    connectivity_graph_drawing="""4       0
+    connectivity_graph_drawing="""
+4       0
 | \\   / |
 |   2   |
 | /   \\ |
