@@ -99,6 +99,40 @@ def when(
     return PDDLConditionalPredicateInstance(conditions, effects)
 
 
+class PDDLForallPredicateInstance(PDDLPredicateInstance, Generic[P]):
+    def __init__(
+        self,
+        function: Callable[P, Sequence[PDDLPredicateInstance]],
+    ):
+        self.function = function
+        annotations = function.__annotations__
+        self.args = {name: class_.__name__ for name, class_ in annotations.items()}
+
+        self.predicates = self.function(
+            *[type_(f"?{arg}") for arg, type_ in annotations.items()]
+        )  # type: ignore
+
+    def __str__(self) -> str:
+        args_grouped_by_type: dict[str, list[str]] = {}
+        for arg, type_ in self.args.items():
+            if type_ not in args_grouped_by_type:
+                args_grouped_by_type[type_] = []
+            args_grouped_by_type[type_].append(f"?{arg}")
+
+        arg_strings = [
+            " ".join(args) + " - " + type_
+            for type_, args in args_grouped_by_type.items()
+        ]
+
+        return f"(forall ({' '.join(arg_strings)}) (and {' '.join(map(str, self.predicates))}))"
+
+
+def forall(
+    function: Callable[P, Sequence[PDDLPredicateInstance]]
+) -> PDDLForallPredicateInstance:
+    return PDDLForallPredicateInstance(function)
+
+
 class _PDDLAction:
     def __init__(
         self,
