@@ -55,6 +55,8 @@ class Solver(ABC):
         ----
         - problem (`str`): Problem to solve as a string input to the solver.
         - time_limit_s (`int`): Time limit in seconds.
+        - min_plan_length (`int`): Minimum plan length.
+        - max_plan_length (`int`): Maximum plan length.
 
         Returns
         --------
