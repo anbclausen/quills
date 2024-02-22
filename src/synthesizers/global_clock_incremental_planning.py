@@ -328,7 +328,13 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
 
             time_left = int(time_limit_s - total_time)
             print(f"Solving with {time_left}s left...")
-            solution, time_taken = solver.solve(domain, problem, time_left)
+            min_plan_length = depth + logical_circuit.size()
+            max_plan_length = (
+                depth + logical_circuit.size() * depth
+            )  # FIXME find better upper bound
+            solution, time_taken = solver.solve(
+                domain, problem, time_left, min_plan_length, max_plan_length
+            )
             total_time += time_taken
             print(f"Solution: {solution}")
 

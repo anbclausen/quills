@@ -17,6 +17,8 @@ from platforms import TOY, TENERIFE, Platform
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
+    M_FORALL_STEPS,
+    M_EXISTS_STEPS,
     MpC_SEQUENTIAL_PLANS,
     MpC_FORALL_STEPS,
     MpC_EXISTS_STEPS,
@@ -47,6 +49,8 @@ platforms: dict[str, Platform] = {
 
 solvers: dict[str, Solver] = {
     "M_seq": M_SEQUENTIAL_PLANS(),
+    "M_all": M_FORALL_STEPS(),
+    "M_exist": M_EXISTS_STEPS(),
     "MpC_seq": MpC_SEQUENTIAL_PLANS(),
     "MpC_all": MpC_FORALL_STEPS(),
     "MpC_exist": MpC_EXISTS_STEPS(),

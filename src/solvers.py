@@ -40,14 +40,14 @@ class Solver(ABC):
     solver_class: str
 
     @abstractmethod
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         pass
 
     @abstractmethod
     def parse_actions(self, solution: str) -> list[str]:
         pass
 
-    def solve(self, domain: str, problem: str, time_limit_s: int) -> tuple[SolverOutput, float]:
+    def solve(self, domain: str, problem: str, time_limit_s: int, min_plan_length: int, max_plan_length: int) -> tuple[SolverOutput, float]:
         """
         Solve a problem.
 
@@ -89,7 +89,7 @@ class Solver(ABC):
             f.write(problem)
 
         command = self.command(
-            domain_file, problem_file, output_file, str(time_limit_s + 100)
+            domain_file, problem_file, output_file, str(time_limit_s + 100), min_plan_length, max_plan_length
         )
         start = time.time()
         try:
@@ -120,20 +120,46 @@ class Solver(ABC):
 class M_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
-        return f"M -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"M -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         actions = [line.split(": ")[1] for line in lines]
         return actions
+    
+class M_FORALL_STEPS(Solver):
+    solver_class = SATISFYING
+
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"M -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        stripped_lines = [line.split(": ")[1] for line in lines]
+        actions = [line.split(" ") for line in stripped_lines]
+        flattened_actions = [action for sublist in actions for action in sublist]
+        return flattened_actions
+    
+class M_EXISTS_STEPS(Solver):
+    solver_class = SATISFYING
+
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"M -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        stripped_lines = [line.split(": ")[1] for line in lines]
+        actions = [line.split(" ") for line in stripped_lines]
+        flattened_actions = [action for sublist in actions for action in sublist]
+        return flattened_actions
 
 
 class MpC_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
-        return f"MpC -P 0 -o {output} -t {time_limit_s} {domain} {problem}"
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"MpC -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -144,8 +170,8 @@ class MpC_SEQUENTIAL_PLANS(Solver):
 class MpC_FORALL_STEPS(Solver):
     solver_class = SATISFYING
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
-        return f"MpC -P 1 -o {output} -t {time_limit_s} {domain} {problem}"
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"MpC -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -158,8 +184,8 @@ class MpC_FORALL_STEPS(Solver):
 class MpC_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
-        return f"MpC -P 2 -o {output} -t {time_limit_s} {domain} {problem}"
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+        return f"MpC -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -172,7 +198,7 @@ class MpC_EXISTS_STEPS(Solver):
 class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
     solver_class = OPTIMAL
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
@@ -187,7 +213,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
 class FAST_DOWNWARD_LAMA_FIRST(Solver):
     solver_class = SATISFYING
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
@@ -201,7 +227,7 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
 class FAST_DOWNWARD_BJOLP(Solver):
     solver_class = OPTIMAL
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias seq-opt-bjolp --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
@@ -215,7 +241,7 @@ class FAST_DOWNWARD_BJOLP(Solver):
 class FAST_DOWNWARD_STONE_SOUP(Solver):
     solver_class = SATISFYING
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias seq-sat-fdss-2023 --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
@@ -229,7 +255,7 @@ class FAST_DOWNWARD_STONE_SOUP(Solver):
 class SCORPION(Solver):
     solver_class = OPTIMAL
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str) -> str:
+    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"python /dependencies/scorpion/fast-downward.py --transform-task preprocess-h2 --alias scorpion --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
