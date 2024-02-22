@@ -91,9 +91,9 @@ input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
 print(f"(depth {input_circuit.depth()}, cx-depth {input_circuit_only_cx.depth()})")
 print()
 
-print(f"Platform '{args.platform}'")
-print(platform.connectivity_graph)
-print("TODO: draw nice graph")
+print(f"Platform '{args.platform}': {platform.description} ({platform.qubits} qubits)")
+if platform.connectivity_graph_drawing:
+    print(platform.connectivity_graph_drawing)
 print()
 
 print(
