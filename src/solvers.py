@@ -97,8 +97,7 @@ class Solver(ABC):
         )
         start = time.time()
         try:
-            #subprocess.run(command.split(), timeout=time_limit_s, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-            subprocess.run(command.split(), timeout=time_limit_s)
+            subprocess.run(command.split(), timeout=time_limit_s, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         except subprocess.TimeoutExpired:
             return SolverTimeout(), time_limit_s
         end = time.time()

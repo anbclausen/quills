@@ -1,20 +1,22 @@
 from synthesizers.synthesizer import Synthesizer
-from synthesizers.optimal_planning import OptimalPlanningSynthesizer
-from synthesizers.optimal_planning_v2 import OptimalPlanningSynthesizerV2
+from synthesizers.cost_based_optimal_planning import CostBasedOptimalPlanningSynthesizer
+from synthesizers.cond_cost_based_optimal_planning import (
+    ConditionalCostBasedOptimalPlanningSynthesizer,
+)
 from synthesizers.local_clock_incremental_planning import (
     LocalClockIncrementalPlanningSynthesizer,
 )
 from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
 )
-from synthesizers.gl_incr_irv1_planning import (
-    GlobalClockIncrementalIrV1PlanningSynthesizer,
+from synthesizers.iterative_incr_planning import (
+    IterativeIncrementalPlanningSynthesizer,
 )
-from synthesizers.gl_incr_irv2_planning import (
-    GlobalClockIncrementalIrV2PlanningSynthesizer,
+from synthesizers.grounded_iterative_incr_planning import (
+    GroundedIterativeIncrementalPlanningSynthesizer,
 )
-from synthesizers.gl_incr_irv3_planning import (
-    GlobalClockIncrementalIrV3PlanningSynthesizer,
+from synthesizers.cond_iterative_incr_planning import (
+    ConditionalIterativeIncrementalPlanningSynthesizer,
 )
 
 from platforms import TOY, TENERIFE, Platform
@@ -40,13 +42,13 @@ CONDITIONAL_SYNTHESIZERS = ["plan_opt_v2", "plan_incr_gc_irv3"]
 
 
 synthesizers: dict[str, Synthesizer] = {
-    "plan_opt": OptimalPlanningSynthesizer(),
-    "plan_opt_v2": OptimalPlanningSynthesizerV2(),
-    "plan_incr_lc": LocalClockIncrementalPlanningSynthesizer(),
-    "plan_incr_gc": GlobalClockIncrementalPlanningSynthesizer(),
-    "plan_incr_gc_irv1": GlobalClockIncrementalIrV1PlanningSynthesizer(),
-    "plan_incr_gc_irv2": GlobalClockIncrementalIrV2PlanningSynthesizer(),
-    "plan_incr_gc_irv3": GlobalClockIncrementalIrV3PlanningSynthesizer(),
+    "cost_opt": CostBasedOptimalPlanningSynthesizer(),
+    "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
+    "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
+    "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
+    "iter_incr": IterativeIncrementalPlanningSynthesizer(),
+    "grounded_iter_incr": GroundedIterativeIncrementalPlanningSynthesizer(),
+    "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {

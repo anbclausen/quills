@@ -35,7 +35,7 @@ parser.add_argument(
     "--model",
     type=str,
     help=f"the synthesizer model to use: {', '.join(synthesizers.keys())}",
-    default="plan_opt",
+    default="cost_opt",
 )
 
 
@@ -53,7 +53,7 @@ parser.add_argument(
     "--solver",
     type=str,
     help=f"the underlying solver: {', '.join(solvers.keys())}",
-    default="fd_ms",
+    default="fd_bjolp",
 )
 
 

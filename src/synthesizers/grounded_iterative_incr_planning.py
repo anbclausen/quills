@@ -14,10 +14,8 @@ from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from solvers import Solver, SolverSolution, SolverTimeout, SolverNoSolution
 
 
-class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
-    description = (
-        "Incremental synthesizer based on planning building each depth iteratively."
-    )
+class GroundedIterativeIncrementalPlanningSynthesizer(Synthesizer):
+    description = "Incremental synthesizer based on planning building each depth iteratively. V2: The version grounds the actions for advancing to the next depth."
 
     def create_instance(
         self,
@@ -74,10 +72,6 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
 
         @PDDLPredicate()
         def clock(d: depth):
-            pass
-
-        @PDDLPredicate()
-        def next_depth(d1: depth, d2: depth):
             pass
 
         @PDDLPredicate()
@@ -150,15 +144,20 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
             ]
             return preconditions, effects
 
-        @PDDLAction()
-        def advance(d1: depth, d2: depth):
-            preconditions = [next_depth(d1, d2), clock(d1)]
-            effects = [
-                not_(clock(d1)),
-                clock(d2),
-                *[not_(busy(lq)) for lq in l],
-            ]
-            return preconditions, effects
+        depth_actions = []
+        for i in range(len(d) - 1):
+
+            @PDDLAction(name=f"advance_{d[i]}")
+            def advance_depth():
+                preconditions = [clock(d[i])]
+                effects = [
+                    *[not_(busy(lq)) for lq in l],
+                    not_(clock(d[i])),
+                    clock(d[i + 1]),
+                ]
+                return preconditions, effects
+
+            depth_actions.append(advance_depth)
 
         gate_line_mapping = gate_line_dependency_mapping(circuit)
         gate_direct_mapping = gate_direct_dependency_mapping(circuit)
@@ -334,7 +333,6 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                 done,
                 clock,
                 busy,
-                next_depth,
                 is_swapping,
                 is_swapping1,
                 is_swapping2,
@@ -343,12 +341,11 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                 swap,
                 swap_dummy1,
                 swap_dummy2,
-                advance,
+                *depth_actions,
                 *gate_actions,
             ],
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
-                *[next_depth(d[i], d[i + 1]) for i in range(maximum_depth - 1)],
                 clock(d[0]),
             ],
             goal_state=[*[done(gi) for gi in g], *[not_(is_swapping(lq)) for lq in l]],

@@ -10,12 +10,14 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_, when, forall
+from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from solvers import Solver, SolverSolution, SolverTimeout, SolverNoSolution
 
 
-class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
-    description = "Incremental synthesizer based on planning building each depth iteratively. V3: This version uses conditional effects and forall quantifiers to get rid of swap dummies."
+class IterativeIncrementalPlanningSynthesizer(Synthesizer):
+    description = (
+        "Incremental synthesizer based on planning building each depth iteratively."
+    )
 
     def create_instance(
         self,
@@ -67,19 +69,7 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
             pass
 
         @PDDLPredicate()
-        def idle(l: lqubit):
-            pass
-
-        @PDDLPredicate()
         def busy(l: lqubit):
-            pass
-
-        @PDDLPredicate()
-        def swap1(l: lqubit):
-            pass
-
-        @PDDLPredicate()
-        def swap2(l: lqubit):
             pass
 
         @PDDLPredicate()
@@ -88,6 +78,18 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
 
         @PDDLPredicate()
         def next_depth(d1: depth, d2: depth):
+            pass
+
+        @PDDLPredicate()
+        def is_swapping1(l1: lqubit, l2: lqubit):
+            pass
+
+        @PDDLPredicate()
+        def is_swapping2(l1: lqubit, l2: lqubit):
+            pass
+
+        @PDDLPredicate()
+        def is_swapping(l: lqubit):
             pass
 
         @PDDLAction()
@@ -101,40 +103,60 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
                 mapped(l1, p1),
                 mapped(l2, p2),
                 connected(p1, p2),
-                idle(l1),
-                idle(l2),
+                not_(busy(l1)),
+                not_(busy(l2)),
             ]
             effects = [
                 not_(mapped(l1, p1)),
                 not_(mapped(l2, p2)),
                 mapped(l1, p2),
                 mapped(l2, p1),
-                swap1(l1),
-                swap1(l2),
-                not_(idle(l1)),
-                not_(idle(l2)),
+                busy(l1),
+                busy(l2),
+                is_swapping(l1),
+                is_swapping(l2),
+                is_swapping1(l1, l2),
+            ]
+            return preconditions, effects
+
+        @PDDLAction()
+        def swap_dummy1(l1: lqubit, l2: lqubit):
+            preconditions = [
+                is_swapping1(l1, l2),
+                not_(busy(l1)),
+                not_(busy(l2)),
+            ]
+            effects = [
+                not_(is_swapping1(l1, l2)),
+                is_swapping2(l1, l2),
+                busy(l1),
+                busy(l2),
+            ]
+            return preconditions, effects
+
+        @PDDLAction()
+        def swap_dummy2(l1: lqubit, l2: lqubit):
+            preconditions = [
+                is_swapping2(l1, l2),
+                not_(busy(l1)),
+                not_(busy(l2)),
+            ]
+            effects = [
+                not_(is_swapping2(l1, l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
+                busy(l1),
+                busy(l2),
             ]
             return preconditions, effects
 
         @PDDLAction()
         def advance(d1: depth, d2: depth):
             preconditions = [next_depth(d1, d2), clock(d1)]
-
-            def advance_busy(l: lqubit):
-                return [when([busy(l)], [not_(busy(l)), idle(l)])]
-
-            def advance_swap1(l: lqubit):
-                return [when([swap1(l)], [not_(swap1(l)), swap2(l)])]
-
-            def advance_swap2(l: lqubit):
-                return [when([swap2(l)], [not_(swap2(l)), busy(l)])]
-
             effects = [
                 not_(clock(d1)),
                 clock(d2),
-                forall(advance_busy),
-                forall(advance_swap1),
-                forall(advance_swap2),
+                *[not_(busy(lq)) for lq in l],
             ]
             return preconditions, effects
 
@@ -197,7 +219,12 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
                                     occupied_physical_qubit,
                                 )
                             )
-                            preconditions.append(idle(l[gate_occupied_logical_qubit]))
+                            preconditions.append(
+                                not_(busy(l[gate_occupied_logical_qubit]))
+                            )
+                            preconditions.append(
+                                not_(is_swapping(l[gate_occupied_logical_qubit]))
+                            )
 
                             # preconds for the line that has not had any gates yet
                             preconditions.append(
@@ -211,17 +238,17 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
                             target_qubit = l[gate_logical_qubits[1]]
 
                             preconditions.append(mapped(control_qubit, p1))
-                            preconditions.append(idle(control_qubit))
+                            preconditions.append(not_(busy(control_qubit)))
+                            preconditions.append(not_(is_swapping(control_qubit)))
 
                             preconditions.append(mapped(target_qubit, p2))
-                            preconditions.append(idle(target_qubit))
+                            preconditions.append(not_(busy(target_qubit)))
+                            preconditions.append(not_(is_swapping(target_qubit)))
 
                         effects = [
                             done(g[gate_id]),
                             busy(l[gate_logical_qubits[0]]),
                             busy(l[gate_logical_qubits[1]]),
-                            not_(idle(l[gate_logical_qubits[0]])),
-                            not_(idle(l[gate_logical_qubits[1]])),
                         ]
 
                         if no_gate_dependency:
@@ -277,7 +304,8 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
                         if no_gate_dependency:
                             preconditions.append(not_(occupied(p)))
                         else:
-                            preconditions.append(idle(logical_qubit))
+                            preconditions.append(not_(busy(logical_qubit)))
+                            preconditions.append(not_(is_swapping(logical_qubit)))
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]
                             preconditions.append(done(direct_predecessor_gate))
                             preconditions.append(mapped(logical_qubit, p))
@@ -285,7 +313,6 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
                         effects = [
                             done(g[gate_id]),
                             busy(logical_qubit),
-                            not_(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
@@ -305,29 +332,26 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
                 mapped,
                 connected,
                 done,
-                idle,
-                busy,
-                swap1,
-                swap2,
                 clock,
+                busy,
                 next_depth,
+                is_swapping,
+                is_swapping1,
+                is_swapping2,
             ],
             actions=[
                 swap,
+                swap_dummy1,
+                swap_dummy2,
                 advance,
                 *gate_actions,
             ],
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
                 *[next_depth(d[i], d[i + 1]) for i in range(maximum_depth - 1)],
-                *[idle(lq) for lq in l],
                 clock(d[0]),
             ],
-            goal_state=[
-                *[done(gi) for gi in g],
-                *[not_(swap1(lq)) for lq in l],
-                *[not_(swap2(lq)) for lq in l],
-            ],
+            goal_state=[*[done(gi) for gi in g], *[not_(is_swapping(lq)) for lq in l]],
         )
 
     def synthesize(
