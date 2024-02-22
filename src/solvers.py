@@ -121,6 +121,7 @@ class Solver(ABC):
 
 class M_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
+    description = "The (M) Madagascar sequential planner is a satisfying SAT-based planner with geometric rates and linear horizons.\n Source: https://research.ics.aalto.fi/software/sat/madagascar/"
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"M -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -132,6 +133,7 @@ class M_SEQUENTIAL_PLANS(Solver):
     
 class M_FORALL_STEPS(Solver):
     solver_class = SATISFYING
+    description = "The (M) Madagascar parallel (∀-step) planner is a satisfying SAT-based planner with geometric rates and linear horizons.\n Source: https://research.ics.aalto.fi/software/sat/madagascar/"
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"M -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -145,6 +147,7 @@ class M_FORALL_STEPS(Solver):
     
 class M_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
+    description = "The (M) Madagascar parallel (∃-step) planner is a satisfying SAT-based planner with geometric rates and linear horizons.\n Source: https://research.ics.aalto.fi/software/sat/madagascar/"
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"M -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -159,6 +162,7 @@ class M_EXISTS_STEPS(Solver):
 
 class MpC_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
+    description = "The (MpC) Madagascar sequential planner is a satisfying SAT-based planner with constant rates and exponential horizons.\n Source: https://research.ics.aalto.fi/software/sat/madagascar/"
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"MpC -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -171,6 +175,7 @@ class MpC_SEQUENTIAL_PLANS(Solver):
 
 class MpC_FORALL_STEPS(Solver):
     solver_class = SATISFYING
+    description = "The (MpC) Madagascar parallel (∀-step) planner is a satisfying SAT-based planner with constant rates and exponential horizons.\n Source: https://research.ics.aalto.fi/software/sat/madagascar/"
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"MpC -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -185,6 +190,7 @@ class MpC_FORALL_STEPS(Solver):
 
 class MpC_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
+    description = "The (MpC) Madagascar parallel (∃-step) planner is a satisfying SAT-based planner with constant rates and exponential horizons.\n Source: https://research.ics.aalto.fi/software/sat/madagascar/"
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"MpC -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
