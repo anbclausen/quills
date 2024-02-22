@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
 from platforms import Platform
 from solvers import Solver
 from pddl import PDDLInstance
@@ -112,7 +112,7 @@ class Synthesizer(ABC):
 
         """
         initial_mapping = {}
-        physical_circuit = QuantumCircuit(platform.qubits)
+        physical_circuit = QuantumCircuit(QuantumRegister(platform.qubits, "p"))
         gate_logical_mapping = gate_line_dependency_mapping(original_circuit)
 
         def add_to_initial_mapping_if_not_present(
@@ -308,7 +308,8 @@ def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
     Remove all non-CX gates from the circuit.
     """
     num_qubits = circuit.num_qubits
-    new_circuit = QuantumCircuit(num_qubits)
+    qubit_name = circuit.qregs[0].name
+    new_circuit = QuantumCircuit(QuantumRegister(num_qubits, qubit_name))
     for instr in circuit.data:
         if instr[0].name == "cx":
             new_circuit.append(instr[0], instr[1])
