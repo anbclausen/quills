@@ -1,4 +1,4 @@
-from typing import Callable, Type, ParamSpec, Generic
+from typing import Callable, Sequence, Type, ParamSpec, Generic
 
 
 class PDDLType:
@@ -80,11 +80,30 @@ def increase_cost(amount: int) -> PDDLIncreaseCostFunctionPredicateInstance:
     return PDDLIncreaseCostFunctionPredicateInstance(amount)
 
 
+class PDDLConditionalPredicateInstance(PDDLPredicateInstance):
+    def __init__(
+        self,
+        conditions: list[PDDLPredicateInstance],
+        effects: list[PDDLPredicateInstance],
+    ):
+        self.conditions = conditions
+        self.effects = effects
+
+    def __str__(self) -> str:
+        return f"(when (and {' '.join(map(str, self.conditions))}) (and {' '.join(map(str, self.effects))}))"
+
+
+def when(
+    conditions: list[PDDLPredicateInstance], effects: list[PDDLPredicateInstance]
+) -> PDDLConditionalPredicateInstance:
+    return PDDLConditionalPredicateInstance(conditions, effects)
+
+
 class _PDDLAction:
     def __init__(
         self,
         function: Callable[
-            ..., tuple[list[PDDLPredicateInstance], list[PDDLPredicateInstance]]
+            ..., tuple[Sequence[PDDLPredicateInstance], Sequence[PDDLPredicateInstance]]
         ],
         name: str | None,
     ):
@@ -136,7 +155,7 @@ def PDDLAction(
 ):
     def decorator(
         function: Callable[
-            ..., tuple[list[PDDLPredicateInstance], list[PDDLPredicateInstance]]
+            ..., tuple[Sequence[PDDLPredicateInstance], Sequence[PDDLPredicateInstance]]
         ]
     ):
         return _PDDLAction(function, name)
