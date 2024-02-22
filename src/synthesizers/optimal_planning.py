@@ -123,7 +123,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
         @PDDLAction()
         def advance():
             preconditions = []
-            effects = [not_(busy(l)) for l in l] + [increase_cost(len(l))]
+            effects = [not_(busy(l)) for l in l] + [increase_cost(num_lqubits)]
             return preconditions, effects
 
         gate_line_mapping = gate_line_dependency_mapping(circuit)
