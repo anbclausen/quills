@@ -26,7 +26,6 @@ class OptimalPlanningSynthesizer(Synthesizer):
         num_pqubits = platform.qubits
         num_lqubits = circuit.num_qubits
         num_gates = circuit.size()
-        maximum_depth = num_gates * 2 + 1
 
         class pqubit(object_):
             pass
@@ -92,6 +91,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
                 is_swapping1(l1, l2),
                 is_swapping(l1),
                 is_swapping(l2),
+                increase_cost(1),
             ]
             return preconditions, effects
 
@@ -103,6 +103,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
                 is_swapping2(l1, l2),
                 busy(l1),
                 busy(l2),
+                increase_cost(1),
             ]
             return preconditions, effects
 
@@ -115,13 +116,14 @@ class OptimalPlanningSynthesizer(Synthesizer):
                 not_(is_swapping(l2)),
                 busy(l1),
                 busy(l2),
+                increase_cost(1),
             ]
             return preconditions, effects
 
         @PDDLAction()
         def advance():
             preconditions = []
-            effects = [not_(busy(l)) for l in l] + [increase_cost(1)]
+            effects = [not_(busy(l)) for l in l] + [increase_cost(len(l))]
             return preconditions, effects
 
         gate_line_mapping = gate_line_dependency_mapping(circuit)
@@ -212,6 +214,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
                             done(g[gate_id]),
                             busy(l[gate_logical_qubits[0]]),
                             busy(l[gate_logical_qubits[1]]),
+                            increase_cost(1),
                         ]
 
                         if no_gate_dependency:
@@ -274,7 +277,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
                             preconditions.append(not_(is_swapping(logical_qubit)))
                             preconditions.append(not_(busy(logical_qubit)))
 
-                        effects = [done(g[gate_id]), busy(logical_qubit)]
+                        effects = [done(g[gate_id]), busy(logical_qubit), increase_cost(1)]
 
                         if no_gate_dependency:
                             effects.append(occupied(p))
