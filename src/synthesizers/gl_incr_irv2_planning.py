@@ -15,6 +15,8 @@ from solvers import Solver, SolverSolution, SolverTimeout, SolverNoSolution
 
 
 class GlobalClockIncrementalIrV2PlanningSynthesizer(Synthesizer):
+    description = "Incremental synthesizer based on planning building each depth iteratively. V2: The version grounds the actions for advancing to the next depth."
+
     def create_instance(
         self,
         circuit: QuantumCircuit,

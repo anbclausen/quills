@@ -20,6 +20,8 @@ from solvers import (
 
 
 class OptimalPlanningSynthesizer(Synthesizer):
+    description = "Optimal cost-based synthesizer based on planning."
+
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
     ) -> PDDLInstance:

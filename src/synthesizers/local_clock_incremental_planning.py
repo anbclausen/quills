@@ -20,6 +20,8 @@ from solvers import (
 
 
 class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
+    description = "Incremental synthesizer based on planning using local vector clocks for each qubit to keep track of depth."
+
     def create_instance(
         self,
         circuit: QuantumCircuit,

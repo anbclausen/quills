@@ -1,4 +1,3 @@
-from typing import Sequence
 from synthesizers.synthesizer import (
     Synthesizer,
     SynthesizerOutput,
@@ -31,6 +30,8 @@ from solvers import (
 
 
 class OptimalPlanningSynthesizerV2(Synthesizer):
+    description = "Optimal cost-based synthesizer based on planning. Uses conditional effects and forall quantifiers."
+
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
     ) -> PDDLInstance:
@@ -122,7 +123,7 @@ class OptimalPlanningSynthesizerV2(Synthesizer):
                 forall(advance_busy),
                 forall(advance_swap1),
                 forall(advance_swap2),
-                increase_cost(num_lqubits)
+                increase_cost(num_lqubits),
             ]
             return preconditions, effects
 
