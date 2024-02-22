@@ -168,7 +168,7 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                 case "cx":
 
                     @PDDLAction(name=f"apply_cx_g{gate_id}")
-                    def apply_gate(p1: pqubit, p2: pqubit, d: depth):
+                    def apply_gate(p1: pqubit, p2: pqubit):
                         preconditions = [
                             not_(done(g[gate_id])),
                             connected(p1, p2),
@@ -290,11 +290,10 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                 case _:
 
                     @PDDLAction(name=f"apply_gate_g{gate_id}")
-                    def apply_gate(p: pqubit, d: depth):
+                    def apply_gate(p: pqubit):
                         logical_qubit = l[gate_logical_qubits[0]]
 
                         preconditions = [
-                            clock(d),
                             not_(done(g[gate_id])),
                         ]
 
