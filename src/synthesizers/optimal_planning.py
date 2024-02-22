@@ -277,7 +277,11 @@ class OptimalPlanningSynthesizer(Synthesizer):
                             preconditions.append(not_(is_swapping(logical_qubit)))
                             preconditions.append(not_(busy(logical_qubit)))
 
-                        effects = [done(g[gate_id]), busy(logical_qubit), increase_cost(1)]
+                        effects = [
+                            done(g[gate_id]),
+                            busy(logical_qubit),
+                            increase_cost(1),
+                        ]
 
                         if no_gate_dependency:
                             effects.append(occupied(p))
@@ -347,7 +351,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
                 )
                 cx_depth = physical_with_only_cnots.depth()
                 return SynthesizerSolution(
-                    physical_circuit, initial_mapping, time_taken, depth, cx_depth
+                    physical_circuit, initial_mapping, total_time, depth, cx_depth
                 )
             case _:
                 raise ValueError(f"Unexpected solution: {solution}")

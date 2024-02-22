@@ -390,7 +390,7 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
                     )
                     cx_depth = physical_with_only_cnots.depth()
                     return SynthesizerSolution(
-                        physical_circuit, initial_mapping, time_taken, depth, cx_depth
+                        physical_circuit, initial_mapping, total_time, depth, cx_depth
                     )
                 case _:
                     raise ValueError(f"Unexpected solution: {solution}")
