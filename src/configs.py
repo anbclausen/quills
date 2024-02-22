@@ -26,7 +26,6 @@ from solvers import (
     FAST_DOWNWARD_LAMA,
     FAST_DOWNWARD_LAMA_FIRST,
     FAST_DOWNWARD_BJOLP,
-    FAST_DOWNWARD_STONE_SOUP,
     SCORPION,
     Solver,
 )
@@ -59,6 +58,5 @@ solvers: dict[str, Solver] = {
     "fd_lama": FAST_DOWNWARD_LAMA(),
     "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
     "fd_bjolp": FAST_DOWNWARD_BJOLP(),
-    "fd_stone_soup": FAST_DOWNWARD_STONE_SOUP(),
     "scorpion": SCORPION(),
 }

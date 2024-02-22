@@ -95,7 +95,7 @@ class Solver(ABC):
         )
         start = time.time()
         try:
-            subprocess.run(command.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=time_limit_s)
+            subprocess.run(command.split(), timeout=time_limit_s)
         except subprocess.TimeoutExpired:
             return SolverTimeout(), time_limit_s
         end = time.time()
@@ -200,7 +200,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
     solver_class = OPTIMAL
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
-        return f"fast-downward.py --alias seq-opt-merge-and-shrink --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
+        return f'fast-downward.py --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(merge_and_shrink(merge_strategy=merge_precomputed(merge_tree=linear(variable_order=reverse_level)),shrink_strategy=shrink_bisimulation(greedy=true),label_reduction=exact(before_shrinking=true,before_merging=false),max_states=infinity,threshold_before_merge=1))'
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -252,26 +252,12 @@ class FAST_DOWNWARD_BJOLP(Solver):
         actions_as_parts = [line.split(" ") for line in without_parentheses]
         actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
         return actions
-    
-class FAST_DOWNWARD_STONE_SOUP(Solver):
-    solver_class = SATISFYING
-
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
-        return f"fast-downward.py --alias seq-sat-fdss-2023 --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
-
-    def parse_actions(self, solution: str) -> list[str]:
-        lines = solution.strip().split("\n")
-        without_cost_line = lines[:-1]
-        without_parentheses = [line[1:-1] for line in without_cost_line]
-        actions_as_parts = [line.split(" ") for line in without_parentheses]
-        actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
-        return actions
 
 class SCORPION(Solver):
     solver_class = OPTIMAL
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
-        return f"python /dependencies/scorpion/fast-downward.py --transform-task preprocess-h2 --alias scorpion --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
+        return f'python /dependencies/scorpion/fast-downward.py --transform-task preprocess-h2 --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))'
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
