@@ -359,25 +359,26 @@ class GlobalClockIncrementalIrV1PlanningSynthesizer(Synthesizer):
     ) -> SynthesizerOutput:
         circuit_depth = logical_circuit.depth()
         total_time = 0
+        print("Searching: ", end="")
         for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
-            print(f"Depth: {depth}")
+            print(f"depth {depth}, ", end="", flush=True)
             instance = self.create_instance(
                 logical_circuit, platform, maximum_depth=depth
             )
             domain, problem = instance.compile()
 
             time_left = int(time_limit_s - total_time)
-            print(f"Solving with {time_left}s left...")
             solution, time_taken = solver.solve(domain, problem, time_left)
             total_time += time_taken
-            print(f"Solution: {solution}")
 
             match solution:
                 case SolverTimeout():
+                    print()
                     return SynthesizerTimeout()
                 case SolverNoSolution():
                     continue
                 case SolverSolution(actions):
+                    print()
                     physical_circuit, initial_mapping = self.parse_solution(
                         logical_circuit, platform, actions
                     )

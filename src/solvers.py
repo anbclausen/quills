@@ -101,7 +101,6 @@ class Solver(ABC):
         end = time.time()
 
         elapsed = end - start
-        print(f"Elapsed time: {elapsed}s")
         
         no_solution_produced = not os.path.exists(output_file) and not os.path.exists(f"{output_file}.1")
 
