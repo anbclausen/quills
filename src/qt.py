@@ -108,7 +108,9 @@ print(f"'{args.model}': {synthesizer.description}")
 print()
 
 print(f"{BOLD_START}SOLVER{BOLD_END}")
-print(f"'{args.solver}': {solver.description}")
+print(
+    f"'{args.solver}' ({'optimal' if solver.solver_class == OPTIMAL else 'satisfying'}): {solver.description}"
+)
 print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
