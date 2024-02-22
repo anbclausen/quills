@@ -39,6 +39,7 @@ class SolverTimeout(SolverOutput):
 class Solver(ABC):
     solver_class: str
     description: str = "No description."
+    accepts_conditional: bool
 
     @abstractmethod
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
@@ -96,7 +97,8 @@ class Solver(ABC):
         )
         start = time.time()
         try:
-            subprocess.run(command.split(), timeout=time_limit_s, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            #subprocess.run(command.split(), timeout=time_limit_s, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            subprocess.run(command.split(), timeout=time_limit_s)
         except subprocess.TimeoutExpired:
             return SolverTimeout(), time_limit_s
         end = time.time()
@@ -122,6 +124,7 @@ class Solver(ABC):
 class M_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
     description = "The (M) Madagascar sequential planner is a SAT-based planner with geometric rates and linear horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"M -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -134,6 +137,7 @@ class M_SEQUENTIAL_PLANS(Solver):
 class M_FORALL_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (M) Madagascar parallel (∀-step) planner is a SAT-based planner with geometric rates and linear horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"M -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -148,6 +152,7 @@ class M_FORALL_STEPS(Solver):
 class M_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (M) Madagascar parallel (∃-step) planner is a SAT-based planner with geometric rates and linear horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"M -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -163,6 +168,7 @@ class M_EXISTS_STEPS(Solver):
 class MpC_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
     description = "The (MpC) Madagascar sequential planner is a SAT-based planner with constant rates and exponential horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"MpC -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -176,6 +182,7 @@ class MpC_SEQUENTIAL_PLANS(Solver):
 class MpC_FORALL_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (MpC) Madagascar parallel (∀-step) planner is a SAT-based planner with constant rates and exponential horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"MpC -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -191,6 +198,7 @@ class MpC_FORALL_STEPS(Solver):
 class MpC_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (MpC) Madagascar parallel (∃-step) planner is a SAT-based planner with constant rates and exponential horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"MpC -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
@@ -206,6 +214,7 @@ class MpC_EXISTS_STEPS(Solver):
 class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
     solver_class = OPTIMAL
     description = "The Fast-Downward Merge and Shrink planner.\nSource: https://www.fast-downward.org"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f'fast-downward.py --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(merge_and_shrink(merge_strategy=merge_precomputed(merge_tree=linear(variable_order=reverse_level)),shrink_strategy=shrink_bisimulation(greedy=true),label_reduction=exact(before_shrinking=true,before_merging=false),max_states=infinity,threshold_before_merge=1))'
@@ -222,6 +231,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
 class FAST_DOWNWARD_LAMA_FIRST(Solver):
     solver_class = SATISFYING
     description = "The Fast-Downward Lama First planner.\nSource: https://www.fast-downward.org"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
@@ -237,6 +247,7 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
 class FAST_DOWNWARD_LAMA(Solver):
     solver_class = SATISFYING
     description = "The Fast-Downward Lama planner.\nSource: https://www.fast-downward.org"
+    accepts_conditional = True
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias lama --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
@@ -252,6 +263,7 @@ class FAST_DOWNWARD_LAMA(Solver):
 class FAST_DOWNWARD_BJOLP(Solver):
     solver_class = OPTIMAL
     description = "The Fast-Downward BJOLP planner.\nSource: https://www.fast-downward.org"
+    accepts_conditional = False
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f"fast-downward.py --alias seq-opt-bjolp --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
@@ -267,6 +279,7 @@ class FAST_DOWNWARD_BJOLP(Solver):
 class SCORPION(Solver):
     solver_class = OPTIMAL
     description = "The Scorpion 2023 planner.\nSource: https://github.com/ipc2023-classical/planner25"
+    accepts_conditional = False
 
     def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
         return f'python /dependencies/scorpion/fast-downward.py --transform-task preprocess-h2 --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))'

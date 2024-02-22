@@ -11,6 +11,7 @@ from configs import (
     platforms,
     solvers,
     OPTIMAL_SYNTHESIZERS,
+    CONDITIONAL_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
 
@@ -85,6 +86,11 @@ optimal_planner = args.model in OPTIMAL_SYNTHESIZERS
 if optimal_planner and solver.solver_class != OPTIMAL:
     raise ValueError(
         f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal"
+    )
+uses_conditionals = args.model in CONDITIONAL_SYNTHESIZERS
+if uses_conditionals and not solver.accepts_conditional:
+    raise ValueError(
+        f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those"
     )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
