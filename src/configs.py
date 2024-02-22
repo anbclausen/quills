@@ -13,6 +13,9 @@ from synthesizers.gl_incr_irv1_planning import (
 from synthesizers.gl_incr_irv2_planning import (
     GlobalClockIncrementalIrV2PlanningSynthesizer,
 )
+from synthesizers.gl_incr_irv3_planning import (
+    GlobalClockIncrementalIrV3PlanningSynthesizer,
+)
 
 from platforms import TOY, TENERIFE, Platform
 
@@ -32,7 +35,8 @@ from solvers import (
 )
 
 DEFAULT_TIME_LIMIT_S = 1800
-OPTIMAL_SYNTHESIZERS = ["plan_opt"]
+OPTIMAL_SYNTHESIZERS = ["plan_opt", "plan_opt_v2"]
+CONDITIONAL_SYNTHESIZERS = ["plan_opt_v2", "plan_incr_gc_irv3"]
 
 
 synthesizers: dict[str, Synthesizer] = {
@@ -42,6 +46,7 @@ synthesizers: dict[str, Synthesizer] = {
     "plan_incr_gc": GlobalClockIncrementalPlanningSynthesizer(),
     "plan_incr_gc_irv1": GlobalClockIncrementalIrV1PlanningSynthesizer(),
     "plan_incr_gc_irv2": GlobalClockIncrementalIrV2PlanningSynthesizer(),
+    "plan_incr_gc_irv3": GlobalClockIncrementalIrV3PlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {
