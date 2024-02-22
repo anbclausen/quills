@@ -329,9 +329,7 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
 
             time_left = int(time_limit_s - total_time)
             min_plan_length = depth + logical_circuit.size()
-            max_plan_length = (
-                depth + logical_circuit.num_qubits * depth
-            )
+            max_plan_length = depth + logical_circuit.num_qubits * depth
             solution, time_taken = solver.solve(
                 domain, problem, time_left, min_plan_length, max_plan_length
             )
