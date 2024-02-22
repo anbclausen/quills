@@ -15,6 +15,8 @@ from solvers import Solver, SolverSolution, SolverTimeout, SolverNoSolution
 
 
 class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
+    description = "Incremental synthesizer based on planning building each depth iteratively. V3: This version uses conditional effects and forall quantifiers to get rid of swap dummies."
+
     def create_instance(
         self,
         circuit: QuantumCircuit,
@@ -117,6 +119,7 @@ class GlobalClockIncrementalIrV3PlanningSynthesizer(Synthesizer):
         @PDDLAction()
         def advance(d1: depth, d2: depth):
             preconditions = [next_depth(d1, d2), clock(d1)]
+
             def advance_busy(l: lqubit):
                 return [when([busy(l)], [not_(busy(l)), idle(l)])]
 
