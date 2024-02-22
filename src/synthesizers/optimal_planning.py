@@ -336,7 +336,7 @@ class OptimalPlanningSynthesizer(Synthesizer):
         max_plan_length = (
             logical_circuit.num_qubits * maximum_depth
         )
-        solution, time_taken = solver.solve(domain, problem, time_limit_s, min_plan_length, max_plan_length)
+        solution, total_time = solver.solve(domain, problem, time_limit_s, min_plan_length, max_plan_length)
 
         match solution:
             case SolverTimeout():
