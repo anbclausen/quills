@@ -165,3 +165,8 @@ if isinstance(output, SynthesizerSolution):
     Simulator.simulate(circ, platform, shots, "nonopt")
     circ = QuantumCircuit.from_qasm_file("benchmarks/opt_depth.qasm")
     Simulator.simulate(circ, platform, shots, "opt")
+
+    circ = QuantumCircuit.from_qasm_file("benchmarks/toy_example.qasm")
+    Simulator.simulate(circ, platform, shots, "toy_noise")
+    circ = QuantumCircuit.from_qasm_file("benchmarks/toy_example.qasm")
+    Simulator.simulate(circ, platform, shots, "toy", withNoise=False)

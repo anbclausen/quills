@@ -9,7 +9,7 @@ from platforms import Platform
 class Simulator:
 
     @staticmethod
-    def simulate(circuit: QuantumCircuit, platform: Platform, shots: int, filename: str):
+    def simulate(circuit: QuantumCircuit, platform: Platform, shots: int, filename: str, withNoise=True):
         # Error probabilities
         prob_1 = 0.001  # 1-qubit gate
         prob_2 = 0.01   # 2-qubit gate
@@ -30,6 +30,9 @@ class Simulator:
         coupling_map = CouplingMap(couplinglist=list(platform.connectivity_graph))
 
         circuit.measure_all()
+
+        if not withNoise:
+            noise_model = None
 
         # Perform a noise simulation
         backend = AerSimulator(noise_model=noise_model,
