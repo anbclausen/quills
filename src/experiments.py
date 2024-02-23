@@ -27,6 +27,8 @@ EXPERIMENTS = [
 
 def print_and_write_to_file(line: str):
     print(line)
+    if not os.path.exists("tmp"):
+        os.makedirs("tmp")
     with open(OUTPUT_FILE, "a") as f:
         f.write(line + "\n")
 
