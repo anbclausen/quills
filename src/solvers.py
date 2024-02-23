@@ -129,7 +129,8 @@ class Solver(ABC):
             return SolverTimeout(), time_limit_s
         except KeyboardInterrupt:
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-            return SolverNoSolution(), time_limit_s
+            p.wait()
+            raise KeyboardInterrupt
         end = time.time()
 
         elapsed = end - start
