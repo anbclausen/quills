@@ -8,7 +8,13 @@ from synthesizers.synthesizer import (
     SynthesizerTimeout,
 )
 from solvers import SATISFYING
-from configs import synthesizers, platforms, solvers, OPTIMAL_SYNTHESIZERS
+from configs import (
+    synthesizers,
+    platforms,
+    solvers,
+    OPTIMAL_SYNTHESIZERS,
+    CONDITIONAL_SYNTHESIZERS,
+)
 from datetime import datetime
 
 EXPERIMENT_TIME_LIMIT_S = 30
@@ -43,7 +49,15 @@ for synthesizer in synthesizers:
             and solvers[solver].solver_class == SATISFYING
         )
 
-        if not optimal_synthesizer_and_satisfying_solver:
+        conditional_synthesizer_and_non_conditional_solver = (
+            synthesizer in CONDITIONAL_SYNTHESIZERS
+            and not solvers[solver].accepts_conditional
+        )
+
+        if (
+            not optimal_synthesizer_and_satisfying_solver
+            and not conditional_synthesizer_and_non_conditional_solver
+        ):
             configurations.append((synthesizer, solver))
 
 for input_file, platform_name in EXPERIMENTS:
