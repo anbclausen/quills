@@ -70,6 +70,6 @@ solvers: dict[str, Solver] = {
     "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
     "fd_bjolp": FAST_DOWNWARD_BJOLP(),
     "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
-    "scorpion": SCORPION(),
+    # "scorpion": SCORPION(),
     "apx_novelty_tarski": ApxNoveltyTarski(),
 }
