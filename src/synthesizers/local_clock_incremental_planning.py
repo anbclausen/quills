@@ -1,23 +1,13 @@
 from synthesizers.synthesizer import (
     Synthesizer,
     SynthesizerOutput,
-    SynthesizerNoSolution,
-    SynthesizerSolution,
-    SynthesizerTimeout,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
-    remove_all_non_cx_gates,
-    remove_intermediate_files,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
 from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
-from solvers import (
-    Solver,
-    SolverTimeout,
-    SolverNoSolution,
-    SolverSolution,
-)
+from solvers import Solver
 
 
 class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
@@ -27,10 +17,10 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
         self,
         circuit: QuantumCircuit,
         platform: Platform,
-        max_depth: int | None = None,
+        maximum_depth: int | None = None,
     ) -> PDDLInstance:
 
-        if max_depth == None:
+        if maximum_depth == None:
             raise ValueError(
                 "'max_depth' should always be given for incremental encodings"
             )
@@ -39,7 +29,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
         num_lqubits = circuit.num_qubits
         num_gates = circuit.size()
         # Added one to off-set that the last depth cannot have any gates
-        maximum_depth = max_depth + 1
+        maximum_depth = maximum_depth + 1
 
         class pqubit(object_):
             pass

@@ -10,19 +10,13 @@ from pddl import (
     PDDLInstance,
     PDDLAction,
     PDDLPredicate,
-    PDDLPredicateInstance,
     object_,
     not_,
     increase_cost,
     when,
     forall,
 )
-from solvers import (
-    Solver,
-    SolverSolution,
-    SolverTimeout,
-    SolverNoSolution,
-)
+from solvers import Solver
 
 
 class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):

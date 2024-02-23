@@ -85,6 +85,8 @@ class Solver(ABC):
         - `str`: Solution to the problem as a string output from the solver.
         - `float`: Time taken to solve the problem in seconds.
         """
+        time.sleep(1)
+
         if not os.path.exists(TMP_FOLDER):
             os.makedirs(TMP_FOLDER)
 
@@ -119,8 +121,8 @@ class Solver(ABC):
             subprocess.run(
                 command.split(),
                 timeout=time_limit_s,
-                #stderr=subprocess.DEVNULL,
-                #stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
             )
         except subprocess.TimeoutExpired:
             return SolverTimeout(), time_limit_s

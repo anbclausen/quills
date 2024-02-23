@@ -1,18 +1,13 @@
 from synthesizers.synthesizer import (
     Synthesizer,
-    SynthesizerTimeout,
-    SynthesizerNoSolution,
-    SynthesizerSolution,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
-    remove_all_non_cx_gates,
-    remove_intermediate_files,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
 from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_, when, forall
-from solvers import Solver, SolverSolution, SolverTimeout, SolverNoSolution
+from solvers import Solver
 
 
 class ConditionalIterativeIncrementalPlanningSynthesizer(Synthesizer):

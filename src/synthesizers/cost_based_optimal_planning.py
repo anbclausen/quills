@@ -1,23 +1,13 @@
 from synthesizers.synthesizer import (
     Synthesizer,
     SynthesizerOutput,
-    SynthesizerSolution,
-    SynthesizerTimeout,
-    SynthesizerNoSolution,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
-    remove_all_non_cx_gates,
-    remove_intermediate_files,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
 from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_, increase_cost
-from solvers import (
-    Solver,
-    SolverSolution,
-    SolverTimeout,
-    SolverNoSolution,
-)
+from solvers import Solver
 
 
 class CostBasedOptimalPlanningSynthesizer(Synthesizer):
