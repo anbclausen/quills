@@ -48,7 +48,6 @@ for synthesizer in synthesizers:
             synthesizer in OPTIMAL_SYNTHESIZERS
             and solvers[solver].solver_class == SATISFYING
         )
-
         conditional_synthesizer_and_non_conditional_solver = (
             synthesizer in CONDITIONAL_SYNTHESIZERS
             and not solvers[solver].accepts_conditional
@@ -61,7 +60,7 @@ for synthesizer in synthesizers:
             configurations.append((synthesizer, solver))
 
 for input_file, platform_name in EXPERIMENTS:
-    results: dict[tuple[str, str], float | Literal["NS", "TO"]] = {}
+    results: dict[tuple[str, str], tuple[int, int, float] | Literal["NS", "TO"]] = {}
     for synthesizer_name, solver_name in configurations:
         print_and_write_to_file(
             f"Running '{synthesizer_name}' on '{solver_name}' for 'benchmarks/{input_file}' on '{platform_name}'..."
@@ -80,24 +79,43 @@ for input_file, platform_name in EXPERIMENTS:
         )
         match experiment:
             case SynthesizerSolution(actions):
-                results[(synthesizer_name, solver_name)] = experiment.time
+                results[(synthesizer_name, solver_name)] = (
+                    experiment.depth,
+                    experiment.cx_depth,
+                    experiment.time,
+                )
             case SynthesizerNoSolution():
                 results[(synthesizer_name, solver_name)] = "NS"
             case SynthesizerTimeout():
                 results[(synthesizer_name, solver_name)] = "TO"
-        print_and_write_to_file(
-            f"  Done in {results[(synthesizer_name, solver_name)]}(s)."
-        )
+        result_string = ""
+        if results[(synthesizer_name, solver_name)] == "NS":
+            result_string = "  No solution found."
+        elif results[(synthesizer_name, solver_name)] == "TO":
+            result_string = "  Timeout."
+        else:
+            result = results[(synthesizer_name, solver_name)]
+            depth = result[0]
+            cx_depth = result[1]
+            time = result[2]
+            result_string = (
+                f"  Done in {time}(s). Found depth {depth} and CX depth {cx_depth}."
+            )
+        print_and_write_to_file(result_string)
     print_and_write_to_file(
         "##############################################################"
     )
     print_and_write_to_file(
-        f"Results for 'benchmarks/{input_file}' on '{platform_name}':"
+        f"Results for 'benchmarks/{input_file}' on '{platform_name}' (depth, CX depth, time):"
     )
-    for (synthesizer_name, solver_name), time in results.items():
-        time_str = time if isinstance(time, str) else f"{time:.3f}s"
+    for (synthesizer_name, solver_name), result in results.items():
+        result_str = (
+            result
+            if isinstance(result, str)
+            else f"{result[0]}, {result[1]}, {result[2]:.3f}s"
+        )
         print_and_write_to_file(
-            f"  '{synthesizer_name}' on '{solver_name}': {time_str}"
+            f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
         )
     print_and_write_to_file(
         "##############################################################"
