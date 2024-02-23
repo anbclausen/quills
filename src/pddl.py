@@ -167,14 +167,8 @@ class _PDDLAction:
             for type_, parameters in parameters_grouped_by_type.items()
         ]
 
-        parameters = (
-            f":parameters ({' '.join(parameters_with_type)})" if self.args != {} else ""
-        )
-        preconditions = (
-            f":precondition (and {" ".join(map(str, self.preconditions))})"
-            if self.preconditions != []
-            else ""
-        )
+        parameters = f":parameters ({' '.join(parameters_with_type)})"
+        preconditions = f":precondition (and {" ".join(map(str, self.preconditions))})"
 
         return f"""
     (:action {self.name}
