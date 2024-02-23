@@ -315,46 +315,14 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
         solver: Solver,
         time_limit_s: int,
     ) -> SynthesizerOutput:
-        remove_intermediate_files()
+        min_plan_length_lambda = lambda depth: logical_circuit.size()
+        max_plan_length_lambda = lambda depth: logical_circuit.num_qubits * depth
 
-        circuit_depth = logical_circuit.depth()
-        total_time = 0
-        print("Searching: ", end="")
-        for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
-            print(f"depth {depth}, ", end="", flush=True)
-            instance = self.create_instance(logical_circuit, platform, max_depth=depth)
-            domain, problem = instance.compile()
-
-            time_left = int(time_limit_s - total_time)
-            min_plan_length = logical_circuit.size()
-            max_plan_length = logical_circuit.num_qubits * depth
-            solution, time_taken = solver.solve(
-                domain, problem, time_left, min_plan_length, max_plan_length
-            )
-            total_time += time_taken
-
-            match solution:
-                case SolverTimeout():
-                    print()
-                    return SynthesizerTimeout()
-                case SolverNoSolution():
-                    continue
-                case SolverSolution(actions):
-                    print()
-                    physical_circuit, initial_mapping = self.parse_solution(
-                        logical_circuit, platform, actions
-                    )
-                    physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                        logical_circuit, platform, actions, swaps_as_cnots=True
-                    )
-                    depth = physical_circuit_with_cnots_as_swap.depth()
-                    physical_with_only_cnots = remove_all_non_cx_gates(
-                        physical_circuit_with_cnots_as_swap
-                    )
-                    cx_depth = physical_with_only_cnots.depth()
-                    return SynthesizerSolution(
-                        physical_circuit, initial_mapping, total_time, depth, cx_depth
-                    )
-                case _:
-                    raise ValueError(f"Unexpected solution: {solution}")
-        return SynthesizerNoSolution()
+        return super().synthesize_incremental(
+            logical_circuit,
+            platform,
+            solver,
+            time_limit_s,
+            min_plan_length_lambda,
+            max_plan_length_lambda,
+        )

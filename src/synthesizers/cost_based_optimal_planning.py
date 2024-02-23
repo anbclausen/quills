@@ -332,36 +332,16 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
         solver: Solver,
         time_limit_s: int,
     ) -> SynthesizerOutput:
-        remove_intermediate_files()
 
-        instance = self.create_instance(logical_circuit, platform)
-        domain, problem = instance.compile()
         min_plan_length = logical_circuit.size()
         maximum_depth = 4 * logical_circuit.size()
         max_plan_length = logical_circuit.num_qubits * maximum_depth
-        solution, total_time = solver.solve(
-            domain, problem, time_limit_s, min_plan_length, max_plan_length
-        )
 
-        match solution:
-            case SolverTimeout():
-                return SynthesizerTimeout()
-            case SolverNoSolution():
-                return SynthesizerNoSolution()
-            case SolverSolution(actions):
-                physical_circuit, initial_mapping = self.parse_solution(
-                    logical_circuit, platform, actions
-                )
-                physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                    logical_circuit, platform, actions, swaps_as_cnots=True
-                )
-                depth = physical_circuit_with_cnots_as_swap.depth()
-                physical_with_only_cnots = remove_all_non_cx_gates(
-                    physical_circuit_with_cnots_as_swap
-                )
-                cx_depth = physical_with_only_cnots.depth()
-                return SynthesizerSolution(
-                    physical_circuit, initial_mapping, total_time, depth, cx_depth
-                )
-            case _:
-                raise ValueError(f"Unexpected solution: {solution}")
+        return super().synthesize_optimal(
+            logical_circuit,
+            platform,
+            solver,
+            time_limit_s,
+            min_plan_length,
+            max_plan_length,
+        )
