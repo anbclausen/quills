@@ -123,6 +123,7 @@ print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
     f"Synthesizing... ",
     end="",
+    flush=True,
 )
 output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
 print(output)
