@@ -22,8 +22,9 @@ class OutputChecker:
         Otherwise returns False.
 
         First splits the lists of output gates for each qubit whenever there is a
-        binary gate in the list. Each list starts with a binary gate, except for the
-        first. Also does connectivity checks for binary gates in this stage.
+        binary gate in the list. Each list starts with a binary gate, except for
+        (maybe) the first. Also does connectivity checks for binary gates in this
+        stage.
 
         Then remakes the lists without SWAPs by iteratively processing the first list
         for each qubit and ensuring that binary gates are kept in sync. Unary gates are
@@ -48,13 +49,6 @@ class OutputChecker:
             PhysicalQubit(line): gates
             for line, gates in line_gate_mapping(output_circuit).items()
         }
-
-        # print(f"input:")
-        # for q, gates in input_line_gates.items():
-        #     print(f"{q}: {gates}")
-        # print(f"output:")
-        # for p, gates in output_line_gates.items():
-        #     print(f"{p}: {list(map(operator.itemgetter(1), gates))}")
 
         # split each list of gates whenever there is a binary gate
         output_line_gates_split: dict[PhysicalQubit, list[list[tuple[int, str]]]] = {
@@ -107,6 +101,7 @@ class OutputChecker:
                 gate_list = first_lists[line]
                 if gate_list:
                     first_gate_num, first_gate_name = gate_list[0]
+                    # check whether the first gate is binary
                     if first_gate_name == "swap" or first_gate_name.startswith("cx"):
                         # check whether the other side of the gate is ready
                         if first_gate_num in waiting.keys():
@@ -125,6 +120,7 @@ class OutputChecker:
                                     output_line_gates_split[line] = tmp
 
                                     # append the gates (without the SWAP) to the correct lists
+                                    # the correct lists are the opposite of where they came from
                                     output_line_gates_no_swaps[other_line].extend(
                                         gate_list[1:]
                                     )
@@ -132,8 +128,9 @@ class OutputChecker:
                                         other_gate_list[1:]
                                     )
                                 else:
-                                    # first gate is CX
+                                    # first gate is not SWAP, so it is CX
                                     # append the gates to the correct lists
+                                    # the correct lists are the same as where they came from
                                     output_line_gates_no_swaps[line].extend(gate_list)
                                     output_line_gates_no_swaps[other_line].extend(
                                         other_gate_list
@@ -163,7 +160,7 @@ class OutputChecker:
                             1:
                         ]
                 else:
-                    # this was a binary gate that someone else was waiting for
+                    # this was a binary gate that someone else was waiting for - skip it
                     pass
 
             # update first_lists for next round
@@ -172,10 +169,6 @@ class OutputChecker:
                 for line, gate_lists in output_line_gates_split.items()
                 if len(gate_lists) > 0
             }
-
-        # print(f"swaps removed:")
-        # for p, gates in output_line_gates_no_swaps.items():
-        #     print(f"{p}: {list(map(operator.itemgetter(1), gates))}")
 
         # now check for equivalence with the input
         for line, gates in input_line_gates.items():
@@ -209,9 +202,11 @@ class OutputChecker:
                     success = False
                 if not success:
                     print("Wrong output gate found")
-                    print("These gates should be identical:")
-                    print(f"Input line: {line}, gate {i}: {gate_name}")
-                    print(f"Output line: {mapped_line}, gate {i}: {output_gate_name}")
+                    print(f"These lists of gates should be identical (problem encountered at gate {i}):")
+                    print(f"Input line: {line}")
+                    print(gates)
+                    print(f"Output line: {mapped_line}")
+                    print(mapped_line_gates)
                     return False
 
         # nothing wrong was found, so the circuits are equivalent
