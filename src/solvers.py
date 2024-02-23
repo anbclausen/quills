@@ -119,8 +119,8 @@ class Solver(ABC):
             subprocess.run(
                 command.split(),
                 timeout=time_limit_s,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
+                #stderr=subprocess.DEVNULL,
+                #stdout=subprocess.DEVNULL,
             )
         except subprocess.TimeoutExpired:
             return SolverTimeout(), time_limit_s
@@ -434,7 +434,8 @@ class SCORPION(Solver):
         min_plan_length: int,
         max_plan_length: int,
     ) -> str:
-        return f"python /dependencies/scorpion/fast-downward.py --transform-task preprocess-h2 --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))"
+        preprocess_timelimit = max(int(int(time_limit_s) / 3), 1)
+        return f"python /dependencies/scorpion/fast-downward.py --transform-task /dependencies/scorpion/builds/release/bin/preprocess-h2 --transform-task-options h2_time_limit,{preprocess_timelimit} --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
