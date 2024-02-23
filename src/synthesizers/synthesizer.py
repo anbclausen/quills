@@ -1,9 +1,10 @@
 import os
 
 from abc import ABC, abstractmethod
+from typing import Callable
 from qiskit import QuantumCircuit, QuantumRegister
 from platforms import Platform
-from solvers import Solver
+from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from pddl import PDDLInstance
 
 
@@ -213,6 +214,103 @@ class Synthesizer(ABC):
         - `float`: Time taken to synthesize the physical circuit.
         """
         pass
+
+    def synthesize_optimal(
+        self,
+        logical_circuit: QuantumCircuit,
+        platform: Platform,
+        solver: Solver,
+        time_limit_s: int,
+        min_plan_length: int,
+        max_plan_length: int,
+    ) -> SynthesizerOutput:
+
+        remove_intermediate_files()
+
+        instance = self.create_instance(logical_circuit, platform)
+        domain, problem = instance.compile()
+        solution, total_time = solver.solve(
+            domain, problem, time_limit_s, min_plan_length, max_plan_length
+        )
+
+        match solution:
+            case SolverTimeout():
+                return SynthesizerTimeout()
+            case SolverNoSolution():
+                return SynthesizerNoSolution()
+            case SolverSolution(actions):
+                physical_circuit, initial_mapping = self.parse_solution(
+                    logical_circuit, platform, actions
+                )
+                physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
+                    logical_circuit, platform, actions, swaps_as_cnots=True
+                )
+                depth = physical_circuit_with_cnots_as_swap.depth()
+                physical_with_only_cnots = remove_all_non_cx_gates(
+                    physical_circuit_with_cnots_as_swap
+                )
+                cx_depth = physical_with_only_cnots.depth()
+                return SynthesizerSolution(
+                    physical_circuit, initial_mapping, total_time, depth, cx_depth
+                )
+            case _:
+                raise ValueError(f"Unexpected solution: {solution}")
+
+    def synthesize_incremental(
+        self,
+        logical_circuit: QuantumCircuit,
+        platform: Platform,
+        solver: Solver,
+        time_limit_s: int,
+        min_plan_length_lambda: Callable[[int], int],
+        max_plan_length_lambda: Callable[[int], int],
+    ) -> SynthesizerOutput:
+
+        remove_intermediate_files()
+
+        circuit_depth = logical_circuit.depth()
+        total_time = 0
+        print("Searching: ", end="")
+        for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
+            print(f"depth {depth}, ", end="", flush=True)
+            instance = self.create_instance(
+                logical_circuit, platform, maximum_depth=depth
+            )
+            domain, problem = instance.compile()
+
+            time_left = int(time_limit_s - total_time)
+            min_plan_length = min_plan_length_lambda(depth)
+            max_plan_length = max_plan_length_lambda(depth)
+            solution, time_taken = solver.solve(
+                domain, problem, time_left, min_plan_length, max_plan_length
+            )
+            total_time += time_taken
+
+            match solution:
+                case SolverTimeout():
+                    print()
+                    return SynthesizerTimeout()
+                case SolverNoSolution():
+                    continue
+                case SolverSolution(actions):
+                    print()
+                    physical_circuit, initial_mapping = self.parse_solution(
+                        logical_circuit, platform, actions
+                    )
+                    physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
+                        logical_circuit, platform, actions, swaps_as_cnots=True
+                    )
+                    depth = physical_circuit_with_cnots_as_swap.depth()
+                    physical_with_only_cnots = remove_all_non_cx_gates(
+                        physical_circuit_with_cnots_as_swap
+                    )
+                    cx_depth = physical_with_only_cnots.depth()
+                    return SynthesizerSolution(
+                        physical_circuit, initial_mapping, total_time, depth, cx_depth
+                    )
+                case _:
+                    raise ValueError(f"Unexpected solution: {solution}")
+        return SynthesizerNoSolution()
 
 
 def gate_line_dependency_mapping(
