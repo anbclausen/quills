@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+import signal
 
 from abc import ABC, abstractmethod
 
@@ -118,14 +119,19 @@ class Solver(ABC):
         )
         start = time.time()
         try:
-            subprocess.run(
-                command.split(),
-                timeout=time_limit_s,
+            p = subprocess.Popen(
+                command.split(), 
+                start_new_session=True, 
+                stdout=subprocess.DEVNULL, 
                 stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
+            p.wait(timeout=time_limit_s)
         except subprocess.TimeoutExpired:
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             return SolverTimeout(), time_limit_s
+        except KeyboardInterrupt:
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            return SolverNoSolution(), time_limit_s
         end = time.time()
 
         elapsed = end - start
