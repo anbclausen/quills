@@ -41,6 +41,3 @@ ENV PYTHONPATH="${PYTHONPATH}:/workspaces/qt/src"
 # Make Madagascar executable
 RUN chmod +x M
 RUN chmod +x MpC
-
-# Install mqt.qcec since poetry wont :(
-RUN poetry run pip install mqt.qcec
