@@ -7,6 +7,7 @@ from synthesizers.synthesizer import (
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
     remove_all_non_cx_gates,
+    remove_intermediate_files,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
@@ -331,6 +332,8 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
         solver: Solver,
         time_limit_s: int,
     ) -> SynthesizerOutput:
+        remove_intermediate_files()
+
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
         min_plan_length = logical_circuit.size()

@@ -7,6 +7,7 @@ from synthesizers.synthesizer import (
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
     remove_all_non_cx_gates,
+    remove_intermediate_files,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
@@ -319,6 +320,8 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
         solver: Solver,
         time_limit_s: int,
     ) -> SynthesizerOutput:
+        remove_intermediate_files()
+
         circuit_depth = logical_circuit.depth()
         total_time = 0
         print("Searching: ", end="")

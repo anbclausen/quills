@@ -1,3 +1,5 @@
+import os
+
 from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit, QuantumRegister
 from platforms import Platform
@@ -360,3 +362,13 @@ def line_gate_mapping(
             mapping[line].append((gate, gate_name))
 
     return mapping
+
+
+def remove_intermediate_files():
+    sas_file_exists = os.path.exists("output.sas")
+    if sas_file_exists:
+        os.remove("output.sas")
+
+    execution_file_exists = os.path.exists("execution.details")
+    if execution_file_exists:
+        os.remove("execution.details")
