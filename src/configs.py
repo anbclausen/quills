@@ -34,6 +34,7 @@ from solvers import (
     FAST_DOWNWARD_BJOLP,
     FAST_DOWNWARD_LM_CUT,
     SCORPION,
+    ApxNoveltyTarski,
     Solver,
 )
 
@@ -70,4 +71,5 @@ solvers: dict[str, Solver] = {
     "fd_bjolp": FAST_DOWNWARD_BJOLP(),
     "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
     "scorpion": SCORPION(),
+    "apx_novelty_tarski": ApxNoveltyTarski(),
 }

@@ -177,3 +177,5 @@ pyrightconfig.json
 
 tmp/
 output.sas
+
+execution.details

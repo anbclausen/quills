@@ -100,10 +100,6 @@ class Solver(ABC):
         if alternative_output_file_exists:
             os.remove(f"{output_file}.1")
 
-        sas_file_exists = os.path.exists("output.sas")
-        if sas_file_exists:
-            os.remove("output.sas")
-
         with open(domain_file, "w") as f:
             f.write(domain)
 
@@ -444,6 +440,32 @@ class SCORPION(Solver):
         lines = solution.strip().split("\n")
         without_cost_line = lines[:-1]
         without_parentheses = [line[1:-1] for line in without_cost_line]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [
+            f"{parts[0]}({','.join([p for p in parts[1:]])})"
+            for parts in actions_as_parts
+        ]
+        return actions
+
+class ApxNoveltyTarski(Solver):
+    solver_class = SATISFYING
+    description = "The ApxNoveltyTarski planner.\nSource: https://github.com/ipc2023-classical/planner29"
+    accepts_conditional = True
+
+    def command(
+        self,
+        domain: str,
+        problem: str,
+        output: str,
+        time_limit_s: str,
+        min_plan_length: int,
+        max_plan_length: int,
+    ) -> str:
+        return f"lapkt.py Approximate_BFWS --grounder Tarski --plan_file {output} -d {domain} -p {problem}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        without_parentheses = [line[1:-1] for line in lines]
         actions_as_parts = [line.split(" ") for line in without_parentheses]
         actions = [
             f"{parts[0]}({','.join([p for p in parts[1:]])})"
