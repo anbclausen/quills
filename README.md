@@ -55,3 +55,11 @@ To run all combinations of the synthesizer model and solver on all experiments, 
 ```
 
 Output will be written to terminal and to `tmp/experiments.txt`.
+
+## Temporal Planning
+
+As of now, `tflap` is the only installed temporal planner. Run example with
+
+```
+tflap temporal_test/domain.pddl temporal_test/problem.pddl temporal_test/output.txt
+```
