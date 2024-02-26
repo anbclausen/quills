@@ -38,6 +38,8 @@ from solvers import (
     FAST_DOWNWARD_LM_CUT,
     SCORPION,
     ApxNoveltyTarski,
+    TFLAP,
+    TFLAPGrounded,
     Solver,
 )
 
@@ -76,4 +78,6 @@ solvers: dict[str, Solver] = {
     "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
     "scorpion": SCORPION(),
     "apx_novelty_tarski": ApxNoveltyTarski(),
+    "tflap": TFLAP(),
+    "tflap_grounded": TFLAPGrounded(),
 }

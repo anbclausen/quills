@@ -9,6 +9,7 @@ TMP_FOLDER = "tmp"
 
 OPTIMAL = "optimal"
 SATISFYING = "satisfying"
+TEMPORAL = "temporal"
 
 
 class SolverOutput:
@@ -520,6 +521,68 @@ class ApxNoveltyTarski(Solver):
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
         without_parentheses = [line[1:-1] for line in lines]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [
+            f"{parts[0]}({','.join([p for p in parts[1:]])})"
+            for parts in actions_as_parts
+        ]
+        return actions
+
+class TFLAP(Solver):
+    solver_class = TEMPORAL
+    description = "The TFLAP temporal planner.\nSource: https://bitbucket.org/ipc2018-temporal/team2.git"
+    accepts_conditional = False
+
+    def command(
+        self,
+        domain: str,
+        problem: str,
+        output: str,
+        time_limit_s: str,
+        min_plan_length: int,
+        max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
+    ) -> str:
+        return f"tflap {domain} {problem} {output}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        without_metadata = lines[:-5]
+        without_timestamp = [line.split(": ")[1] for line in without_metadata]
+        without_cost = [line.split(" [")[0] for line in without_timestamp]
+        without_parentheses = [line[1:-1] for line in without_cost]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [
+            f"{parts[0]}({','.join([p for p in parts[1:]])})"
+            for parts in actions_as_parts
+        ]
+        return actions
+
+class TFLAPGrounded(Solver):
+    solver_class = TEMPORAL
+    description = "The TFLAP temporal planner.\nSource: https://bitbucket.org/ipc2018-temporal/team2.git"
+    accepts_conditional = False
+
+    def command(
+        self,
+        domain: str,
+        problem: str,
+        output: str,
+        time_limit_s: str,
+        min_plan_length: int,
+        max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
+    ) -> str:
+        return f"tflap {domain} {problem} {output} -ground"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        without_metadata = lines[:-5]
+        without_timestamp = [line.split(": ")[1] for line in without_metadata]
+        without_cost = [line.split(" [")[0] for line in without_timestamp]
+        without_parentheses = [line[1:-1] for line in without_cost]
         actions_as_parts = [line.split(" ") for line in without_parentheses]
         actions = [
             f"{parts[0]}({','.join([p for p in parts[1:]])})"
