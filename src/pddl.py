@@ -202,6 +202,7 @@ class PDDLInstance:
         goal_state: list[PDDLPredicateInstance] = [],
         actions: list[_PDDLAction] = [],
         cost_function: bool = False,
+        negative_preconditions: bool = True,
     ):
         self.domain = "Quantum"
         self.problem = "circuit"
@@ -213,6 +214,7 @@ class PDDLInstance:
         self.goal_state = goal_state
         self.actions = actions
         self.cost_function = cost_function
+        self.negative_preconditions = negative_preconditions
 
     def compile(self) -> tuple[str, str]:
         object_grouped_by_type: dict[str, list[PDDLType]] = {}
@@ -285,7 +287,7 @@ class PDDLInstance:
 
         domain = f"""
 (define (domain {self.domain})
-    (:requirements :strips :typing :negative-preconditions {":action-costs" if self.cost_function else ""})
+    (:requirements :strips :typing {":negative-preconditions" if self.negative_preconditions else ""} {":action-costs" if self.cost_function else ""})
     (:types
         {"\n        ".join(type_strings)}
     )
