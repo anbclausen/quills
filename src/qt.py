@@ -84,17 +84,20 @@ print()
 optimal_planner = args.model in OPTIMAL_SYNTHESIZERS
 if optimal_planner and solver.solver_class != OPTIMAL:
     raise ValueError(
-        f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal"
+        f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal.\n"
+        f"Please choose one of the following optimal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == OPTIMAL)}"
     )
 uses_conditionals = args.model in CONDITIONAL_SYNTHESIZERS
 if uses_conditionals and not solver.accepts_conditional:
     raise ValueError(
-        f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those"
+        f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
+        f"Please choose one of the following solvers: {', '.join(s for s in solvers if solvers[s].accepts_conditional)}"
     )
 uses_temporal = args.model in TEMPORAL_SYNTHESIZERS
 if uses_temporal and solver.solver_class != TEMPORAL:
     raise ValueError(
-        f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal"
+        f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal.\n"
+        f"Please choose one of the following temporal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == TEMPORAL)}"
     )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
