@@ -18,7 +18,7 @@ from pddl import (
 from solvers import Solver
 
 
-class CostBasedOptimalPlanningSynthesizer(Synthesizer):
+class TemporalOptimalPlanningSynthesizer(Synthesizer):
     description = "Optimal synthesizer based on temporal planning."
 
     def create_instance(
