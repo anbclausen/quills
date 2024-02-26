@@ -56,7 +56,14 @@ class Solver(ABC):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
+        """
+        `min_plan_length` and `max_plan_length` are the minimum and maximum plan lengths, respectively.
+
+        Parallel plans solvers also accept `min_layers` and `max_layers` as the minimum and maximum number of layers (parallel actions) to take.
+        """
         pass
 
     @abstractmethod
@@ -70,6 +77,8 @@ class Solver(ABC):
         time_limit_s: int,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> tuple[SolverOutput, float]:
         """
         Solve a problem.
@@ -80,6 +89,8 @@ class Solver(ABC):
         - time_limit_s (`int`): Time limit in seconds.
         - min_plan_length (`int`): Minimum plan length.
         - max_plan_length (`int`): Maximum plan length.
+        - min_layers (`int`): Minimum number of layers (parallel actions) to take.
+        - max_layers (`int`): Maximum number of layers (parallel actions) to take.
 
         Returns
         --------
@@ -114,6 +125,8 @@ class Solver(ABC):
             str(time_limit_s + 100),
             min_plan_length,
             max_plan_length,
+            min_layers,
+            max_layers,
         )
         start = time.time()
         try:
@@ -188,8 +201,10 @@ class M_FORALL_STEPS(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
-        return f"M -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
+        return f"M -P 1 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -212,8 +227,10 @@ class M_EXISTS_STEPS(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
-        return f"M -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
+        return f"M -P 2 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -236,6 +253,8 @@ class MpC_SEQUENTIAL_PLANS(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"MpC -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
 
@@ -258,8 +277,10 @@ class MpC_FORALL_STEPS(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
-        return f"MpC -P 1 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
+        return f"MpC -P 1 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -282,8 +303,10 @@ class MpC_EXISTS_STEPS(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
-        return f"MpC -P 2 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
+        return f"MpC -P 2 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -306,6 +329,8 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"fast-downward.py --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(merge_and_shrink(merge_strategy=merge_precomputed(merge_tree=linear(variable_order=reverse_level)),shrink_strategy=shrink_bisimulation(greedy=true),label_reduction=exact(before_shrinking=true,before_merging=false),max_states=infinity,threshold_before_merge=1))"
 
@@ -336,6 +361,8 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
@@ -366,6 +393,8 @@ class FAST_DOWNWARD_LAMA(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"fast-downward.py --alias lama --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
@@ -396,6 +425,8 @@ class FAST_DOWNWARD_BJOLP(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"fast-downward.py --alias seq-opt-bjolp --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
@@ -415,7 +446,16 @@ class FAST_DOWNWARD_LM_CUT(Solver):
     description = "The Fast-Downward LM Cut planner.\nSource: https://www.fast-downward.org"
     accepts_conditional = False
 
-    def command(self, domain: str, problem: str, output: str, time_limit_s: str, min_plan_length: int, max_plan_length: int) -> str:
+    def command(
+        self, domain: str, 
+        problem: str, 
+        output: str, 
+        time_limit_s: str, 
+        min_plan_length: int, 
+        max_plan_length: int, 
+        min_layers: int, 
+        max_layers: int,
+    ) -> str:
         return f"fast-downward.py --alias seq-opt-lmcut --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
 
     def parse_actions(self, solution: str) -> list[str]:
@@ -440,6 +480,8 @@ class SCORPION(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         preprocess_timelimit = max(int(int(time_limit_s) / 3), 1)
         return f"python /dependencies/scorpion/fast-downward.py --transform-task /dependencies/scorpion/builds/release/bin/preprocess-h2 --transform-task-options h2_time_limit,{preprocess_timelimit} --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))"
@@ -468,6 +510,8 @@ class ApxNoveltyTarski(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"lapkt.py Approximate_BFWS --grounder Tarski --plan_file {output} -d {domain} -p {problem}"
 

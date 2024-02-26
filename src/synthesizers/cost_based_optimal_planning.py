@@ -334,4 +334,6 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
             time_limit_s,
             min_plan_length,
             max_plan_length,
+            min_plan_length,
+            max_plan_length,
         )

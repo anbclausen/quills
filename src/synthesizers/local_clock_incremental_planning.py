@@ -307,6 +307,8 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
     ) -> SynthesizerOutput:
         min_plan_length_lambda = lambda depth: logical_circuit.size()
         max_plan_length_lambda = lambda depth: logical_circuit.num_qubits * depth
+        min_layers_lambda = lambda depth: depth
+        max_layers_lambda = lambda depth: depth
 
         return super().synthesize_incremental(
             logical_circuit,
@@ -315,4 +317,6 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
             time_limit_s,
             min_plan_length_lambda,
             max_plan_length_lambda,
+            min_layers_lambda,
+            max_layers_lambda,
         )

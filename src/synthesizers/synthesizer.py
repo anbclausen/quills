@@ -223,6 +223,8 @@ class Synthesizer(ABC):
         time_limit_s: int,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> SynthesizerOutput:
 
         remove_intermediate_files()
@@ -230,7 +232,13 @@ class Synthesizer(ABC):
         instance = self.create_instance(logical_circuit, platform)
         domain, problem = instance.compile()
         solution, total_time = solver.solve(
-            domain, problem, time_limit_s, min_plan_length, max_plan_length
+            domain,
+            problem,
+            time_limit_s,
+            min_plan_length,
+            max_plan_length,
+            min_layers,
+            max_layers,
         )
 
         match solution:
@@ -264,6 +272,8 @@ class Synthesizer(ABC):
         time_limit_s: int,
         min_plan_length_lambda: Callable[[int], int],
         max_plan_length_lambda: Callable[[int], int],
+        min_layers_lambda: Callable[[int], int],
+        max_layers_lambda: Callable[[int], int],
     ) -> SynthesizerOutput:
 
         remove_intermediate_files()
@@ -281,8 +291,16 @@ class Synthesizer(ABC):
             time_left = int(time_limit_s - total_time)
             min_plan_length = min_plan_length_lambda(depth)
             max_plan_length = max_plan_length_lambda(depth)
+            min_layers = min_layers_lambda(depth)
+            max_layers = max_layers_lambda(depth)
             solution, time_taken = solver.solve(
-                domain, problem, time_left, min_plan_length, max_plan_length
+                domain,
+                problem,
+                time_left,
+                min_plan_length,
+                max_plan_length,
+                min_layers,
+                max_layers,
             )
             total_time += time_taken
 
