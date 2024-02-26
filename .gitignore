@@ -179,3 +179,5 @@ tmp/
 output.sas
 
 execution.details
+GroundedDomain.pddl
+GroundedProblem.pddl

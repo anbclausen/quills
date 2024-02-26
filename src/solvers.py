@@ -11,6 +11,30 @@ OPTIMAL = "optimal"
 SATISFYING = "satisfying"
 TEMPORAL = "temporal"
 
+OUTPUT_FILES = [
+    "tmp/output.txt",
+    "tmp/output.txt.1",
+    "tmp/output.txt.2",
+    "tmp/output.txt.3",
+    "tmp/output.txt.4",
+    "tmp/output.txt.5",
+    "tmp/output.txt.6",
+    "tmp/output.txt.7",
+    "tmp/output.txt.8",
+    "tmp/output.txt.9",
+    "tmp/output.txt.10",
+    "tmp/output.txt.11",
+    "tmp/output.txt.12",
+    "tmp/output.txt.13",
+    "tmp/output.txt.14",
+    "tmp/output.txt.15",
+    "tmp/output.txt.16",
+    "tmp/output.txt.17",
+    "tmp/output.txt.18",
+    "tmp/output.txt.19",
+    "tmp/output.txt.20",
+]
+
 
 class SolverOutput:
     def __init__(self) -> None:
@@ -105,13 +129,9 @@ class Solver(ABC):
         problem_file = os.path.join(TMP_FOLDER, "problem.pddl")
         output_file = os.path.join(TMP_FOLDER, "output.txt")
 
-        output_file_exists = os.path.exists(output_file)
-        if output_file_exists:
-            os.remove(output_file)
-
-        alternative_output_file_exists = os.path.exists(f"{output_file}.1")
-        if alternative_output_file_exists:
-            os.remove(f"{output_file}.1")
+        for output_file in OUTPUT_FILES:
+            if os.path.exists(output_file):
+                os.remove(output_file)
 
         with open(domain_file, "w") as f:
             f.write(domain)
@@ -122,7 +142,7 @@ class Solver(ABC):
         command = self.command(
             domain_file,
             problem_file,
-            output_file,
+            OUTPUT_FILES[0],
             str(time_limit_s + 100),
             min_plan_length,
             max_plan_length,
@@ -149,18 +169,16 @@ class Solver(ABC):
 
         elapsed = end - start
 
-        no_solution_produced = not os.path.exists(output_file) and not os.path.exists(
-            f"{output_file}.1"
+        solution_produced = any(
+            os.path.exists(output_file) for output_file in OUTPUT_FILES
         )
 
-        if no_solution_produced:
+        if not solution_produced:
             return SolverNoSolution(), elapsed
-
-        try:
-            with open(output_file, "r") as f:
-                solution = f.read()
-        except FileNotFoundError:
-            with open(f"{output_file}.1", "r") as f:
+        
+        # get latest output file
+        output_file = max(OUTPUT_FILES, key=lambda p: os.path.getctime(p) if os.path.exists(p) else 0)
+        with open(output_file, "r") as f:
                 solution = f.read()
 
         actions = self.parse_actions(solution)

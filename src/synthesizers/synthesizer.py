@@ -7,6 +7,13 @@ from platforms import Platform
 from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from pddl import PDDLInstance
 
+JUNK_FILES = [
+    "output.sas",
+    "execution.details",
+    "GroundedDomain.pddl",
+    "GroundedProblem.pddl",
+]
+
 
 class LogicalQubit:
     def __init__(self, id: int):
@@ -481,10 +488,7 @@ def line_gate_mapping(
 
 
 def remove_intermediate_files():
-    sas_file_exists = os.path.exists("output.sas")
-    if sas_file_exists:
-        os.remove("output.sas")
-
-    execution_file_exists = os.path.exists("execution.details")
-    if execution_file_exists:
-        os.remove("execution.details")
+    for file in JUNK_FILES:
+        file_exists = os.path.exists(file)
+        if file_exists:
+            os.remove(file)
