@@ -361,7 +361,7 @@ class IterativeIncrementalPlanningSynthesizer(Synthesizer):
         max_plan_length_lambda = (
             lambda depth: depth + logical_circuit.num_qubits * depth
         )
-        min_layers_lambda = lambda depth: depth
+        min_layers_lambda = lambda depth: 2 * depth
         max_layers_lambda = lambda depth: 2 * depth
 
         return super().synthesize_incremental(
