@@ -179,6 +179,8 @@ class M_SEQUENTIAL_PLANS(Solver):
         time_limit_s: str,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
     ) -> str:
         return f"M -P 0 -F {min_plan_length} -T {max_plan_length} -o {output} -t {time_limit_s} {domain} {problem}"
 
