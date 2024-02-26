@@ -1,9 +1,8 @@
 
 (define (domain Quantum)
-    (:requirements :strips :typing :durative-actions)
+    (:requirements :equality :typing :durative-actions)
     (:types
-        pqubit gate depth - object
-        lqubit - gate
+        pqubit gate lqubit - object
     )
     (:constants
         l0 l1 l2 l3 - lqubit
@@ -19,113 +18,103 @@
     
     (:durative-action swap
         :parameters (?l1 ?l2 - lqubit ?p1 ?p2 - pqubit)
-        :duration (= ?duration 4)
+        :duration (= ?duration 3)
         :condition (and 
-            (at start (and 
-                (mapped ?l1 ?p1) (mapped ?l2 ?p2)
-                (connected ?p1 ?p2) 
-                (free ?l1) (free ?l2)
-            ))
+            (at start (mapped ?l1 ?p1))
+            (at start (mapped ?l2 ?p2))
+            (at start (connected ?p1 ?p2))
+            (at start (free ?l1))
+            (at start (free ?l2))
         )
         :effect (and 
-            (at start (and 
-                (not (free ?l1)) (not (free ?l2))
-            ))
-            (at end (and 
-                (not (mapped ?l1 ?p1)) (not (mapped ?l2 ?p2)) 
-                (mapped ?l1 ?p2) (mapped ?l2 ?p1) 
-                (free ?l1) (free ?l2)
-            ))
+            (at start (not (free ?l1)))
+            (at start (not (free ?l2)))
+            (at end (not (mapped ?l1 ?p1))) 
+            (at end (not (mapped ?l2 ?p2)))
+            (at end (mapped ?l1 ?p2))
+            (at end (mapped ?l2 ?p1))
+            (at end (free ?l1))
+            (at end (free ?l2)) 
         )
     )
 
     (:durative-action apply_gate_g0
         :parameters (?p - pqubit)
-        :duration (= ?duration 2)
+        :duration (= ?duration 1)
         :condition (and 
-            (at start (and 
-                (not (done g0))
-                (not (occupied ?p))
-                (free l0)
-            ))
+            (at start (not (done g0)))
+            (at start (not (occupied ?p)))
+            (at start (free l0))
         )
         :effect (and 
-            (at start (and 
-                (not (free l0))
-            ))
-            (at end (and 
-                (done g0)
-                (occupied ?p)
-                (mapped l0 ?p)
-                (free l0)
-            ))
+            (at start (not (free l0)))
+            (at start (occupied ?p))
+            (at start (mapped l0 ?p))
+            (at end (done g0))
+            (at end (free l0))
         )
     )
     
     (:durative-action apply_cx_g1
         :parameters (?p1 ?p2 - pqubit)
-        :duration (= ?duration 2)
+        :duration (= ?duration 1)
         :condition (and 
-            (at start (and 
-                (not (done g1))
-                (connected ?p1 ?p2) 
-                (not (occupied ?p1)) (not (occupied ?p2))
-                (free l2) (free l3)
-            ))
+            (at start (not (done g1)))
+            (at start (connected ?p1 ?p2)) 
+            (at start (not (occupied ?p1)))
+            (at start (not (occupied ?p2)))
+            (at start (free l2))
+            (at start (free l3))
         )
         :effect (and 
-            (at start (and 
-                (not (free l2)) (not (free l3))
-            ))
-            (at end (and 
-                (done g1)
-                (occupied ?p1) (occupied ?p2)
-                (mapped l2 ?p1) (mapped l3 ?p2)
-                (free l2) (free l3)
-            ))
+            (at start (not (free l2)))
+            (at start (not (free l3)))
+            (at start (occupied ?p1))
+            (at start (occupied ?p2)) 
+            (at start (mapped l2 ?p1))
+            (at start (mapped l3 ?p2))
+            (at end (done g1)) 
+            (at end (free l2))
+            (at end (free l3))
         )
     )
     
     (:durative-action apply_cx_g2
         :parameters (?p1 ?p2 - pqubit)
-        :duration (= ?duration 2)
+        :duration (= ?duration 1)
         :condition (and 
-            (at start (and 
-                (not (done g2)) (done g0) 
-                (connected ?p1 ?p2)  
-                (mapped l0 ?p1) (not (occupied ?p2))
-                (free l0) (free l1)
-            ))
+            (at start (not (done g2)))
+            (at start (done g0))
+            (at start (connected ?p1 ?p2))
+            (at start (mapped l0 ?p1))
+            (at start (not (occupied ?p2)))
+            (at start (free l0))
+            (at start (free l1))
         )
         :effect (and 
-            (at start (and 
-                (not (free l0)) (not (free l1))
-            ))
-            (at end (and 
-                (done g2) (occupied ?p2) (mapped l1 ?p2)
-                (free l0) (free l1)
-            ))
+            (at start (not (free l0)))
+            (at start (not (free l1)))
+            (at start (occupied ?p2))
+            (at start (mapped l1 ?p2))
+            (at end (done g2))
+            (at end (free l0))
+            (at end (free l1))
         )
     )
     
     (:durative-action apply_gate_g3
         :parameters (?p - pqubit)
-        :duration (= ?duration 2)
+        :duration (= ?duration 1)
         :condition (and 
-            (at start (and 
-                (not (done g3)) (done g1)
-                (mapped l2 ?p)
-                (free l2)
-            ))
+            (at start (not (done g3)))
+            (at start (done g1))
+            (at start (mapped l2 ?p)) 
+            (at start (free l2))
         )
         :effect (and 
-            (at start (and 
-                (not (free l2))
-            ))
-            (at end (and 
-                (done g3)
-                (free l2)
-            ))
+            (at start (not (free l2)))
+            (at end (done g3))
+            (at end (free l2))
         )
     )
 )
