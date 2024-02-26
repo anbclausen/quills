@@ -191,6 +191,123 @@ def PDDLAction(
     return decorator
 
 
+def PDDLDurativePredicate(
+    type_: str | None = None,
+):
+    def decorator(function: Callable[[PDDLPredicateInstance], None]):
+        return _PDDLDurativePredicate(function, type_)
+
+    return decorator
+
+
+class PDDLDurativePredicateInstance:
+    def __init__(self, type_: str, predicate: PDDLPredicateInstance):
+        self.type_ = type_
+        self.predicate = predicate
+
+    def __str__(self) -> str:
+        return f"({self.type_} ({self.predicate}))"
+
+
+class _PDDLDurativePredicate:
+    def __init__(
+        self, function: Callable[[PDDLPredicateInstance], None], type_: str | None
+    ):
+        self.function = function
+        self.type_ = function.__name__ if type_ is None else type_
+
+    def __call__(
+        self, predicate: PDDLPredicateInstance
+    ) -> PDDLDurativePredicateInstance:
+        return PDDLDurativePredicateInstance(self.type_, predicate)
+
+
+@PDDLDurativePredicate(type_="at start")
+def at_start(predicate: PDDLPredicateInstance):
+    pass
+
+
+@PDDLDurativePredicate(type_="at end")
+def at_end(predicate: PDDLPredicateInstance):
+    pass
+
+
+@PDDLDurativePredicate(type_="over all")
+def over_all(predicate: PDDLPredicateInstance):
+    pass
+
+
+class _PDDLDurativeAction:
+    def __init__(
+        self,
+        function: Callable[
+            ...,
+            tuple[
+                int,
+                Sequence[PDDLDurativePredicateInstance],
+                Sequence[PDDLDurativePredicateInstance],
+            ],
+        ],
+        name: str | None,
+    ):
+        self.function = function
+        self.name = function.__name__ if name is None else name
+        self.args = {
+            name: class_.__name__ for name, class_ in function.__annotations__.items()
+        }
+        args = self.function.__annotations__
+
+        self.duration, self.conditions, self.effects = self.function(
+            *[type_(f"?{arg}") for arg, type_ in args.items()]
+        )
+
+    def __call__(self, *args):
+        return self.function(*args)
+
+    def __str__(self) -> str:
+        parameters_grouped_by_type: dict[str, list[str]] = {}
+        for arg, type_ in self.args.items():
+            if type_ not in parameters_grouped_by_type:
+                parameters_grouped_by_type[type_] = []
+            parameters_grouped_by_type[type_].append(f"?{arg}")
+
+        parameters_with_type = [
+            " ".join(parameters) + " - " + type_
+            for type_, parameters in parameters_grouped_by_type.items()
+        ]
+
+        parameters = f":parameters ({' '.join(parameters_with_type)})"
+        duration = f":duration (= ?duration {self.duration})"
+        conditions = f":condition (and {" ".join(map(str, self.conditions))})"
+        effects = f":effect (and {" ".join(map(str, self.effects))})"
+
+        return f"""
+    (:durative-action {self.name}
+        {parameters}
+        {duration}
+        {conditions}
+        {effects}
+    )"""
+
+
+def PDDLDurativeAction(
+    name: str | None = None,
+):
+    def decorator(
+        function: Callable[
+            ...,
+            tuple[
+                int,
+                Sequence[PDDLDurativePredicateInstance],
+                Sequence[PDDLDurativePredicateInstance],
+            ],
+        ]
+    ):
+        return _PDDLDurativeAction(function, name)
+
+    return decorator
+
+
 class PDDLInstance:
     def __init__(
         self,
@@ -201,9 +318,10 @@ class PDDLInstance:
         initial_state: list[PDDLPredicateInstance] = [],
         goal_state: list[PDDLPredicateInstance] = [],
         actions: list[_PDDLAction] = [],
+        durative_actions: list[_PDDLDurativeAction] = [],
         cost_function: bool = False,
         negative_preconditions: bool = True,
-        durative_actions: bool = False,
+        durative_actions_req: bool = False,
     ):
         self.domain = "Quantum"
         self.problem = "circuit"
@@ -214,9 +332,10 @@ class PDDLInstance:
         self.initial_state = initial_state
         self.goal_state = goal_state
         self.actions = actions
+        self.durative_actions = durative_actions
         self.cost_function = cost_function
         self.negative_preconditions = negative_preconditions
-        self.durative_actions = durative_actions
+        self.durative_actions_req = durative_actions_req
 
     def compile(self) -> tuple[str, str]:
         object_grouped_by_type: dict[str, list[PDDLType]] = {}
@@ -289,7 +408,7 @@ class PDDLInstance:
 
         domain = f"""
 (define (domain {self.domain})
-    (:requirements :strips :typing {":negative-preconditions" if self.negative_preconditions else ""} {":action-costs" if self.cost_function else ""} {":durative-actions" if self.durative_actions else ""})
+    (:requirements :strips :typing {":negative-preconditions" if self.negative_preconditions else ""} {":action-costs" if self.cost_function else ""} {":durative-actions" if self.durative_actions_req else ""})
     (:types
         {"\n        ".join(type_strings)}
     )
@@ -301,6 +420,7 @@ class PDDLInstance:
     )
     {functions_string}
     {"\n    ".join(map(str, self.actions))}
+    {"\n    ".join(map(str, self.durative_actions))}
 )
 """
         return domain, problem
