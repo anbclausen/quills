@@ -515,7 +515,7 @@ class ApxNoveltyTarski(Solver):
         min_layers: int,
         max_layers: int,
     ) -> str:
-        return f"lapkt.py Approximate_BFWS --grounder Tarski --plan_file {output} -d {domain} -p {problem}"
+        return f"lapkt.py Approximate_BFWS --grounder Tarski --plan_file {output} -d {domain} -p {problem} --actual_action_costs_in_output"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
