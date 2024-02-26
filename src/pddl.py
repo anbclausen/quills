@@ -203,6 +203,7 @@ class PDDLInstance:
         actions: list[_PDDLAction] = [],
         cost_function: bool = False,
         negative_preconditions: bool = True,
+        durative_actions: bool = False,
     ):
         self.domain = "Quantum"
         self.problem = "circuit"
@@ -215,6 +216,7 @@ class PDDLInstance:
         self.actions = actions
         self.cost_function = cost_function
         self.negative_preconditions = negative_preconditions
+        self.durative_actions = durative_actions
 
     def compile(self) -> tuple[str, str]:
         object_grouped_by_type: dict[str, list[PDDLType]] = {}
@@ -287,7 +289,7 @@ class PDDLInstance:
 
         domain = f"""
 (define (domain {self.domain})
-    (:requirements :strips :typing {":negative-preconditions" if self.negative_preconditions else ""} {":action-costs" if self.cost_function else ""})
+    (:requirements :strips :typing {":negative-preconditions" if self.negative_preconditions else ""} {":action-costs" if self.cost_function else ""} {":durative-actions" if self.durative_actions else ""})
     (:types
         {"\n        ".join(type_strings)}
     )
