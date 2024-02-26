@@ -358,6 +358,9 @@ class PDDLInstance:
         ]
 
         metric_string = f"(:metric minimize (total-cost))" if self.cost_function else ""
+        metric_string = (
+            f"(:metric minimize (total-time))" if self.durative_actions_req else ""
+        )
 
         problem = f"""
 (define (problem {self.problem})
