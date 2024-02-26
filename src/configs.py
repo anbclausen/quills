@@ -46,6 +46,7 @@ from solvers import (
 DEFAULT_TIME_LIMIT_S = 1800
 OPTIMAL_SYNTHESIZERS = ["cost_opt", "cond_cost_opt"]
 CONDITIONAL_SYNTHESIZERS = ["cond_cost_opt", "cond_iter_incr"]
+TEMPORAL_SYNTHESIZERS = ["temp_opt"]
 
 
 synthesizers: dict[str, Synthesizer] = {

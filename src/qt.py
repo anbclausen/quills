@@ -3,15 +3,14 @@ from qiskit import QuantumCircuit
 from synthesizers.synthesizer import remove_all_non_cx_gates
 from synthesizers.synthesizer import SynthesizerSolution
 from output_checker import OutputChecker
-from solvers import (
-    OPTIMAL,
-)
+from solvers import OPTIMAL, TEMPORAL
 from configs import (
     synthesizers,
     platforms,
     solvers,
     OPTIMAL_SYNTHESIZERS,
     CONDITIONAL_SYNTHESIZERS,
+    TEMPORAL_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
 
@@ -91,6 +90,11 @@ uses_conditionals = args.model in CONDITIONAL_SYNTHESIZERS
 if uses_conditionals and not solver.accepts_conditional:
     raise ValueError(
         f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those"
+    )
+uses_temporal = args.model in TEMPORAL_SYNTHESIZERS
+if uses_temporal and solver.solver_class != TEMPORAL:
+    raise ValueError(
+        f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal"
     )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
