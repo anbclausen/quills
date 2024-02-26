@@ -7,13 +7,14 @@ from synthesizers.synthesizer import (
     SynthesizerNoSolution,
     SynthesizerTimeout,
 )
-from solvers import SATISFYING
+from solvers import SATISFYING, TEMPORAL
 from configs import (
     synthesizers,
     platforms,
     solvers,
     OPTIMAL_SYNTHESIZERS,
     CONDITIONAL_SYNTHESIZERS,
+    TEMPORAL_SYNTHESIZERS,
 )
 from datetime import datetime
 
@@ -54,10 +55,15 @@ for synthesizer in synthesizers:
             synthesizer in CONDITIONAL_SYNTHESIZERS
             and not solvers[solver].accepts_conditional
         )
+        temporal_synthesizer_and_non_temporal_solver = (
+            synthesizer in TEMPORAL_SYNTHESIZERS
+            and solvers[solver].solver_class != TEMPORAL
+        )
 
         if (
             not optimal_synthesizer_and_satisfying_solver
             and not conditional_synthesizer_and_non_conditional_solver
+            and not temporal_synthesizer_and_non_temporal_solver
         ):
             configurations.append((synthesizer, solver))
 
