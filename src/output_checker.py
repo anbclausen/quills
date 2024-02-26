@@ -2,11 +2,12 @@ from synthesizers.synthesizer import (
     PhysicalQubit,
     LogicalQubit,
     line_gate_mapping,
+    remove_all_non_swap_gates,
 )
 from platforms import Platform
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 import operator
-from mqt.qcec import verify
+from mqt.qcec import verify, verify_compilation
 
 
 class OutputChecker:
@@ -261,7 +262,7 @@ class OutputChecker:
 
         registers: list[int] = [pqubit.id for _, pqubit in initial_mapping.items()]
         # new circuit
-        mapped_circuit = QuantumCircuit(QuantumRegister(max(registers)+1, "p"))
+        mapped_circuit = QuantumCircuit(QuantumRegister(max(registers) + 1, "p"))
         while first_lists:
             for line in first_lists.keys():
                 gate_list = first_lists[line]
@@ -357,7 +358,47 @@ class OutputChecker:
             }
 
         # FIXME transform input minimally to allow equivalence check
-        result = verify(mapped_circuit, output_circuit)
-        print(mapped_circuit)
+        # for lqubit, pqubit in initial_mapping.items():
+        # only_swap_out = remove_all_non_swap_gates(output_circuit)
+        # current_mapping = {p.id: p for _, p in initial_mapping.items()}
+        # for instr in only_swap_out.data:
+        #     index0 = instr[1][0]._index
+        #     index1 = instr[1][1]._index
+        #     line0 = current_mapping[index0]
+        #     line1 = current_mapping[index1]
+        #     current_mapping[index0] = line1
+        #     current_mapping[index1] = line0
+        # reverse_mapping = {p: num for num, p in current_mapping.items()}
+        # final_mapping = {reverse_mapping[p] : l for l, p in initial_mapping.items()}
+
+        # output_circuit.barrier()
+        # for p, num in reverse_mapping.items():
+        #     output_circuit.measure(p.id, num)
+        # print(input_circuit)
+        # print(mapped_circuit)
+        # print(output_circuit)
+            
+        output_circuit.measure_all()
+        print(output_circuit)
+        
+        only_swap_out = remove_all_non_swap_gates(output_circuit)
+        current_mapping = {p.id: p for _, p in initial_mapping.items()}
+        for instr in only_swap_out.data:
+            index0 = instr[1][0]._index
+            index1 = instr[1][1]._index
+            line0 = current_mapping[index0]
+            line1 = current_mapping[index1]
+            current_mapping[index0] = line1
+            current_mapping[index1] = line0
+        reverse_initial = {p: l for l, p in initial_mapping.items()}
+        input_circuit.barrier()
+        input_circuit.add_register(ClassicalRegister(input_circuit.num_qubits, "meas"))
+        for num, p in current_mapping.items():
+            input_circuit.measure(reverse_initial[PhysicalQubit(num)].id, p.id)
+        print(input_circuit)
+
+
+        result = verify(input_circuit, output_circuit)
+        print(result)
         print(result.equivalence)
         return False
