@@ -4,8 +4,9 @@ from synthesizers.synthesizer import (
     line_gate_mapping,
 )
 from platforms import Platform
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
 import operator
+from mqt.qcec import verify
 
 
 class OutputChecker:
@@ -202,7 +203,9 @@ class OutputChecker:
                     success = False
                 if not success:
                     print("Wrong output gate found")
-                    print(f"These lists of gates should be identical (problem encountered at gate {i}):")
+                    print(
+                        f"These lists of gates should be identical (problem encountered at gate {i}):"
+                    )
                     print(f"Input line: {line}")
                     print(gates)
                     print(f"Output line: {mapped_line}")
@@ -211,3 +214,150 @@ class OutputChecker:
 
         # nothing wrong was found, so the circuits are equivalent
         return True
+
+    @staticmethod
+    def check_qcec(
+        input_circuit: QuantumCircuit,
+        output_circuit: QuantumCircuit,
+        initial_mapping: dict[LogicalQubit, PhysicalQubit],
+    ) -> bool:
+
+        input_line_gates: dict[LogicalQubit, list[tuple[int, str]]] = {
+            LogicalQubit(line): gates
+            for line, gates in line_gate_mapping(input_circuit).items()
+        }
+
+        # split each list of gates whenever there is a binary gate
+        input_line_gates_split: dict[LogicalQubit, list[list[tuple[int, str]]]] = {
+            line: [] for line in input_line_gates.keys()
+        }
+        for line, gates in input_line_gates.items():
+            # current_list keeps track of the gates seen so far that have no conflicts
+            # with each other - unary gates, and possibly one binary gate at the start
+            current_list = []
+            for gate_num, gate_name in gates:
+                if gate_name.startswith("cx"):
+                    # for binary gates, flush and reset the list if necessary
+                    if current_list:
+                        input_line_gates_split[line].append(current_list)
+                        current_list = []
+                    # then start a new list with the binary gate
+                    current_list = [(gate_num, gate_name)]
+                else:
+                    # unary gate - just append to list
+                    current_list.append((gate_num, gate_name))
+            # flush the last list
+            if current_list:
+                input_line_gates_split[line].append(current_list)
+
+        # get the first list of non-conflicting qubits for each qubit
+        first_lists: dict[LogicalQubit, list[tuple[int, str]]] = {
+            line: gate_lists[0]
+            for line, gate_lists in input_line_gates_split.items()
+            if len(gate_lists) > 0
+        }
+        # waiting list for binary qubits
+        waiting: dict[int, LogicalQubit] = {}
+
+        registers: list[int] = [pqubit.id for _, pqubit in initial_mapping.items()]
+        # new circuit
+        mapped_circuit = QuantumCircuit(QuantumRegister(max(registers)+1, "p"))
+        while first_lists:
+            for line in first_lists.keys():
+                gate_list = first_lists[line]
+                if gate_list:
+                    first_gate_num, first_gate_name = gate_list[0]
+                    # check whether the first gate is binary
+                    if first_gate_name.startswith("cx"):
+                        # check whether the other side of the gate is ready
+                        if first_gate_num in waiting.keys():
+                            other_line = waiting[first_gate_num]
+                            if other_line != line:
+                                # found someone else on the waiting list - proceed
+                                waiting.pop(first_gate_num)
+                                other_gate_list = first_lists[other_line]
+
+                                # first gate is not SWAP, so it is CX
+                                # append the gates to the correct lists
+                                # the correct lists are the same as where they came from
+                                mapped_line = initial_mapping[line]
+                                other_mapped_line = initial_mapping[other_line]
+
+                                if first_gate_name.startswith("cx0"):
+                                    mapped_circuit.cx(
+                                        mapped_line.id, other_mapped_line.id
+                                    )
+                                else:
+                                    mapped_circuit.cx(
+                                        other_mapped_line.id, mapped_line.id
+                                    )
+                                for _, gate_name in gate_list[1:]:
+                                    match gate_name:
+                                        case "x":
+                                            mapped_circuit.x(mapped_line.id)
+                                        case "h":
+                                            mapped_circuit.h(mapped_line.id)
+                                        case _:
+                                            raise ValueError(
+                                                f"Unknown gate in circuit checker: {gate_name}"
+                                            )
+                                for _, gate_name in other_gate_list[1:]:
+                                    match gate_name:
+                                        case "x":
+                                            mapped_circuit.x(other_mapped_line.id)
+                                        case "h":
+                                            mapped_circuit.h(other_mapped_line.id)
+                                        case _:
+                                            raise ValueError(
+                                                f"Unknown gate in circuit checker: {gate_name}"
+                                            )
+
+                                # then remove the gates from remaining
+                                input_line_gates_split[line] = input_line_gates_split[
+                                    line
+                                ][1:]
+                                input_line_gates_split[other_line] = (
+                                    input_line_gates_split[other_line][1:]
+                                )
+                                # and remove from other first_list to avoid duplication
+                                first_lists[other_line] = []
+                            else:
+                                # found itself on the waiting list - keep waiting
+                                pass
+                        else:
+                            # put name on waiting list and do nothing
+                            waiting[first_gate_num] = line
+                    else:
+                        # gate is unary
+                        # add gates to correct line
+                        mapped_line = initial_mapping[line]
+
+                        for _, gate_name in gate_list:
+                            match gate_name:
+                                case "x":
+                                    mapped_circuit.x(mapped_line.id)
+                                case "h":
+                                    mapped_circuit.h(mapped_line.id)
+                                case _:
+                                    raise ValueError(
+                                        f"Unknown gate in circuit checker: {gate_name}"
+                                    )
+
+                        # then remove the list from remaining
+                        input_line_gates_split[line] = input_line_gates_split[line][1:]
+                else:
+                    # this was a binary gate that someone else was waiting for - skip it
+                    pass
+
+            # update first_lists for next round
+            first_lists: dict[LogicalQubit, list[tuple[int, str]]] = {
+                line: gate_lists[0]
+                for line, gate_lists in input_line_gates_split.items()
+                if len(gate_lists) > 0
+            }
+
+        # FIXME transform input minimally to allow equivalence check
+        result = verify(mapped_circuit, output_circuit)
+        print(mapped_circuit)
+        print(result.equivalence)
+        return False
