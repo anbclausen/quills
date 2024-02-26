@@ -18,6 +18,9 @@ from synthesizers.grounded_iterative_incr_planning import (
 from synthesizers.cond_iterative_incr_planning import (
     ConditionalIterativeIncrementalPlanningSynthesizer,
 )
+from synthesizers.temporal_optimal_planning import (
+    TemporalOptimalPlanningSynthesizer,
+)
 
 from platforms import TOY, TENERIFE, Platform
 
@@ -51,6 +54,7 @@ synthesizers: dict[str, Synthesizer] = {
     "iter_incr": IterativeIncrementalPlanningSynthesizer(),
     "grounded_iter_incr": GroundedIterativeIncrementalPlanningSynthesizer(),
     "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
+    "temp_opt": TemporalOptimalPlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {
