@@ -206,7 +206,7 @@ class PDDLDurativePredicateInstance:
         self.predicate = predicate
 
     def __str__(self) -> str:
-        return f"({self.type_} ({self.predicate}))"
+        return f"({self.type_} {self.predicate})"
 
 
 class _PDDLDurativePredicate:
