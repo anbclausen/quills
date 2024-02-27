@@ -404,7 +404,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
         min_layers: int,
         max_layers: int,
     ) -> str:
-        return f"fast-downward.py --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(merge_and_shrink(merge_strategy=merge_precomputed(merge_tree=linear(variable_order=reverse_level)),shrink_strategy=shrink_bisimulation(greedy=true),label_reduction=exact(before_shrinking=true,before_merging=false),max_states=infinity,threshold_before_merge=1))"
+        return f"fast-downward.py --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search 'astar(merge_and_shrink(merge_strategy=merge_precomputed(merge_tree=linear(variable_order=reverse_level)),shrink_strategy=shrink_bisimulation(greedy=true),label_reduction=exact(before_shrinking=true,before_merging=false),max_states=infinity,threshold_before_merge=1))'"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
@@ -556,7 +556,7 @@ class SCORPION(Solver):
         max_layers: int,
     ) -> str:
         preprocess_timelimit = max(int(int(time_limit_s) / 3), 1)
-        return f"python /dependencies/scorpion/fast-downward.py --transform-task /dependencies/scorpion/builds/release/bin/preprocess-h2 --transform-task-options h2_time_limit,{preprocess_timelimit} --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))"
+        return f"python /dependencies/scorpion/fast-downward.py --transform-task /dependencies/scorpion/builds/release/bin/preprocess-h2 --transform-task-options h2_time_limit,{preprocess_timelimit} --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem} --search 'astar(scp_online([projections(sys_scp(max_time=100,max_time_per_restart=10)),cartesian()],saturator=perimstar,max_time=1000,interval=10K,orders=greedy_orders()),pruning=limited_pruning(pruning=atom_centric_stubborn_sets(),min_required_pruning_ratio=0.2))'"
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
