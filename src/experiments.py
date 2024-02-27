@@ -20,13 +20,15 @@ from configs import (
 from datetime import datetime
 
 EXPERIMENT_TIME_LIMIT_S = 10
-OUTPUT_FILE = "tmp/experiments.txt"
 CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
     # ("toy_example.qasm", "toy"),
     ("adder.qasm", "tenerife"),
 ]
-# tuple[int, str, str, str, str], tuple[float | Literal["NS", "TO"], int, int]
+
+if not os.path.exists("tmp"):
+    os.makedirs("tmp")
+
 cache: dict[
     str,
     dict[
@@ -97,17 +99,9 @@ def get_cache_key(
     return None, 0, 0
 
 
-def print_and_write_to_file(line: str):
-    print(line)
-    if not os.path.exists("tmp"):
-        os.makedirs("tmp")
-    with open(OUTPUT_FILE, "a") as f:
-        f.write(line + "\n")
-
-
 now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 operating_system = os.uname().sysname
-print_and_write_to_file(
+print(
     f"--- EXPERIMENTS ---\n"
     f"Date: {now_str}\n"
     f"OS: {operating_system}\n"
@@ -141,15 +135,13 @@ for synthesizer in synthesizers:
 for input_file, platform_name in EXPERIMENTS:
     results: dict[tuple[str, str], tuple[int, int, float] | Literal["NS", "TO"]] = {}
     for synthesizer_name, solver_name in configurations:
-        print_and_write_to_file(
+        print(
             f"Running '{synthesizer_name}' on '{solver_name}' for 'benchmarks/{input_file}' on '{platform_name}'..."
         )
         synthesizer = synthesizers[synthesizer_name]
         solver = solvers[solver_name]
         if platform_name not in platforms:
-            print_and_write_to_file(
-                f"  Platform '{platform_name}' not found. Skipping experiment..."
-            )
+            print(f"  Platform '{platform_name}' not found. Skipping experiment...")
             continue
 
         cached_result, cached_depth, cached_cx_depth = get_cache_key(
@@ -164,9 +156,7 @@ for input_file, platform_name in EXPERIMENTS:
                     cached_cx_depth,
                     cached_result,
                 )
-            print_and_write_to_file(
-                f"  Found cached result for '{synthesizer_name}' on '{solver_name}'."
-            )
+            print(f"  Found cached result for '{synthesizer_name}' on '{solver_name}'.")
         else:
             platform = platforms[platform_name]
             input_circuit = QuantumCircuit.from_qasm_file(f"benchmarks/{input_file}")
@@ -229,11 +219,9 @@ for input_file, platform_name in EXPERIMENTS:
             result_string = (
                 f"  Done in {time:.3f}s. Found depth {depth} and CX depth {cx_depth}."
             )
-        print_and_write_to_file(result_string)
-    print_and_write_to_file(
-        "##############################################################"
-    )
-    print_and_write_to_file(
+        print(result_string)
+    print("##############################################################")
+    print(
         f"Results for 'benchmarks/{input_file}' on '{platform_name}' (depth, CX depth, time):"
     )
     for (synthesizer_name, solver_name), result in results.items():
@@ -242,9 +230,5 @@ for input_file, platform_name in EXPERIMENTS:
             if isinstance(result, str)
             else f"{result[0]}, {result[1]}, {result[2]:.3f}s"
         )
-        print_and_write_to_file(
-            f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
-        )
-    print_and_write_to_file(
-        "##############################################################"
-    )
+        print(f"  '{synthesizer_name}' on '{solver_name}': {result_str}")
+    print("##############################################################")
