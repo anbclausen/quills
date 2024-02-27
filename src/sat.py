@@ -46,6 +46,8 @@ formula = CNF(from_file=args.input)
 solver = solvers[args.solver]
 solver.append_formula(formula.clauses)
 if solver.solve():
+    solution = solver.get_model()
+    print(f"SAT: {solution}")
     exit(0)
 else:
     exit(1)
