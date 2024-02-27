@@ -52,14 +52,14 @@ TEMPORAL_SYNTHESIZERS = ["temp_opt"]
 
 
 synthesizers: dict[str, Synthesizer] = {
-    "cost_opt": CostBasedOptimalPlanningSynthesizer(),
-    "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
+    # "cost_opt": CostBasedOptimalPlanningSynthesizer(),
+    # "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
     "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
-    "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
+    # "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
     "iter_incr": IterativeIncrementalPlanningSynthesizer(),
     "grounded_iter_incr": GroundedIterativeIncrementalPlanningSynthesizer(),
-    "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
-    "temp_opt": TemporalOptimalPlanningSynthesizer(),
+    # "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
+    # "temp_opt": TemporalOptimalPlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {
@@ -68,18 +68,18 @@ platforms: dict[str, Platform] = {
 }
 
 solvers: dict[str, Solver] = {
-    "M_seq": M_SEQUENTIAL_PLANS(),
-    "M_all": M_FORALL_STEPS(),
-    "M_exist": M_EXISTS_STEPS(),
-    "MpC_seq": MpC_SEQUENTIAL_PLANS(),
+    # "M_seq": M_SEQUENTIAL_PLANS(),
+    # "M_all": M_FORALL_STEPS(),
+    # "M_exist": M_EXISTS_STEPS(),
+    # "MpC_seq": MpC_SEQUENTIAL_PLANS(),
     "MpC_all": MpC_FORALL_STEPS(),
     "MpC_exist": MpC_EXISTS_STEPS(),
     "MpC_all_glucose": MpC_FORALL_STEPS_EXTENDED("glucose"),
     "MpC_exist_glucose": MpC_EXISTS_STEPS_EXTENDED("glucose"),
     "MpC_all_cadical": MpC_FORALL_STEPS_EXTENDED("cadical"),
     "MpC_exist_cadical": MpC_EXISTS_STEPS_EXTENDED("cadical"),
-    "MpC_all_maple_chrono": MpC_FORALL_STEPS_EXTENDED("maple_chrono"),
-    "MpC_exist_maple_chrono": MpC_EXISTS_STEPS_EXTENDED("maple_chrono"),
+    # "MpC_all_maple_chrono": MpC_FORALL_STEPS_EXTENDED("maple_chrono"),
+    # "MpC_exist_maple_chrono": MpC_EXISTS_STEPS_EXTENDED("maple_chrono"),
     "MpC_all_maple_cm": MpC_FORALL_STEPS_EXTENDED("maple_cm"),
     "MpC_exist_maple_cm": MpC_EXISTS_STEPS_EXTENDED("maple_cm"),
     "MpC_all_maplesat": MpC_FORALL_STEPS_EXTENDED("maplesat"),
@@ -90,13 +90,13 @@ solvers: dict[str, Solver] = {
     "MpC_exist_minicard": MpC_EXISTS_STEPS_EXTENDED("minicard"),
     "MpC_all_minisat": MpC_FORALL_STEPS_EXTENDED("minisat"),
     "MpC_exist_minisat": MpC_EXISTS_STEPS_EXTENDED("minisat"),
-    "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
-    "fd_lama": FAST_DOWNWARD_LAMA(),
-    "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
-    "fd_bjolp": FAST_DOWNWARD_BJOLP(),
-    "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
-    "scorpion": SCORPION(),
-    "apx_novelty_tarski": ApxNoveltyTarski(),
-    "tflap": TFLAP(),
-    "tflap_grounded": TFLAPGrounded(),
+    # "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
+    # "fd_lama": FAST_DOWNWARD_LAMA(),
+    # "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
+    # "fd_bjolp": FAST_DOWNWARD_BJOLP(),
+    # "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
+    # "scorpion": SCORPION(),
+    # "apx_novelty_tarski": ApxNoveltyTarski(),
+    # "tflap": TFLAP(),
+    # "tflap_grounded": TFLAPGrounded(),
 }

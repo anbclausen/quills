@@ -1,4 +1,5 @@
 import os
+import json
 
 from qiskit import QuantumCircuit
 from typing import Literal
@@ -18,12 +19,82 @@ from configs import (
 )
 from datetime import datetime
 
-EXPERIMENT_TIME_LIMIT_S = 30
+EXPERIMENT_TIME_LIMIT_S = 10
 OUTPUT_FILE = "tmp/experiments.txt"
+CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
-    ("toy_example.qasm", "toy"),
+    # ("toy_example.qasm", "toy"),
     ("adder.qasm", "tenerife"),
 ]
+# tuple[int, str, str, str, str], tuple[float | Literal["NS", "TO"], int, int]
+cache: dict[
+    str,
+    dict[
+        str,
+        dict[
+            str,
+            dict[str, dict[str, dict[str, float | Literal["NS", "TO"] | int | int]]],
+        ],
+    ],
+] = (
+    json.load(open(CACHE_FILE, "r")) if os.path.exists(CACHE_FILE) else {}
+)
+
+
+def update_cache(
+    input_file: str,
+    synthesizer_name: str,
+    solver_name: str,
+    platform_name: str,
+    time: float | Literal["NS", "TO"],
+    depth: int,
+    cx_depth: int,
+):
+    time_str = str(EXPERIMENT_TIME_LIMIT_S)
+    if not cache.get(time_str):
+        cache[time_str] = {}
+    if not cache[time_str].get(input_file):
+        cache[time_str][input_file] = {}
+    if not cache[time_str][input_file].get(platform_name):
+        cache[time_str][input_file][platform_name] = {}
+    if not cache[time_str][input_file][platform_name].get(synthesizer_name):
+        cache[time_str][input_file][platform_name][synthesizer_name] = {}
+    cache[time_str][input_file][platform_name][synthesizer_name][solver_name] = {
+        "time": time,
+        "depth": depth,
+        "cx_depth": cx_depth,
+    }
+
+    with open(CACHE_FILE, "w") as f:
+        json.dump(cache, f)
+
+
+def get_cache_key(
+    input_file: str, synthesizer_name: str, solver_name: str, platform_name: str
+) -> tuple[float | Literal["NS", "TO"] | None, int, int]:
+    result = (
+        cache.get(str(EXPERIMENT_TIME_LIMIT_S), {})
+        .get(input_file, {})
+        .get(platform_name, {})
+        .get(synthesizer_name, {})
+        .get(solver_name, {})
+    )
+    if result:
+        time = result.get("time")
+        if time in ["NS", "TO"]:
+            return time, 0, 0
+
+        depth = result.get("depth")
+        cx_depth = result.get("cx_depth")
+
+        # to make the type checker happy
+        if (
+            isinstance(time, float)
+            and isinstance(depth, int)
+            and isinstance(cx_depth, int)
+        ):
+            return time, depth, cx_depth
+    return None, 0, 0
 
 
 def print_and_write_to_file(line: str):
@@ -80,34 +151,83 @@ for input_file, platform_name in EXPERIMENTS:
                 f"  Platform '{platform_name}' not found. Skipping experiment..."
             )
             continue
-        platform = platforms[platform_name]
-        input_circuit = QuantumCircuit.from_qasm_file(f"benchmarks/{input_file}")
-        experiment = synthesizer.synthesize(
-            input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S
+
+        cached_result, cached_depth, cached_cx_depth = get_cache_key(
+            input_file, synthesizer_name, solver_name, platform_name
         )
-        match experiment:
-            case SynthesizerSolution(actions):
+        if cached_result is not None:
+            if cached_result in ["NS", "TO"]:
+                results[(synthesizer_name, solver_name)] = cached_result
+            elif isinstance(cached_result, float):
                 results[(synthesizer_name, solver_name)] = (
-                    experiment.depth,
-                    experiment.cx_depth,
-                    experiment.time,
+                    cached_depth,
+                    cached_cx_depth,
+                    cached_result,
                 )
-            case SynthesizerNoSolution():
-                results[(synthesizer_name, solver_name)] = "NS"
-            case SynthesizerTimeout():
-                results[(synthesizer_name, solver_name)] = "TO"
+            print_and_write_to_file(
+                f"  Found cached result for '{synthesizer_name}' on '{solver_name}'."
+            )
+        else:
+            platform = platforms[platform_name]
+            input_circuit = QuantumCircuit.from_qasm_file(f"benchmarks/{input_file}")
+            experiment = synthesizer.synthesize(
+                input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S
+            )
+            match experiment:
+                case SynthesizerSolution(actions):
+                    results[(synthesizer_name, solver_name)] = (
+                        experiment.depth,
+                        experiment.cx_depth,
+                        experiment.time,
+                    )
+                case SynthesizerNoSolution():
+                    results[(synthesizer_name, solver_name)] = "NS"
+                case SynthesizerTimeout():
+                    results[(synthesizer_name, solver_name)] = "TO"
         result_string = ""
         if results[(synthesizer_name, solver_name)] == "NS":
             result_string = "  No solution found."
+            update_cache(
+                input_file,
+                synthesizer_name,
+                solver_name,
+                platform_name,
+                "NS",
+                0,
+                0,
+            )
         elif results[(synthesizer_name, solver_name)] == "TO":
             result_string = "  Timeout."
+            update_cache(
+                input_file,
+                synthesizer_name,
+                solver_name,
+                platform_name,
+                "TO",
+                0,
+                0,
+            )
         else:
-            result = results[(synthesizer_name, solver_name)]
-            depth = result[0]
-            cx_depth = result[1]
-            time = result[2]
+            depth, cx_depth, time = results[(synthesizer_name, solver_name)]
+
+            # to make the type checker happy
+            if (
+                isinstance(time, float)
+                and isinstance(cx_depth, int)
+                and isinstance(depth, int)
+            ):
+                update_cache(
+                    input_file,
+                    synthesizer_name,
+                    solver_name,
+                    platform_name,
+                    time,
+                    depth,
+                    cx_depth,
+                )
+
             result_string = (
-                f"  Done in {time}(s). Found depth {depth} and CX depth {cx_depth}."
+                f"  Done in {time:.3f}s. Found depth {depth} and CX depth {cx_depth}."
             )
         print_and_write_to_file(result_string)
     print_and_write_to_file(
