@@ -22,7 +22,7 @@ from synthesizers.temporal_optimal_planning import (
     TemporalOptimalPlanningSynthesizer,
 )
 
-from platforms import TOY, TENERIFE, Platform
+from platforms import TOY, TENERIFE, MELBOURNE, Platform
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -65,6 +65,7 @@ synthesizers: dict[str, Synthesizer] = {
 platforms: dict[str, Platform] = {
     "toy": TOY,
     "tenerife": TENERIFE,
+    "melbourne": MELBOURNE,
 }
 
 solvers: dict[str, Solver] = {
