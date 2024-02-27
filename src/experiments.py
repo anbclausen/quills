@@ -19,7 +19,7 @@ from configs import (
 )
 from datetime import datetime
 
-EXPERIMENT_TIME_LIMIT_S = 10
+EXPERIMENT_TIME_LIMIT_S = 90
 CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
     # ("toy_example.qasm", "toy"),

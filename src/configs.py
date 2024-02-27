@@ -53,13 +53,13 @@ TEMPORAL_SYNTHESIZERS = ["temp_opt"]
 
 synthesizers: dict[str, Synthesizer] = {
     # "cost_opt": CostBasedOptimalPlanningSynthesizer(),
-    # "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
+    "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
     "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
     # "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
     "iter_incr": IterativeIncrementalPlanningSynthesizer(),
     "grounded_iter_incr": GroundedIterativeIncrementalPlanningSynthesizer(),
     # "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
-    # "temp_opt": TemporalOptimalPlanningSynthesizer(),
+    "temp_opt": TemporalOptimalPlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {
@@ -90,13 +90,13 @@ solvers: dict[str, Solver] = {
     "MpC_exist_minicard": MpC_EXISTS_STEPS_EXTENDED("minicard"),
     "MpC_all_minisat": MpC_FORALL_STEPS_EXTENDED("minisat"),
     "MpC_exist_minisat": MpC_EXISTS_STEPS_EXTENDED("minisat"),
-    # "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
+    "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
     # "fd_lama": FAST_DOWNWARD_LAMA(),
     # "fd_lama_first": FAST_DOWNWARD_LAMA_FIRST(),
     # "fd_bjolp": FAST_DOWNWARD_BJOLP(),
     # "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
     # "scorpion": SCORPION(),
     # "apx_novelty_tarski": ApxNoveltyTarski(),
-    # "tflap": TFLAP(),
-    # "tflap_grounded": TFLAPGrounded(),
+    "tflap": TFLAP(),
+    "tflap_grounded": TFLAPGrounded(),
 }
