@@ -12,6 +12,7 @@ JUNK_FILES = [
     "execution.details",
     "GroundedDomain.pddl",
     "GroundedProblem.pddl",
+    *[f"quantum-circuit.{i:03}.cnf" for i in range(1000)],
 ]
 
 

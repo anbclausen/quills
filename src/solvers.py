@@ -13,26 +13,7 @@ TEMPORAL = "temporal"
 
 OUTPUT_FILES = [
     "tmp/output.txt",
-    "tmp/output.txt.1",
-    "tmp/output.txt.2",
-    "tmp/output.txt.3",
-    "tmp/output.txt.4",
-    "tmp/output.txt.5",
-    "tmp/output.txt.6",
-    "tmp/output.txt.7",
-    "tmp/output.txt.8",
-    "tmp/output.txt.9",
-    "tmp/output.txt.10",
-    "tmp/output.txt.11",
-    "tmp/output.txt.12",
-    "tmp/output.txt.13",
-    "tmp/output.txt.14",
-    "tmp/output.txt.15",
-    "tmp/output.txt.16",
-    "tmp/output.txt.17",
-    "tmp/output.txt.18",
-    "tmp/output.txt.19",
-    "tmp/output.txt.20",
+    *[f"tmp/output.txt.{i}" for i in range(50)],
 ]
 
 
@@ -152,11 +133,13 @@ class Solver(ABC):
         start = time.time()
         try:
             p = subprocess.Popen(
-                command.split(), 
+                command, 
                 start_new_session=True, 
+                shell=True,
                 stdout=subprocess.DEVNULL, 
                 stderr=subprocess.DEVNULL,
             )
+            time.sleep(10)
             p.wait(timeout=time_limit_s)
         except subprocess.TimeoutExpired:
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
@@ -328,6 +311,74 @@ class MpC_EXISTS_STEPS(Solver):
         max_layers: int,
     ) -> str:
         return f"MpC -P 2 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
+
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        stripped_lines = [line.split(": ")[1] for line in lines]
+        actions = [line.split(" ") for line in stripped_lines]
+        flattened_actions = [action for sublist in actions for action in sublist]
+        return flattened_actions
+    
+
+class MpC_FORALL_STEPS_EXTENDED(Solver):
+    sat_solver = ""
+    solver_class = SATISFYING
+    description = f"The (MpC) Madagascar parallel (∀-step) planner + {sat_solver} is a SAT-based planner with the {sat_solver} SAT solver underneath.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
+
+    def __init__(self, sat_solver: str) -> None:
+        self.sat_solver = sat_solver
+
+    def command(
+        self,
+        domain: str,
+        problem: str,
+        output: str,
+        time_limit_s: str,
+        min_plan_length: int,
+        max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
+    ) -> str:
+        return (
+            f"MpC -O -P 1 -F {min_layers} -T {max_layers} -t {time_limit_s} {domain} {problem}"
+            f" && python src/sat.py quantum-circuit.{min_layers:03}.cnf -s {self.sat_solver}"
+            f" && MpC -P 1 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
+        )
+    
+    def parse_actions(self, solution: str) -> list[str]:
+        lines = solution.strip().split("\n")
+        stripped_lines = [line.split(": ")[1] for line in lines]
+        actions = [line.split(" ") for line in stripped_lines]
+        flattened_actions = [action for sublist in actions for action in sublist]
+        return flattened_actions
+
+
+class MpC_EXISTS_STEPS_EXTENDED(Solver):
+    sat_solver = ""
+    solver_class = SATISFYING
+    description = f"The (MpC) Madagascar parallel (∃-step) planner + {sat_solver} is a SAT-based planner with the {sat_solver} SAT solver underneath.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    accepts_conditional = True
+
+    def __init__(self, sat_solver: str) -> None:
+        self.sat_solver = sat_solver
+
+    def command(
+        self,
+        domain: str,
+        problem: str,
+        output: str,
+        time_limit_s: str,
+        min_plan_length: int,
+        max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
+    ) -> str:
+        return (
+            f"MpC -O -P 2 -F {min_layers} -T {max_layers} -t {time_limit_s} {domain} {problem}"
+            f" && python src/sat.py quantum-circuit.{min_layers:03}.cnf -s {self.sat_solver}"
+            f" && MpC -P 2 -F {min_layers} -T {max_layers} -o {output} -t {time_limit_s} {domain} {problem}"
+        )
 
     def parse_actions(self, solution: str) -> list[str]:
         lines = solution.strip().split("\n")
