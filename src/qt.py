@@ -43,7 +43,7 @@ parser.add_argument(
     "--platform",
     type=str,
     help=f"the target platform: {', '.join(platforms.keys())}",
-    default="toy",
+    default="tenerife",
 )
 
 
