@@ -19,7 +19,7 @@ from configs import (
 )
 from datetime import datetime
 
-EXPERIMENT_TIME_LIMIT_S = 10
+EXPERIMENT_TIME_LIMIT_S = 90
 CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
     # ("toy_example.qasm", "toy"),
@@ -100,20 +100,21 @@ def get_cache_key(
     )
     if result:
         time = result.get("time")
+        time_limit = result.get("time_limit")
         if time in ["NS", "TO"]:
+            if isinstance(time_limit, int) and time_limit <= EXPERIMENT_TIME_LIMIT_S:
+                return None, 0, 0
             return time, 0, 0
 
         depth = result.get("depth")
         cx_depth = result.get("cx_depth")
-        time_limit = result.get("time_limit")
 
         # to make the type checker happy
         if (
             isinstance(time, float)
             and isinstance(depth, int)
             and isinstance(cx_depth, int)
-            and isinstance(time_limit, int)
-            and time_limit <= EXPERIMENT_TIME_LIMIT_S
+            and time <= EXPERIMENT_TIME_LIMIT_S
         ):
             return time, depth, cx_depth
     return None, 0, 0
