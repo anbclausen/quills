@@ -2,7 +2,7 @@ import os
 
 from abc import ABC, abstractmethod
 from typing import Callable
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from platforms import Platform
 from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from pddl import PDDLInstance
@@ -414,6 +414,20 @@ def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
     new_circuit = QuantumCircuit(QuantumRegister(num_qubits, qubit_name))
     for instr in circuit.data:
         if instr[0].name == "cx":
+            new_circuit.append(instr[0], instr[1])
+
+    return new_circuit
+
+
+def remove_all_non_swap_gates(circuit: QuantumCircuit) -> QuantumCircuit:
+    """
+    Remove all non-SWAP gates from the circuit.
+    """
+    num_qubits = circuit.num_qubits
+    qubit_name = circuit.qregs[0].name
+    new_circuit = QuantumCircuit(QuantumRegister(num_qubits, qubit_name))
+    for instr in circuit.data:
+        if instr[0].name.startswith("swap"):
             new_circuit.append(instr[0], instr[1])
 
     return new_circuit

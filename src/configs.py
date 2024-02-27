@@ -19,7 +19,7 @@ from synthesizers.cond_iterative_incr_planning import (
     ConditionalIterativeIncrementalPlanningSynthesizer,
 )
 
-from platforms import TOY, TENERIFE, Platform
+from platforms import TOY, TOY2, TENERIFE, Platform
 
 from solvers import (
     M_SEQUENTIAL_PLANS,
@@ -55,6 +55,7 @@ synthesizers: dict[str, Synthesizer] = {
 
 platforms: dict[str, Platform] = {
     "toy": TOY,
+    "toy2": TOY2,
     "tenerife": TENERIFE,
 }
 
