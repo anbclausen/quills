@@ -22,8 +22,8 @@ from datetime import datetime
 EXPERIMENT_TIME_LIMIT_S = 10
 CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
-    ("toy_example.qasm", "toy"),
-    # ("adder.qasm", "tenerife"),
+    # ("toy_example.qasm", "toy"),
+    ("adder.qasm", "tenerife"),
 ]
 
 if not os.path.exists("tmp"):
@@ -33,10 +33,7 @@ cache: dict[
     str,
     dict[
         str,
-        dict[
-            str,
-            dict[str, dict[str, dict[str, float | Literal["NS", "TO"] | int | int]]],
-        ],
+        dict[str, dict[str, dict[str, float | Literal["NS", "TO"] | int | int]]],
     ],
 ] = (
     json.load(open(CACHE_FILE, "r")) if os.path.exists(CACHE_FILE) else {}
@@ -52,20 +49,41 @@ def update_cache(
     depth: int,
     cx_depth: int,
 ):
-    time_str = str(EXPERIMENT_TIME_LIMIT_S)
-    if not cache.get(time_str):
-        cache[time_str] = {}
-    if not cache[time_str].get(input_file):
-        cache[time_str][input_file] = {}
-    if not cache[time_str][input_file].get(platform_name):
-        cache[time_str][input_file][platform_name] = {}
-    if not cache[time_str][input_file][platform_name].get(synthesizer_name):
-        cache[time_str][input_file][platform_name][synthesizer_name] = {}
-    cache[time_str][input_file][platform_name][synthesizer_name][solver_name] = {
-        "time": time,
-        "depth": depth,
-        "cx_depth": cx_depth,
-    }
+    if not cache.get(input_file):
+        cache[input_file] = {}
+    if not cache[input_file].get(platform_name):
+        cache[input_file][platform_name] = {}
+    if not cache[input_file][platform_name].get(synthesizer_name):
+        cache[input_file][platform_name][synthesizer_name] = {}
+
+    never_seen_config = (
+        not cache[input_file][platform_name][synthesizer_name]
+        .get(solver_name, {})
+        .get("time_limit")
+    )
+    if never_seen_config:
+        cache[input_file][platform_name][synthesizer_name][solver_name] = {
+            "time": time,
+            "depth": depth,
+            "cx_depth": cx_depth,
+            "time_limit": EXPERIMENT_TIME_LIMIT_S,
+        }
+    else:
+        cached_time_limit = cache[input_file][platform_name][synthesizer_name][
+            solver_name
+        ]["time_limit"]
+
+        cached_time_limit_is_smaller = (
+            isinstance(cached_time_limit, int)
+            and cached_time_limit <= EXPERIMENT_TIME_LIMIT_S
+        )
+        if cached_time_limit_is_smaller:
+            cache[input_file][platform_name][synthesizer_name][solver_name] = {
+                "time": time,
+                "depth": depth,
+                "cx_depth": cx_depth,
+                "time_limit": EXPERIMENT_TIME_LIMIT_S,
+            }
 
     with open(CACHE_FILE, "w") as f:
         json.dump(cache, f)
@@ -75,8 +93,7 @@ def get_cache_key(
     input_file: str, synthesizer_name: str, solver_name: str, platform_name: str
 ) -> tuple[float | Literal["NS", "TO"] | None, int, int]:
     result = (
-        cache.get(str(EXPERIMENT_TIME_LIMIT_S), {})
-        .get(input_file, {})
+        cache.get(input_file, {})
         .get(platform_name, {})
         .get(synthesizer_name, {})
         .get(solver_name, {})
@@ -88,12 +105,15 @@ def get_cache_key(
 
         depth = result.get("depth")
         cx_depth = result.get("cx_depth")
+        time_limit = result.get("time_limit")
 
         # to make the type checker happy
         if (
             isinstance(time, float)
             and isinstance(depth, int)
             and isinstance(cx_depth, int)
+            and isinstance(time_limit, int)
+            and time_limit <= EXPERIMENT_TIME_LIMIT_S
         ):
             return time, depth, cx_depth
     return None, 0, 0
