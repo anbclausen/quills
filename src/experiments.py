@@ -19,11 +19,11 @@ from configs import (
 )
 from datetime import datetime
 
-EXPERIMENT_TIME_LIMIT_S = 90
+EXPERIMENT_TIME_LIMIT_S = 10
 CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
-    # ("toy_example.qasm", "toy"),
-    ("adder.qasm", "tenerife"),
+    ("toy_example.qasm", "toy"),
+    # ("adder.qasm", "tenerife"),
 ]
 
 if not os.path.exists("tmp"):
@@ -124,11 +124,16 @@ for synthesizer in synthesizers:
             synthesizer in TEMPORAL_SYNTHESIZERS
             and solvers[solver].solver_class != TEMPORAL
         )
+        non_temporal_synthesizer_and_temporal_solver = (
+            synthesizer not in TEMPORAL_SYNTHESIZERS
+            and solvers[solver].solver_class == TEMPORAL
+        )
 
         if (
             not optimal_synthesizer_and_satisfying_solver
             and not conditional_synthesizer_and_non_conditional_solver
             and not temporal_synthesizer_and_non_temporal_solver
+            and not non_temporal_synthesizer_and_temporal_solver
         ):
             configurations.append((synthesizer, solver))
 
