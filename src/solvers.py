@@ -139,7 +139,6 @@ class Solver(ABC):
                 stdout=subprocess.DEVNULL, 
                 stderr=subprocess.DEVNULL,
             )
-            time.sleep(10)
             p.wait(timeout=time_limit_s)
         except subprocess.TimeoutExpired:
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
