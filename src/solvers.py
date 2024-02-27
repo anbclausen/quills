@@ -320,9 +320,8 @@ class MpC_EXISTS_STEPS(Solver):
     
 
 class MpC_FORALL_STEPS_EXTENDED(Solver):
-    sat_solver = ""
     solver_class = SATISFYING
-    description = f"The (MpC) Madagascar parallel (∀-step) planner + {sat_solver} is a SAT-based planner with the {sat_solver} SAT solver underneath.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    description = f"The (MpC) Madagascar parallel (∀-step) planner is a SAT-based planner extended with a custom SAT solver.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
 
     def __init__(self, sat_solver: str) -> None:
@@ -359,9 +358,8 @@ class MpC_FORALL_STEPS_EXTENDED(Solver):
 
 
 class MpC_EXISTS_STEPS_EXTENDED(Solver):
-    sat_solver = ""
     solver_class = SATISFYING
-    description = f"The (MpC) Madagascar parallel (∃-step) planner + {sat_solver} is a SAT-based planner with the {sat_solver} SAT solver underneath.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
+    description = f"The (MpC) Madagascar parallel (∃-step) planner is a SAT-based planner extended with a custom SAT solver.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
 
     def __init__(self, sat_solver: str) -> None:
