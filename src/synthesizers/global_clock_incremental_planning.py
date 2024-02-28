@@ -1,4 +1,6 @@
 from synthesizers.synthesizer import (
+    LogicalQubit,
+    PhysicalQubit,
     Synthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
@@ -22,7 +24,7 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
 
         if maximum_depth == None:
             raise ValueError(
-                "'max_depth' should always be given for incremental encodings"
+                "'maximum_depth' should always be given for incremental encodings"
             )
 
         num_pqubits = platform.qubits
@@ -38,7 +40,7 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
         class depth(object_):
             pass
 
-        class lqubit(gate):
+        class lqubit(object_):
             pass
 
         p = [pqubit(f"p{i}") for i in range(num_pqubits)]
@@ -148,8 +150,6 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                             not_(done(g[gate_id])),
                             connected(p1, p2),
                             clock(d),
-                            not_(is_busy(p1, d)),
-                            not_(is_busy(p2, d)),
                         ]
 
                         one_gate_dependency = len(gate_direct_mapping[gate_id]) == 1
@@ -193,6 +193,9 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                                     occupied_physical_qubit,
                                 )
                             )
+                            preconditions.append(
+                                not_(is_busy(occupied_physical_qubit, d))
+                            )
 
                             # preconds for the line that has not had any gates yet
                             preconditions.append(
@@ -207,6 +210,8 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
 
                             preconditions.append(mapped(control_qubit, p1))
                             preconditions.append(mapped(target_qubit, p2))
+                            preconditions.append(not_(is_busy(p1, d)))
+                            preconditions.append(not_(is_busy(p2, d)))
 
                         effects = [
                             done(g[gate_id]),
@@ -263,7 +268,6 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                         preconditions = [
                             clock(d),
                             not_(done(g[gate_id])),
-                            not_(is_busy(p, d)),
                         ]
 
                         if no_gate_dependency:
@@ -272,6 +276,7 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]
                             preconditions.append(done(direct_predecessor_gate))
                             preconditions.append(mapped(logical_qubit, p))
+                            preconditions.append(not_(is_busy(p, d)))
 
                         effects = [
                             done(g[gate_id]),
@@ -331,4 +336,16 @@ class GlobalClockIncrementalPlanningSynthesizer(Synthesizer):
             max_plan_length_lambda,
             min_layers_lambda,
             max_layers_lambda,
+        )
+
+    def parse_solution(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+
+        return super().parse_solution_grounded(
+            original_circuit, platform, solver_solution, swaps_as_cnots
         )

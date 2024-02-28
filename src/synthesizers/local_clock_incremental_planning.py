@@ -1,4 +1,6 @@
 from synthesizers.synthesizer import (
+    LogicalQubit,
+    PhysicalQubit,
     Synthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
@@ -22,7 +24,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
 
         if maximum_depth == None:
             raise ValueError(
-                "'max_depth' should always be given for incremental encodings"
+                "'maximum_depth' should always be given for incremental encodings"
             )
 
         num_pqubits = platform.qubits
@@ -40,7 +42,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
         class depth(object_):
             pass
 
-        class lqubit(gate):
+        class lqubit(object_):
             pass
 
         p = [pqubit(f"p{i}") for i in range(num_pqubits)]
@@ -319,4 +321,16 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
             max_plan_length_lambda,
             min_layers_lambda,
             max_layers_lambda,
+        )
+
+    def parse_solution(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+
+        return super().parse_solution_grounded(
+            original_circuit, platform, solver_solution, swaps_as_cnots
         )

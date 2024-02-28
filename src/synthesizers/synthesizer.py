@@ -107,6 +107,7 @@ class Synthesizer(ABC):
     ) -> PDDLInstance:
         pass
 
+    @abstractmethod
     def parse_solution(
         self,
         original_circuit: QuantumCircuit,
@@ -114,12 +115,21 @@ class Synthesizer(ABC):
         solver_solution: list[str],
         swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
-        """
-        Parse the solver solution of the layout synthesis problem.
+        pass
 
-        This method has a default implementation that requires:
+    def parse_solution_grounded(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+        """
+        Parse the solver solution of the layout synthesis problem for grounded encodings.
+
+        This implementation requires:
         - all unary gates actions are named `apply_gate_g{id}(q{id}, ...)`
-        - all CX gates actions are named `apply_cx_g{id}(?, ?, q_control{id}, q_target{id}, ...)`
+        - all CX gates actions are named `apply_cx_g{id}(q_control{id}, q_target{id}, ...)`
         - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)`
         - no other actions matter in how the physical circuit is constructed
 
@@ -175,6 +185,91 @@ class Synthesizer(ABC):
                     add_cx_gate_qubits(gate_id, control, target)
                 else:
                     qubit = int(arguments[0][1:])
+                    add_single_gate_qubit(gate_id, qubit)
+
+            elif action.startswith("swap("):
+                control = int(arguments[2][1:])
+                target = int(arguments[3][1:])
+                if swaps_as_cnots:
+                    physical_circuit.cx(control, target)
+                    physical_circuit.cx(target, control)
+                    physical_circuit.cx(control, target)
+                else:
+                    physical_circuit.swap(control, target)
+
+        num_lqubits = original_circuit.num_qubits
+        if len(initial_mapping) != num_lqubits:
+            mapping_string = ", ".join(
+                f"{l} => {p}" for l, p in initial_mapping.items()
+            )
+            raise ValueError(
+                f"Mapping '{mapping_string}' does not have the same number of qubits as the original circuit"
+            )
+
+        return physical_circuit, initial_mapping
+
+    def parse_solution_lifted(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+        """
+        Parse the solver solution of the layout synthesis problem for lifted encodings.
+
+        This implementation requires:
+        - all unary gates actions are named `apply_unary_[gate + input](?, q{id}, g{id}, ...)`
+        - all CX gates actions are named `apply_cx_[gate + input]_[gate + input](?, ?, q_control{id}, q_target{id}, g{id}, ...)`
+        - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)`
+        - no other actions matter in how the physical circuit is constructed
+
+        """
+
+        initial_mapping = {}
+        physical_circuit = QuantumCircuit(QuantumRegister(platform.qubits, "p"))
+        gate_logical_mapping = gate_line_dependency_mapping(original_circuit)
+
+        def add_to_initial_mapping_if_not_present(
+            logical_qubit: LogicalQubit, physical_qubit: PhysicalQubit
+        ):
+            initial_mapping_key_ids = [l.id for l in initial_mapping.keys()]
+            if logical_qubit.id not in initial_mapping_key_ids:
+                initial_mapping[logical_qubit] = physical_qubit
+
+        def add_single_gate_qubit(id: int, qubit: int):
+            op = original_circuit.data[id].operation
+            physical_circuit.append(op, [qubit])
+
+            logical_qubit = gate_logical_mapping[id][1][0]
+            add_to_initial_mapping_if_not_present(
+                LogicalQubit(logical_qubit), PhysicalQubit(qubit)
+            )
+
+        def add_cx_gate_qubits(id: int, control: int, target: int):
+            physical_circuit.cx(control, target)
+
+            logical_control = gate_logical_mapping[id][1][0]
+            logical_target = gate_logical_mapping[id][1][1]
+            add_to_initial_mapping_if_not_present(
+                LogicalQubit(logical_control), PhysicalQubit(control)
+            )
+            add_to_initial_mapping_if_not_present(
+                LogicalQubit(logical_target), PhysicalQubit(target)
+            )
+
+        for action in solver_solution:
+            arguments = action.split("(")[1].split(")")[0].split(",")
+            if action.startswith("apply"):
+                is_cx = action.startswith("apply_cx")
+                if is_cx:
+                    gate_id = int(arguments[4][1:])
+                    control = int(arguments[2][1:])
+                    target = int(arguments[3][1:])
+                    add_cx_gate_qubits(gate_id, control, target)
+                else:
+                    gate_id = int(arguments[2][1:])
+                    qubit = int(arguments[1][1:])
                     add_single_gate_qubit(gate_id, qubit)
 
             elif action.startswith("swap("):
