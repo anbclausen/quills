@@ -1,22 +1,40 @@
 from synthesizers.synthesizer import Synthesizer
 from synthesizers.cost_based_optimal_planning import CostBasedOptimalPlanningSynthesizer
+from synthesizers.cost_based_optimal_lifted_planning import (
+    CostBasedOptimalLiftedPlanningSynthesizer,
+)
 from synthesizers.cond_cost_based_optimal_planning import (
     ConditionalCostBasedOptimalPlanningSynthesizer,
+)
+from synthesizers.cond_cost_based_optimal_lifted_planning import (
+    ConditionalCostBasedOptimalLiftedPlanningSynthesizer,
 )
 from synthesizers.local_clock_incremental_planning import (
     LocalClockIncrementalPlanningSynthesizer,
 )
+from synthesizers.local_clock_incremental_lifted_planning import (
+    LocalClockIncrementalLiftedPlanningSynthesizer,
+)
 from synthesizers.global_clock_incremental_planning import (
     GlobalClockIncrementalPlanningSynthesizer,
 )
+from synthesizers.global_clock_incremental_lifted_planning import (
+    GlobalClockIncrementalLiftedPlanningSynthesizer,
+)
 from synthesizers.iterative_incr_planning import (
     IterativeIncrementalPlanningSynthesizer,
+)
+from synthesizers.iterative_incr_lifted_planning import (
+    IterativeIncrementalLiftedPlanningSynthesizer,
 )
 from synthesizers.grounded_iterative_incr_planning import (
     GroundedIterativeIncrementalPlanningSynthesizer,
 )
 from synthesizers.cond_iterative_incr_planning import (
     ConditionalIterativeIncrementalPlanningSynthesizer,
+)
+from synthesizers.cond_iterative_incr_lifted_planning import (
+    ConditionalIterativeIncrementalLiftedPlanningSynthesizer,
 )
 from synthesizers.temporal_optimal_planning import (
     TemporalOptimalPlanningSynthesizer,
@@ -46,20 +64,36 @@ from solvers import (
 )
 
 DEFAULT_TIME_LIMIT_S = 1800
-OPTIMAL_SYNTHESIZERS = ["cost_opt", "cond_cost_opt"]
-CONDITIONAL_SYNTHESIZERS = ["cond_cost_opt", "cond_iter_incr"]
+OPTIMAL_SYNTHESIZERS = [
+    "cost_opt",
+    "cond_cost_opt",
+    "cond_cost_opt_lift",
+    "cost_opt_lift",
+]
+CONDITIONAL_SYNTHESIZERS = [
+    "cond_cost_opt",
+    "cond_iter_incr",
+    "cond_cost_opt_lift",
+    "cond_iter_incr_lift",
+]
 TEMPORAL_SYNTHESIZERS = ["temp_opt"]
 
 
 synthesizers: dict[str, Synthesizer] = {
-    # "cost_opt": CostBasedOptimalPlanningSynthesizer(),
+    "cost_opt": CostBasedOptimalPlanningSynthesizer(),
+    "cost_opt_lift": CostBasedOptimalLiftedPlanningSynthesizer(),
     "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
-    # "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
-    # "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
+    "cond_cost_opt_lift": ConditionalCostBasedOptimalLiftedPlanningSynthesizer(),
+    "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
+    "lc_incr_lift": LocalClockIncrementalLiftedPlanningSynthesizer(),
+    "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
+    "gc_incr_lift": GlobalClockIncrementalLiftedPlanningSynthesizer(),
     "iter_incr": IterativeIncrementalPlanningSynthesizer(),
+    "iter_incr_lift": IterativeIncrementalLiftedPlanningSynthesizer(),
     "grounded_iter_incr": GroundedIterativeIncrementalPlanningSynthesizer(),
-    # "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
-    # "temp_opt": TemporalOptimalPlanningSynthesizer(),
+    "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
+    "cond_iter_incr_lift": ConditionalIterativeIncrementalLiftedPlanningSynthesizer(),
+    "temp_opt": TemporalOptimalPlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {
