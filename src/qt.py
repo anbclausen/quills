@@ -148,9 +148,9 @@ if isinstance(output, SynthesizerSolution):
         input_circuit, output.circuit, output.initial_mapping, platform
     )
     if correct_output:
-        print("✓ Output circuit is correct")
+        print("✓ Input and output circuits are equivalent (proprietary checker)")
     else:
-        print("✗ Output circuit is not correct")
+        print("✗ Input and output circuits are not equivalent (proprietary checker)")
     correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
     if correct_qcec:
         print("✓ Input and output circuits are equivalent (QCEC)")
