@@ -41,3 +41,8 @@ ENV PYTHONPATH="${PYTHONPATH}:/workspaces/qt/src"
 # Make Madagascar executable
 RUN chmod +x M
 RUN chmod +x MpC
+
+# Install tflap
+RUN git clone https://bitbucket.org/ipc2018-temporal/team2.git tflap
+RUN cd tflap/src && make clean && make all
+ENV PATH="${PATH}:/dependencies/tflap/src"

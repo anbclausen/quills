@@ -3,15 +3,14 @@ from qiskit import QuantumCircuit, qasm2
 from synthesizers.synthesizer import remove_all_non_cx_gates
 from synthesizers.synthesizer import SynthesizerSolution
 from output_checker import OutputChecker
-from solvers import (
-    OPTIMAL,
-)
+from solvers import OPTIMAL, TEMPORAL
 from configs import (
     synthesizers,
     platforms,
     solvers,
     OPTIMAL_SYNTHESIZERS,
     CONDITIONAL_SYNTHESIZERS,
+    TEMPORAL_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
 
@@ -35,27 +34,31 @@ parser.add_argument(
     "--model",
     type=str,
     help=f"the synthesizer model to use: {', '.join(synthesizers.keys())}",
-    default="cost_opt",
+    default="cond_cost_opt",
 )
-
 
 parser.add_argument(
     "-p",
     "--platform",
     type=str,
     help=f"the target platform: {', '.join(platforms.keys())}",
-    default="toy",
+    default="tenerife",
 )
-
 
 parser.add_argument(
     "-s",
     "--solver",
     type=str,
     help=f"the underlying solver: {', '.join(solvers.keys())}",
-    default="fd_bjolp",
+    default="fd_ms",
 )
 
+parser.add_argument(
+    "-cx",
+    "--cx_optimal",
+    help=f"whether to optimize for cx-depth",
+    action="store_true",
+)
 
 parser.add_argument(
     "input",
@@ -85,12 +88,20 @@ print()
 optimal_planner = args.model in OPTIMAL_SYNTHESIZERS
 if optimal_planner and solver.solver_class != OPTIMAL:
     raise ValueError(
-        f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal"
+        f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal.\n"
+        f"Please choose one of the following optimal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == OPTIMAL)}"
     )
 uses_conditionals = args.model in CONDITIONAL_SYNTHESIZERS
 if uses_conditionals and not solver.accepts_conditional:
     raise ValueError(
-        f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those"
+        f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
+        f"Please choose one of the following solvers: {', '.join(s for s in solvers if solvers[s].accepts_conditional)}"
+    )
+uses_temporal = args.model in TEMPORAL_SYNTHESIZERS
+if uses_temporal and solver.solver_class != TEMPORAL:
+    raise ValueError(
+        f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal.\n"
+        f"Please choose one of the following temporal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == TEMPORAL)}"
     )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
@@ -121,11 +132,13 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing... ",
+    f"Synthesizing ({"cx-depth" if args.cx_optimal else "depth"}-optimal)... ",
     end="",
     flush=True,
 )
-output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
+output = synthesizer.synthesize(
+    input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
+)
 print(output)
 print()
 

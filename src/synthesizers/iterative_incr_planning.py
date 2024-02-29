@@ -1,4 +1,6 @@
 from synthesizers.synthesizer import (
+    LogicalQubit,
+    PhysicalQubit,
     Synthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
@@ -356,11 +358,14 @@ class IterativeIncrementalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         min_plan_length_lambda = lambda depth: depth + logical_circuit.size()
         max_plan_length_lambda = (
             lambda depth: depth + logical_circuit.num_qubits * depth
         )
+        min_layers_lambda = lambda depth: 2 * depth
+        max_layers_lambda = lambda depth: 2 * depth
 
         return super().synthesize_incremental(
             logical_circuit,
@@ -369,4 +374,19 @@ class IterativeIncrementalPlanningSynthesizer(Synthesizer):
             time_limit_s,
             min_plan_length_lambda,
             max_plan_length_lambda,
+            min_layers_lambda,
+            max_layers_lambda,
+            cx_optimal,
+        )
+
+    def parse_solution(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+
+        return super().parse_solution_grounded(
+            original_circuit, platform, solver_solution, swaps_as_cnots
         )

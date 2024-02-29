@@ -8,12 +8,20 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_, increase_cost
+from pddl import (
+    PDDLDurativeAction,
+    PDDLInstance,
+    PDDLPredicate,
+    object_,
+    not_,
+    at_end,
+    at_start,
+)
 from solvers import Solver
 
 
-class CostBasedOptimalPlanningSynthesizer(Synthesizer):
-    description = "Optimal cost-based synthesizer based on planning."
+class TemporalOptimalPlanningSynthesizer(Synthesizer):
+    description = "Optimal synthesizer based on temporal planning."
 
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
@@ -52,74 +60,30 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
             pass
 
         @PDDLPredicate()
-        def busy(l: lqubit):
+        def idle(l: lqubit):
             pass
 
-        @PDDLPredicate()
-        def is_swapping1(l1: lqubit, l2: lqubit):
-            pass
-
-        @PDDLPredicate()
-        def is_swapping2(l1: lqubit, p2: lqubit):
-            pass
-
-        @PDDLPredicate()
-        def is_swapping(l: lqubit):
-            pass
-
-        @PDDLAction()
+        @PDDLDurativeAction()
         def swap(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
-            preconditions = [
-                mapped(l1, p1),
-                mapped(l2, p2),
-                connected(p1, p2),
-                not_(busy(l1)),
-                not_(busy(l2)),
+            duration = 3
+            conditions = [
+                at_start(mapped(l1, p1)),
+                at_start(mapped(l2, p2)),
+                at_start(connected(p1, p2)),
+                at_start(idle(l1)),
+                at_start(idle(l2)),
             ]
             effects = [
-                not_(mapped(l1, p1)),
-                not_(mapped(l2, p2)),
-                mapped(l1, p2),
-                mapped(l2, p1),
-                busy(l1),
-                busy(l2),
-                is_swapping1(l1, l2),
-                is_swapping(l1),
-                is_swapping(l2),
-                increase_cost(1),
+                at_start(not_(idle(l1))),
+                at_start(not_(idle(l2))),
+                at_end(not_(mapped(l1, p1))),
+                at_end(not_(mapped(l2, p2))),
+                at_end(mapped(l1, p2)),
+                at_end(mapped(l2, p1)),
+                at_end(idle(l1)),
+                at_end(idle(l2)),
             ]
-            return preconditions, effects
-
-        @PDDLAction()
-        def swap_dummy1(l1: lqubit, l2: lqubit):
-            preconditions = [is_swapping1(l1, l2), not_(busy(l1)), not_(busy(l2))]
-            effects = [
-                not_(is_swapping1(l1, l2)),
-                is_swapping2(l1, l2),
-                busy(l1),
-                busy(l2),
-                increase_cost(1),
-            ]
-            return preconditions, effects
-
-        @PDDLAction()
-        def swap_dummy2(l1: lqubit, l2: lqubit):
-            preconditions = [is_swapping2(l1, l2), not_(busy(l1)), not_(busy(l2))]
-            effects = [
-                not_(is_swapping2(l1, l2)),
-                not_(is_swapping(l1)),
-                not_(is_swapping(l2)),
-                busy(l1),
-                busy(l2),
-                increase_cost(1),
-            ]
-            return preconditions, effects
-
-        @PDDLAction()
-        def advance():
-            preconditions = []
-            effects = [not_(busy(l)) for l in l] + [increase_cost(num_lqubits)]
-            return preconditions, effects
+            return duration, conditions, effects
 
         gate_line_mapping = gate_line_dependency_mapping(circuit)
         gate_direct_mapping = gate_direct_dependency_mapping(circuit)
@@ -132,18 +96,24 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
             match gate_type:
                 case "cx":
 
-                    @PDDLAction(name=f"apply_cx_g{gate_id}")
+                    @PDDLDurativeAction(name=f"apply_cx_g{gate_id}")
                     def apply_gate(p1: pqubit, p2: pqubit):
-                        preconditions = [
-                            not_(done(g[gate_id])),
-                            connected(p1, p2),
+                        control_qubit = l[gate_logical_qubits[0]]
+                        target_qubit = l[gate_logical_qubits[1]]
+
+                        duration = 1
+                        conditions = [
+                            at_start(not_(done(g[gate_id]))),
+                            at_start(connected(p1, p2)),
+                            at_start(idle(control_qubit)),
+                            at_start(idle(target_qubit)),
                         ]
 
                         one_gate_dependency = len(gate_direct_mapping[gate_id]) == 1
 
                         if no_gate_dependency:
-                            preconditions.append(not_(occupied(p1)))
-                            preconditions.append(not_(occupied(p2)))
+                            conditions.append(at_start(not_(occupied(p1))))
+                            conditions.append(at_start(not_(occupied(p2))))
                         elif one_gate_dependency:
                             earlier_gate = direct_predecessor_gates[0]
                             _, earlier_gate_logical_qubits = gate_line_mapping[
@@ -173,50 +143,47 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
                             )
 
                             # preconds for the occupied line
-                            preconditions.append(done(g[earlier_gate]))
-                            preconditions.append(
-                                mapped(
-                                    l[gate_occupied_logical_qubit],
-                                    occupied_physical_qubit,
+                            conditions.append(at_start(done(g[earlier_gate])))
+                            conditions.append(
+                                at_start(
+                                    mapped(
+                                        l[gate_occupied_logical_qubit],
+                                        occupied_physical_qubit,
+                                    )
                                 )
-                            )
-                            preconditions.append(
-                                not_(is_swapping(l[gate_occupied_logical_qubit]))
-                            )
-                            preconditions.append(
-                                not_(busy(l[gate_occupied_logical_qubit]))
                             )
 
                             # preconds for the unoccupied line
-                            preconditions.append(
-                                not_(occupied(unoccupied_physical_qubit))
+                            conditions.append(
+                                at_start(not_(occupied(unoccupied_physical_qubit)))
                             )
                         else:
-                            preconditions.extend(
-                                [done(g[dep]) for dep in direct_predecessor_gates]
+                            conditions.extend(
+                                [
+                                    at_start(done(g[dep]))
+                                    for dep in direct_predecessor_gates
+                                ]
                             )
-                            control_qubit = l[gate_logical_qubits[0]]
-                            target_qubit = l[gate_logical_qubits[1]]
-
-                            preconditions.append(mapped(control_qubit, p1))
-                            preconditions.append(mapped(target_qubit, p2))
-                            preconditions.append(not_(is_swapping(control_qubit)))
-                            preconditions.append(not_(is_swapping(target_qubit)))
-                            preconditions.append(not_(busy(control_qubit)))
-                            preconditions.append(not_(busy(target_qubit)))
+                            conditions.append(at_start(mapped(control_qubit, p1)))
+                            conditions.append(at_start(mapped(target_qubit, p2)))
 
                         effects = [
-                            done(g[gate_id]),
-                            busy(l[gate_logical_qubits[0]]),
-                            busy(l[gate_logical_qubits[1]]),
-                            increase_cost(1),
+                            at_start(not_(idle(l[gate_logical_qubits[0]]))),
+                            at_start(not_(idle(l[gate_logical_qubits[1]]))),
+                            at_end(done(g[gate_id])),
+                            at_end(idle(l[gate_logical_qubits[0]])),
+                            at_end(idle(l[gate_logical_qubits[1]])),
                         ]
 
                         if no_gate_dependency:
-                            effects.append(occupied(p1))
-                            effects.append(occupied(p2))
-                            effects.append(mapped(l[gate_logical_qubits[0]], p1))
-                            effects.append(mapped(l[gate_logical_qubits[1]], p2))
+                            effects.append(at_start(occupied(p1)))
+                            effects.append(at_start(occupied(p2)))
+                            effects.append(
+                                at_start(mapped(l[gate_logical_qubits[0]], p1))
+                            )
+                            effects.append(
+                                at_start(mapped(l[gate_logical_qubits[1]], p2))
+                            )
 
                         elif one_gate_dependency:
                             earlier_gate = direct_predecessor_gates[0]
@@ -243,46 +210,49 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
                                 - gate_logical_qubits.index(gate_occupied_logical_qubit)
                             ]
 
-                            effects.append(occupied(unoccupied_physical_qubit))
                             effects.append(
-                                mapped(
-                                    l[gate_unoccupied_logical_qubit],
-                                    unoccupied_physical_qubit,
+                                at_start(occupied(unoccupied_physical_qubit))
+                            )
+                            effects.append(
+                                at_start(
+                                    mapped(
+                                        l[gate_unoccupied_logical_qubit],
+                                        unoccupied_physical_qubit,
+                                    )
                                 )
                             )
 
-                        return preconditions, effects
+                        return duration, conditions, effects
 
                 case _:
 
-                    @PDDLAction(name=f"apply_gate_g{gate_id}")
+                    @PDDLDurativeAction(name=f"apply_gate_g{gate_id}")
                     def apply_gate(p: pqubit):
                         logical_qubit = l[gate_logical_qubits[0]]
-
-                        preconditions = [
-                            not_(done(g[gate_id])),
+                        duration = 1
+                        conditions = [
+                            at_start(not_(done(g[gate_id]))),
+                            at_start(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
-                            preconditions.append(not_(occupied(p)))
+                            conditions.append(at_start(not_(occupied(p))))
                         else:
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]
-                            preconditions.append(done(direct_predecessor_gate))
-                            preconditions.append(mapped(logical_qubit, p))
-                            preconditions.append(not_(is_swapping(logical_qubit)))
-                            preconditions.append(not_(busy(logical_qubit)))
+                            conditions.append(at_start(done(direct_predecessor_gate)))
+                            conditions.append(at_start(mapped(logical_qubit, p)))
 
                         effects = [
-                            done(g[gate_id]),
-                            busy(logical_qubit),
-                            increase_cost(1),
+                            at_start(not_(idle(logical_qubit))),
+                            at_end(done(g[gate_id])),
+                            at_end(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
-                            effects.append(occupied(p))
-                            effects.append(mapped(logical_qubit, p))
+                            effects.append(at_start(occupied(p)))
+                            effects.append(at_start(mapped(logical_qubit, p)))
 
-                        return preconditions, effects
+                        return duration, conditions, effects
 
             gate_actions.append(apply_gate)
 
@@ -295,26 +265,21 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
                 mapped,
                 connected,
                 done,
-                busy,
-                is_swapping1,
-                is_swapping2,
-                is_swapping,
+                idle,
             ],
-            actions=[
+            durative_actions=[
                 swap,
-                swap_dummy1,
-                swap_dummy2,
-                advance,
                 *gate_actions,
             ],
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
+                *[idle(li) for li in l],
             ],
             goal_state=[
                 *[done(gi) for gi in g],
-                *[not_(is_swapping(li)) for li in l],
             ],
-            cost_function=True,
+            durative_actions_req=True,
+            negative_preconditions=False,
         )
 
     def synthesize(
@@ -323,7 +288,6 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
 
         min_plan_length = logical_circuit.size()
@@ -339,7 +303,6 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
             max_plan_length,
             min_plan_length,
             max_plan_length,
-            cx_optimal,
         )
 
     def parse_solution(

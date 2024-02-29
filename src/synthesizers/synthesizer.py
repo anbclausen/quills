@@ -1,11 +1,21 @@
 import os
 
+from itertools import takewhile
 from abc import ABC, abstractmethod
 from typing import Callable
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit.circuit import Instruction
 from platforms import Platform
 from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from pddl import PDDLInstance
+
+JUNK_FILES = [
+    "output.sas",
+    "execution.details",
+    "GroundedDomain.pddl",
+    "GroundedProblem.pddl",
+    *[f"quantum-circuit.{i:03}.cnf" for i in range(1000)],
+]
 
 
 class LogicalQubit:
@@ -99,6 +109,7 @@ class Synthesizer(ABC):
     ) -> PDDLInstance:
         pass
 
+    @abstractmethod
     def parse_solution(
         self,
         original_circuit: QuantumCircuit,
@@ -106,12 +117,21 @@ class Synthesizer(ABC):
         solver_solution: list[str],
         swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
-        """
-        Parse the solver solution of the layout synthesis problem.
+        pass
 
-        This method has a default implementation that requires:
+    def parse_solution_grounded(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+        """
+        Parse the solver solution of the layout synthesis problem for grounded encodings.
+
+        This implementation requires:
         - all unary gates actions are named `apply_gate_g{id}(q{id}, ...)`
-        - all CX gates actions are named `apply_cx_g{id}(?, ?, q_control{id}, q_target{id}, ...)`
+        - all CX gates actions are named `apply_cx_g{id}(q_control{id}, q_target{id}, ...)`
         - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)`
         - no other actions matter in how the physical circuit is constructed
 
@@ -190,6 +210,91 @@ class Synthesizer(ABC):
 
         return physical_circuit, initial_mapping
 
+    def parse_solution_lifted(
+        self,
+        original_circuit: QuantumCircuit,
+        platform: Platform,
+        solver_solution: list[str],
+        swaps_as_cnots: bool = False,
+    ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
+        """
+        Parse the solver solution of the layout synthesis problem for lifted encodings.
+
+        This implementation requires:
+        - all unary gates actions are named `apply_unary_[gate + input](?, q{id}, g{id}, ...)`
+        - all CX gates actions are named `apply_cx_[gate + input]_[gate + input](?, ?, q_control{id}, q_target{id}, g{id}, ...)`
+        - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)`
+        - no other actions matter in how the physical circuit is constructed
+
+        """
+
+        initial_mapping = {}
+        physical_circuit = QuantumCircuit(QuantumRegister(platform.qubits, "p"))
+        gate_logical_mapping = gate_line_dependency_mapping(original_circuit)
+
+        def add_to_initial_mapping_if_not_present(
+            logical_qubit: LogicalQubit, physical_qubit: PhysicalQubit
+        ):
+            initial_mapping_key_ids = [l.id for l in initial_mapping.keys()]
+            if logical_qubit.id not in initial_mapping_key_ids:
+                initial_mapping[logical_qubit] = physical_qubit
+
+        def add_single_gate_qubit(id: int, qubit: int):
+            op = original_circuit.data[id].operation
+            physical_circuit.append(op, [qubit])
+
+            logical_qubit = gate_logical_mapping[id][1][0]
+            add_to_initial_mapping_if_not_present(
+                LogicalQubit(logical_qubit), PhysicalQubit(qubit)
+            )
+
+        def add_cx_gate_qubits(id: int, control: int, target: int):
+            physical_circuit.cx(control, target)
+
+            logical_control = gate_logical_mapping[id][1][0]
+            logical_target = gate_logical_mapping[id][1][1]
+            add_to_initial_mapping_if_not_present(
+                LogicalQubit(logical_control), PhysicalQubit(control)
+            )
+            add_to_initial_mapping_if_not_present(
+                LogicalQubit(logical_target), PhysicalQubit(target)
+            )
+
+        for action in solver_solution:
+            arguments = action.split("(")[1].split(")")[0].split(",")
+            if action.startswith("apply"):
+                is_cx = action.startswith("apply_cx")
+                if is_cx:
+                    gate_id = int(arguments[4][1:])
+                    control = int(arguments[2][1:])
+                    target = int(arguments[3][1:])
+                    add_cx_gate_qubits(gate_id, control, target)
+                else:
+                    gate_id = int(arguments[2][1:])
+                    qubit = int(arguments[1][1:])
+                    add_single_gate_qubit(gate_id, qubit)
+
+            elif action.startswith("swap("):
+                control = int(arguments[2][1:])
+                target = int(arguments[3][1:])
+                if swaps_as_cnots:
+                    physical_circuit.cx(control, target)
+                    physical_circuit.cx(target, control)
+                    physical_circuit.cx(control, target)
+                else:
+                    physical_circuit.swap(control, target)
+
+        num_lqubits = original_circuit.num_qubits
+        if len(initial_mapping) != num_lqubits:
+            mapping_string = ", ".join(
+                f"{l} => {p}" for l, p in initial_mapping.items()
+            )
+            raise ValueError(
+                f"Mapping '{mapping_string}' does not have the same number of qubits as the original circuit"
+            )
+
+        return physical_circuit, initial_mapping
+
     @abstractmethod
     def synthesize(
         self,
@@ -197,6 +302,7 @@ class Synthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         """
         Layout synthesis.
@@ -223,14 +329,28 @@ class Synthesizer(ABC):
         time_limit_s: int,
         min_plan_length: int,
         max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
+        cnot_optimal: bool,
     ) -> SynthesizerOutput:
 
         remove_intermediate_files()
 
-        instance = self.create_instance(logical_circuit, platform)
+        circuit = (
+            remove_all_non_cx_gates(logical_circuit)
+            if cnot_optimal
+            else logical_circuit
+        )
+        instance = self.create_instance(circuit, platform)
         domain, problem = instance.compile()
         solution, total_time = solver.solve(
-            domain, problem, time_limit_s, min_plan_length, max_plan_length
+            domain,
+            problem,
+            time_limit_s,
+            min_plan_length,
+            max_plan_length,
+            min_layers,
+            max_layers,
         )
 
         match solution:
@@ -240,10 +360,17 @@ class Synthesizer(ABC):
                 return SynthesizerNoSolution()
             case SolverSolution(actions):
                 physical_circuit, initial_mapping = self.parse_solution(
-                    logical_circuit, platform, actions
+                    circuit, platform, actions
                 )
+
+                if cnot_optimal:
+                    physical_circuit = reinsert_unary_gates(
+                        logical_circuit, physical_circuit, initial_mapping
+                    )
+                    print("FIXME, depth is wrong")
+
                 physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                    logical_circuit, platform, actions, swaps_as_cnots=True
+                    circuit, platform, actions, swaps_as_cnots=True
                 )
                 depth = physical_circuit_with_cnots_as_swap.depth()
                 physical_with_only_cnots = remove_all_non_cx_gates(
@@ -264,25 +391,40 @@ class Synthesizer(ABC):
         time_limit_s: int,
         min_plan_length_lambda: Callable[[int], int],
         max_plan_length_lambda: Callable[[int], int],
+        min_layers_lambda: Callable[[int], int],
+        max_layers_lambda: Callable[[int], int],
+        cnot_optimal: bool,
     ) -> SynthesizerOutput:
 
         remove_intermediate_files()
 
-        circuit_depth = logical_circuit.depth()
+        circuit = (
+            remove_all_non_cx_gates(logical_circuit)
+            if cnot_optimal
+            else logical_circuit
+        )
+
+        circuit_depth = circuit.depth()
         total_time = 0
         print("Searching: ", end="")
         for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
             print(f"depth {depth}, ", end="", flush=True)
-            instance = self.create_instance(
-                logical_circuit, platform, maximum_depth=depth
-            )
+            instance = self.create_instance(circuit, platform, maximum_depth=depth)
             domain, problem = instance.compile()
 
             time_left = int(time_limit_s - total_time)
             min_plan_length = min_plan_length_lambda(depth)
             max_plan_length = max_plan_length_lambda(depth)
+            min_layers = min_layers_lambda(depth)
+            max_layers = max_layers_lambda(depth)
             solution, time_taken = solver.solve(
-                domain, problem, time_left, min_plan_length, max_plan_length
+                domain,
+                problem,
+                time_left,
+                min_plan_length,
+                max_plan_length,
+                min_layers,
+                max_layers,
             )
             total_time += time_taken
 
@@ -295,10 +437,16 @@ class Synthesizer(ABC):
                 case SolverSolution(actions):
                     print()
                     physical_circuit, initial_mapping = self.parse_solution(
-                        logical_circuit, platform, actions
+                        circuit, platform, actions
                     )
+
+                    if cnot_optimal:
+                        physical_circuit = reinsert_unary_gates(
+                            logical_circuit, physical_circuit, initial_mapping
+                        )
+
                     physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                        logical_circuit, platform, actions, swaps_as_cnots=True
+                        circuit, platform, actions, swaps_as_cnots=True
                     )
                     depth = physical_circuit_with_cnots_as_swap.depth()
                     physical_with_only_cnots = remove_all_non_cx_gates(
@@ -310,6 +458,127 @@ class Synthesizer(ABC):
                     )
                 case _:
                     raise ValueError(f"Unexpected solution: {solution}")
+        return SynthesizerNoSolution()
+
+    def synthesize_incremental_binary(
+        self,
+        logical_circuit: QuantumCircuit,
+        platform: Platform,
+        solver: Solver,
+        time_limit_s: int,
+        min_plan_length_lambda: Callable[[int], int],
+        max_plan_length_lambda: Callable[[int], int],
+        min_layers_lambda: Callable[[int], int],
+        max_layers_lambda: Callable[[int], int],
+    ) -> SynthesizerOutput:
+
+        def find_larger_depth(current_depth: int) -> tuple[int, bool]:
+            if smallest_success > max_depth:
+                candidate_depth = current_depth * 2
+            else:
+                candidate_depth = int((smallest_success + current_depth) / 2)
+
+            if candidate_depth > max_depth:
+                if max_depth in failed_depths:
+                    return 0, False
+                else:
+                    return max_depth, True
+            else:
+                return candidate_depth, True
+
+        def find_smaller_depth(current_depth: int) -> tuple[int, bool]:
+            candidate_depth = int((largest_fail + current_depth) / 2)
+            return candidate_depth, True
+
+        def return_found_solution(actions: list[str]) -> SynthesizerOutput:
+            print()
+            physical_circuit, initial_mapping = self.parse_solution(
+                logical_circuit, platform, actions
+            )
+            physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
+                logical_circuit, platform, actions, swaps_as_cnots=True
+            )
+            depth = physical_circuit_with_cnots_as_swap.depth()
+            physical_with_only_cnots = remove_all_non_cx_gates(
+                physical_circuit_with_cnots_as_swap
+            )
+            cx_depth = physical_with_only_cnots.depth()
+            return SynthesizerSolution(
+                physical_circuit, initial_mapping, total_time, depth, cx_depth
+            )
+
+        remove_intermediate_files()
+
+        circuit_depth = logical_circuit.depth()
+        total_time = 0
+        print("Searching: ", end="")
+
+        failed_depths: set[int] = set()
+        largest_fail = circuit_depth - 1
+        failed_depths.add(largest_fail)
+
+        max_depth = 4 * circuit_depth + 1
+        smallest_success = max_depth + 1
+        successful_depths: dict[int, list[str]] = {}
+
+        current_depth = circuit_depth
+
+        try_more_depths = True
+
+        while try_more_depths:
+            print(f"depth {current_depth}, ", end="", flush=True)
+            instance = self.create_instance(
+                logical_circuit, platform, maximum_depth=current_depth
+            )
+            domain, problem = instance.compile()
+
+            time_left = int(time_limit_s - total_time)
+            min_plan_length = min_plan_length_lambda(current_depth)
+            max_plan_length = max_plan_length_lambda(current_depth)
+            min_layers = min_layers_lambda(current_depth)
+            max_layers = max_layers_lambda(current_depth)
+            solution, time_taken = solver.solve(
+                domain,
+                problem,
+                time_left,
+                min_plan_length,
+                max_plan_length,
+                min_layers,
+                max_layers,
+            )
+            total_time += time_taken
+
+            match solution:
+                case SolverTimeout():
+                    print()
+                    return SynthesizerTimeout()
+                case SolverNoSolution():
+                    failed_depths.add(current_depth)
+
+                    if current_depth + 1 in successful_depths.keys():
+                        return return_found_solution(
+                            successful_depths[current_depth + 1]
+                        )
+
+                    next_depth, try_more_depths = find_larger_depth(current_depth)
+                    largest_fail = current_depth
+                    current_depth = next_depth
+                    continue
+
+                case SolverSolution(actions):
+                    successful_depths[current_depth] = actions
+
+                    if current_depth - 1 in failed_depths:
+                        return return_found_solution(actions)
+
+                    next_depth, try_more_depths = find_smaller_depth(current_depth)
+                    smallest_success = current_depth
+                    current_depth = next_depth
+                    continue
+
+                case _:
+                    raise ValueError(f"Unexpected solution: {solution}")
+
         return SynthesizerNoSolution()
 
 
@@ -477,10 +746,141 @@ def line_gate_mapping(
 
 
 def remove_intermediate_files():
-    sas_file_exists = os.path.exists("output.sas")
-    if sas_file_exists:
-        os.remove("output.sas")
+    for file in JUNK_FILES:
+        file_exists = os.path.exists(file)
+        if file_exists:
+            os.remove(file)
 
-    execution_file_exists = os.path.exists("execution.details")
-    if execution_file_exists:
-        os.remove("execution.details")
+
+def reinsert_unary_gates(
+    original_circuit: QuantumCircuit,
+    cx_circuit: QuantumCircuit,
+    initial_mapping: dict[LogicalQubit, PhysicalQubit],
+):
+    """
+    Reinserts the unary gates from the original circuit into the CX circuit.
+    """
+
+    def get_gates_on_line(
+        gates: list[tuple[int, str]], mapping: dict[int, tuple[str, list[int]]]
+    ):
+        def short_name(name: str):
+            if name.startswith("cx"):
+                return "cx"
+            if name.startswith("swap"):
+                return "swap"
+            return name
+
+        return [(short_name(g[1]), mapping[g[0]][1]) for g in gates]
+
+    def consume_line_until_binary_gate(gate_list: list[tuple[str, list[int]]]):
+        unary_gates = list(takewhile(lambda g: g[0] not in ["cx", "swap"], gate_list))
+        rest = gate_list[len(unary_gates) :]
+        return unary_gates, rest
+
+    original_gate_line_dependency_mapping = gate_line_dependency_mapping(
+        original_circuit
+    )
+    original_gate_list = {
+        line: get_gates_on_line(gates, original_gate_line_dependency_mapping)
+        for line, gates in line_gate_mapping(original_circuit).items()
+    }
+    cx_gate_line_dependency_mapping = gate_line_dependency_mapping(cx_circuit)
+    cx_gate_list = {
+        line: get_gates_on_line(gates, cx_gate_line_dependency_mapping)
+        for line, gates in line_gate_mapping(cx_circuit).items()
+    }
+
+    result_circuit = QuantumCircuit(QuantumRegister(cx_circuit.num_qubits, "p"))
+    mapping = {k.id: v.id for k, v in initial_mapping.items()}
+    while not all(len(gates) == 0 for gates in original_gate_list.values()):
+        # insert unary gates
+        for line in range(original_circuit.num_qubits):
+            unary_gates, rest = consume_line_until_binary_gate(original_gate_list[line])
+            original_gate_list[line] = rest
+            physical_line = mapping[line]
+            for unary_gate in unary_gates:
+                gate_name, _ = unary_gate
+                match gate_name:
+                    case "x":
+                        result_circuit.x(physical_line)
+                    case "h":
+                        result_circuit.h(physical_line)
+                    case "t":
+                        result_circuit.t(physical_line)
+                    case "tdg":
+                        result_circuit.tdg(physical_line)
+                    case "s":
+                        result_circuit.s(physical_line)
+                    case "sdg":
+                        result_circuit.sdg(physical_line)
+                    case "y":
+                        result_circuit.y(physical_line)
+                    case "z":
+                        result_circuit.z(physical_line)
+                    case _:
+                        raise ValueError(
+                            f"Unknown unary gate: '{gate_name}'... Perhaps you should add it to the match statement?"
+                        )
+
+        def gate_with_unpacked_qubits(gate):
+            name, lines = gate
+            return name, lines[0], lines[1]
+
+        def instructions_with_two_occurences(instrs: list[tuple[str, int, int]]):
+            return {
+                instr
+                for instr in instrs
+                if sum(1 for instr2 in instrs if instr2 == instr) == 2
+            }
+
+        # find binary gates to add
+        next_instructions = [
+            gate_with_unpacked_qubits(gates[0])
+            for gates in cx_gate_list.values()
+            if gates
+        ]
+        binary_gates_to_add = instructions_with_two_occurences(next_instructions)
+
+        # pop relevant elements from cx_gate_list
+        for line in cx_gate_list:
+            empty = len(cx_gate_list[line]) == 0
+            if empty:
+                continue
+            is_to_be_added = (
+                gate_with_unpacked_qubits(cx_gate_list[line][0]) in binary_gates_to_add
+            )
+            if is_to_be_added:
+                cx_gate_list[line].pop(0)
+
+        # pop relevant elements from original_gate_list
+        for line in original_gate_list:
+            empty = len(original_gate_list[line]) == 0
+            if empty:
+                continue
+            name, first, second = gate_with_unpacked_qubits(original_gate_list[line][0])
+            is_to_be_added = (
+                name,
+                mapping[first],
+                mapping[second],
+            ) in binary_gates_to_add
+            if is_to_be_added:
+                original_gate_list[line].pop(0)
+
+        # insert binary gates
+        for gate in binary_gates_to_add:
+            gate_name, first, second = gate
+            if gate_name == "cx":
+                result_circuit.cx(first, second)
+            elif gate_name == "swap":
+                result_circuit.swap(first, second)
+
+                # fix mapping
+                reverse_mapping = {v: k for k, v in mapping.items()}
+                first_logical = reverse_mapping[first]
+                second_logical = reverse_mapping[second]
+                tmp = mapping[first_logical]
+                mapping[first_logical] = mapping[second_logical]
+                mapping[second_logical] = tmp
+
+    return result_circuit
