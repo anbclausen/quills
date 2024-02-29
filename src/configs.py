@@ -102,6 +102,7 @@ synthesizers: dict[str, Synthesizer] = {
 
 platforms: dict[str, Platform] = {
     "toy": TOY,
+    "toy2": TOY2,
     "tenerife": TENERIFE,
     "melbourne": MELBOURNE,
 }

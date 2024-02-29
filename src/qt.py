@@ -1,5 +1,5 @@
 import argparse
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, qasm2
 from synthesizers.synthesizer import remove_all_non_cx_gates
 from synthesizers.synthesizer import SynthesizerSolution
 from output_checker import OutputChecker
@@ -150,4 +150,9 @@ if isinstance(output, SynthesizerSolution):
     if correct_output:
         print("✓ Output circuit is correct")
     else:
-        print("✗ Output circuit is not correct ✗")
+        print("✗ Output circuit is not correct")
+    correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
+    if correct_qcec:
+        print("✓ Input and output circuits are equivalent (QCEC)")
+    else:
+        print("✗ Input and output circuits are not equivalent (QCEC)")
