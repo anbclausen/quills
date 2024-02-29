@@ -761,7 +761,7 @@ def reinsert_unary_gates(
 
     def consume_line_until_binary_gate(gate_list: list[tuple[str, list[int]]]):
         unary_gates = list(takewhile(lambda g: g[0] not in ["cx", "swap"], gate_list))
-        rest = gate_list[len(unary_gates) + 1 :]
+        rest = gate_list[len(unary_gates) :]
         return unary_gates, rest
 
     original_gate_line_dependency_mapping = gate_line_dependency_mapping(
@@ -794,15 +794,45 @@ def reinsert_unary_gates(
             name, lines = gate
             return name, lines[0], lines[1]
 
-        # find binary gates to add
-        binary_gates_to_add = {
-            gate_with_unpacked_qubits(gates[0]) for gates in cx_gate_list.values()
-        }
+        def instructions_with_two_occurences(instrs: list[tuple[str, int, int]]):
+            return {
+                instr
+                for instr in instrs
+                if sum(1 for instr2 in instrs if instr2 == instr) == 2
+            }
 
-        # pop first element fx list
-        cx_gate_list = {
-            line: gates[1:] for line, gates in cx_gate_list.items() if len(gates) > 1
-        }
+        # find binary gates to add
+        next_instructions = [
+            gate_with_unpacked_qubits(gates[0])
+            for gates in cx_gate_list.values()
+            if gates
+        ]
+        binary_gates_to_add = instructions_with_two_occurences(next_instructions)
+
+        # pop relevant elements from cx_gate_list
+        for line in cx_gate_list:
+            empty = len(cx_gate_list[line]) == 0
+            if empty:
+                continue
+            is_to_be_added = (
+                gate_with_unpacked_qubits(cx_gate_list[line][0]) in binary_gates_to_add
+            )
+            if is_to_be_added:
+                cx_gate_list[line].pop(0)
+
+        # pop relevant elements from original_gate_list
+        for line in original_gate_list:
+            empty = len(original_gate_list[line]) == 0
+            if empty:
+                continue
+            name, first, second = gate_with_unpacked_qubits(original_gate_list[line][0])
+            is_to_be_added = (
+                name,
+                mapping[first],
+                mapping[second],
+            ) in binary_gates_to_add
+            if is_to_be_added:
+                original_gate_list[line].pop(0)
 
         # insert binary gates
         for gate in binary_gates_to_add:
@@ -813,8 +843,11 @@ def reinsert_unary_gates(
                 result_circuit.swap(first, second)
 
                 # fix mapping
-                tmp = mapping[first]
-                mapping[first] = mapping[second]
-                mapping[second] = tmp
+                reverse_mapping = {v: k for k, v in mapping.items()}
+                first_logical = reverse_mapping[first]
+                second_logical = reverse_mapping[second]
+                tmp = mapping[first_logical]
+                mapping[first_logical] = mapping[second_logical]
+                mapping[second_logical] = tmp
 
     return result_circuit
