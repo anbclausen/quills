@@ -115,7 +115,6 @@ class Synthesizer(ABC):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-        swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         pass
 
@@ -124,7 +123,6 @@ class Synthesizer(ABC):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-        swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         """
         Parse the solver solution of the layout synthesis problem for grounded encodings.
@@ -192,12 +190,8 @@ class Synthesizer(ABC):
             elif action.startswith("swap("):
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
-                if swaps_as_cnots:
-                    physical_circuit.cx(control, target)
-                    physical_circuit.cx(target, control)
-                    physical_circuit.cx(control, target)
-                else:
-                    physical_circuit.swap(control, target)
+
+                physical_circuit.swap(control, target)
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
@@ -215,7 +209,6 @@ class Synthesizer(ABC):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-        swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         """
         Parse the solver solution of the layout synthesis problem for lifted encodings.
@@ -277,12 +270,8 @@ class Synthesizer(ABC):
             elif action.startswith("swap("):
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
-                if swaps_as_cnots:
-                    physical_circuit.cx(control, target)
-                    physical_circuit.cx(target, control)
-                    physical_circuit.cx(control, target)
-                else:
-                    physical_circuit.swap(control, target)
+
+                physical_circuit.swap(control, target)
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
@@ -367,10 +356,9 @@ class Synthesizer(ABC):
                     physical_circuit = reinsert_unary_gates(
                         logical_circuit, physical_circuit, initial_mapping
                     )
-                    print("FIXME, depth is wrong")
 
-                physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                    circuit, platform, actions, swaps_as_cnots=True
+                physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(
+                    physical_circuit
                 )
                 depth = physical_circuit_with_cnots_as_swap.depth()
                 physical_with_only_cnots = remove_all_non_cx_gates(
@@ -445,8 +433,8 @@ class Synthesizer(ABC):
                             logical_circuit, physical_circuit, initial_mapping
                         )
 
-                    physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                        circuit, platform, actions, swaps_as_cnots=True
+                    physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(
+                        physical_circuit
                     )
                     depth = physical_circuit_with_cnots_as_swap.depth()
                     physical_with_only_cnots = remove_all_non_cx_gates(
@@ -495,9 +483,7 @@ class Synthesizer(ABC):
             physical_circuit, initial_mapping = self.parse_solution(
                 logical_circuit, platform, actions
             )
-            physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                logical_circuit, platform, actions, swaps_as_cnots=True
-            )
+            physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(physical_circuit)
             depth = physical_circuit_with_cnots_as_swap.depth()
             physical_with_only_cnots = remove_all_non_cx_gates(
                 physical_circuit_with_cnots_as_swap
@@ -870,3 +856,19 @@ def reinsert_unary_gates(
                 mapping[second_logical] = tmp
 
     return result_circuit
+
+
+def with_swaps_as_cnots(circuit: QuantumCircuit):
+    """
+    Replaces all SWAP gates with CNOT gates.
+    """
+    new_circuit = QuantumCircuit(QuantumRegister(circuit.num_qubits, "p"))
+    for instr in circuit.data:
+        if instr[0].name.startswith("swap"):
+            new_circuit.cx(instr[1][0]._index, instr[1][1]._index)
+            new_circuit.cx(instr[1][1]._index, instr[1][0]._index)
+            new_circuit.cx(instr[1][0]._index, instr[1][1]._index)
+        else:
+            new_circuit.append(instr[0], instr[1])
+
+    return new_circuit

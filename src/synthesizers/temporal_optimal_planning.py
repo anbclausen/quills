@@ -288,6 +288,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
 
         min_plan_length = logical_circuit.size()
@@ -303,6 +304,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
             max_plan_length,
             min_plan_length,
             max_plan_length,
+            cx_optimal,
         )
 
     def parse_solution(
@@ -310,9 +312,8 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-        swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
 
         return super().parse_solution_grounded(
-            original_circuit, platform, solver_solution, swaps_as_cnots
+            original_circuit, platform, solver_solution
         )

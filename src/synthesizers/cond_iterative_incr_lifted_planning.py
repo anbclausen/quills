@@ -436,9 +436,8 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
         original_circuit: QuantumCircuit,
         platform: Platform,
         solver_solution: list[str],
-        swaps_as_cnots: bool = False,
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
 
         return super().parse_solution_lifted(
-            original_circuit, platform, solver_solution, swaps_as_cnots
+            original_circuit, platform, solver_solution
         )
