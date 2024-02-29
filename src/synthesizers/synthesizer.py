@@ -445,6 +445,127 @@ class Synthesizer(ABC):
                     raise ValueError(f"Unexpected solution: {solution}")
         return SynthesizerNoSolution()
 
+    def synthesize_incremental_binary(
+        self,
+        logical_circuit: QuantumCircuit,
+        platform: Platform,
+        solver: Solver,
+        time_limit_s: int,
+        min_plan_length_lambda: Callable[[int], int],
+        max_plan_length_lambda: Callable[[int], int],
+        min_layers_lambda: Callable[[int], int],
+        max_layers_lambda: Callable[[int], int],
+    ) -> SynthesizerOutput:
+
+        def find_larger_depth(current_depth: int) -> tuple[int, bool]:
+            if smallest_success > max_depth:
+                candidate_depth = current_depth * 2
+            else:
+                candidate_depth = int((smallest_success + current_depth) / 2)
+
+            if candidate_depth > max_depth:
+                if max_depth in failed_depths:
+                    return 0, False
+                else:
+                    return max_depth, True
+            else:
+                return candidate_depth, True
+
+        def find_smaller_depth(current_depth: int) -> tuple[int, bool]:
+            candidate_depth = int((largest_fail + current_depth) / 2)
+            return candidate_depth, True
+
+        def return_found_solution(actions: list[str]) -> SynthesizerOutput:
+            print()
+            physical_circuit, initial_mapping = self.parse_solution(
+                logical_circuit, platform, actions
+            )
+            physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
+                logical_circuit, platform, actions, swaps_as_cnots=True
+            )
+            depth = physical_circuit_with_cnots_as_swap.depth()
+            physical_with_only_cnots = remove_all_non_cx_gates(
+                physical_circuit_with_cnots_as_swap
+            )
+            cx_depth = physical_with_only_cnots.depth()
+            return SynthesizerSolution(
+                physical_circuit, initial_mapping, total_time, depth, cx_depth
+            )
+
+        remove_intermediate_files()
+
+        circuit_depth = logical_circuit.depth()
+        total_time = 0
+        print("Searching: ", end="")
+
+        failed_depths: set[int] = set()
+        largest_fail = circuit_depth - 1
+        failed_depths.add(largest_fail)
+
+        max_depth = 4 * circuit_depth + 1
+        smallest_success = max_depth + 1
+        successful_depths: dict[int, list[str]] = {}
+
+        current_depth = circuit_depth
+
+        try_more_depths = True
+
+        while try_more_depths:
+            print(f"depth {current_depth}, ", end="", flush=True)
+            instance = self.create_instance(
+                logical_circuit, platform, maximum_depth=current_depth
+            )
+            domain, problem = instance.compile()
+
+            time_left = int(time_limit_s - total_time)
+            min_plan_length = min_plan_length_lambda(current_depth)
+            max_plan_length = max_plan_length_lambda(current_depth)
+            min_layers = min_layers_lambda(current_depth)
+            max_layers = max_layers_lambda(current_depth)
+            solution, time_taken = solver.solve(
+                domain,
+                problem,
+                time_left,
+                min_plan_length,
+                max_plan_length,
+                min_layers,
+                max_layers,
+            )
+            total_time += time_taken
+
+            match solution:
+                case SolverTimeout():
+                    print()
+                    return SynthesizerTimeout()
+                case SolverNoSolution():
+                    failed_depths.add(current_depth)
+
+                    if current_depth + 1 in successful_depths.keys():
+                        return return_found_solution(
+                            successful_depths[current_depth + 1]
+                        )
+
+                    next_depth, try_more_depths = find_larger_depth(current_depth)
+                    largest_fail = current_depth
+                    current_depth = next_depth
+                    continue
+
+                case SolverSolution(actions):
+                    successful_depths[current_depth] = actions
+
+                    if current_depth - 1 in failed_depths:
+                        return return_found_solution(actions)
+
+                    next_depth, try_more_depths = find_smaller_depth(current_depth)
+                    smallest_success = current_depth
+                    current_depth = next_depth
+                    continue
+
+                case _:
+                    raise ValueError(f"Unexpected solution: {solution}")
+
+        return SynthesizerNoSolution()
+
 
 def gate_line_dependency_mapping(
     circuit: QuantumCircuit,
