@@ -787,8 +787,27 @@ def reinsert_unary_gates(
             physical_line = mapping[line]
             for unary_gate in unary_gates:
                 gate_name, _ = unary_gate
-                instruction = Instruction(gate_name.capitalize(), 1, 0, [])
-                result_circuit.append(instruction, [physical_line])
+                match gate_name:
+                    case "x":
+                        result_circuit.x(physical_line)
+                    case "h":
+                        result_circuit.h(physical_line)
+                    case "t":
+                        result_circuit.t(physical_line)
+                    case "tdg":
+                        result_circuit.tdg(physical_line)
+                    case "s":
+                        result_circuit.s(physical_line)
+                    case "sdg":
+                        result_circuit.sdg(physical_line)
+                    case "y":
+                        result_circuit.y(physical_line)
+                    case "z":
+                        result_circuit.z(physical_line)
+                    case _:
+                        raise ValueError(
+                            f"Unknown unary gate: '{gate_name}'... Perhaps you should add it to the match statement?"
+                        )
 
         def gate_with_unpacked_qubits(gate):
             name, lines = gate
