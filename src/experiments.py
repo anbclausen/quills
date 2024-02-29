@@ -19,12 +19,20 @@ from configs import (
 )
 from datetime import datetime
 
-EXPERIMENT_TIME_LIMIT_S = 90
+EXPERIMENT_TIME_LIMIT_S = 180
 CACHE_FILE = "tmp/experiments_cache.json"
 EXPERIMENTS = [
-    # ("toy_example.qasm", "toy"),
+    ("toy_example.qasm", "toy"),
+    ("or.qasm", "toy"),
+    ("toffoli.qasm", "toy"),
+    ("adder.qasm", "toy"),
+    ("toy_example.qasm", "tenerife"),
+    ("or.qasm", "tenerife"),
+    ("toffoli.qasm", "tenerife"),
     ("adder.qasm", "tenerife"),
-    # ("barenco_tof_4.qasm", "melbourne"),
+    ("qaoa5.qasm", "tenerife"),
+    ("4mod5-v1_22.qasm", "tenerife"),
+    ("barenco_tof_4.qasm", "melbourne"),
 ]
 
 if not os.path.exists("tmp"):
