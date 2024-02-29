@@ -1,8 +1,10 @@
 import os
 
+from itertools import takewhile
 from abc import ABC, abstractmethod
 from typing import Callable
 from qiskit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import Instruction
 from platforms import Platform
 from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from pddl import PDDLInstance
@@ -360,6 +362,13 @@ class Synthesizer(ABC):
                 physical_circuit, initial_mapping = self.parse_solution(
                     circuit, platform, actions
                 )
+
+                if cnot_optimal:
+                    physical_circuit = reinsert_unary_gates(
+                        logical_circuit, physical_circuit, initial_mapping
+                    )
+                    print("FIXME, depth is wrong")
+
                 physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
                     circuit, platform, actions, swaps_as_cnots=True
                 )
@@ -430,6 +439,12 @@ class Synthesizer(ABC):
                     physical_circuit, initial_mapping = self.parse_solution(
                         circuit, platform, actions
                     )
+
+                    if cnot_optimal:
+                        physical_circuit = reinsert_unary_gates(
+                            logical_circuit, physical_circuit, initial_mapping
+                        )
+
                     physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
                         circuit, platform, actions, swaps_as_cnots=True
                     )
@@ -721,3 +736,85 @@ def remove_intermediate_files():
         file_exists = os.path.exists(file)
         if file_exists:
             os.remove(file)
+
+
+def reinsert_unary_gates(
+    original_circuit: QuantumCircuit,
+    cx_circuit: QuantumCircuit,
+    initial_mapping: dict[LogicalQubit, PhysicalQubit],
+):
+    """
+    Reinserts the unary gates from the original circuit into the CX circuit.
+    """
+
+    def get_gates_on_line(
+        gates: list[tuple[int, str]], mapping: dict[int, tuple[str, list[int]]]
+    ):
+        def short_name(name: str):
+            if name.startswith("cx"):
+                return "cx"
+            if name.startswith("swap"):
+                return "swap"
+            return name
+
+        return [(short_name(g[1]), mapping[g[0]][1]) for g in gates]
+
+    def consume_line_until_binary_gate(gate_list: list[tuple[str, list[int]]]):
+        unary_gates = list(takewhile(lambda g: g[0] not in ["cx", "swap"], gate_list))
+        rest = gate_list[len(unary_gates) + 1 :]
+        return unary_gates, rest
+
+    original_gate_line_dependency_mapping = gate_line_dependency_mapping(
+        original_circuit
+    )
+    original_gate_list = {
+        line: get_gates_on_line(gates, original_gate_line_dependency_mapping)
+        for line, gates in line_gate_mapping(original_circuit).items()
+    }
+    cx_gate_line_dependency_mapping = gate_line_dependency_mapping(cx_circuit)
+    cx_gate_list = {
+        line: get_gates_on_line(gates, cx_gate_line_dependency_mapping)
+        for line, gates in line_gate_mapping(cx_circuit).items()
+    }
+
+    result_circuit = QuantumCircuit(QuantumRegister(cx_circuit.num_qubits, "p"))
+    mapping = {k.id: v.id for k, v in initial_mapping.items()}
+    while not all(len(gates) == 0 for gates in original_gate_list.values()):
+        # insert unary gates
+        for line in range(original_circuit.num_qubits):
+            unary_gates, rest = consume_line_until_binary_gate(original_gate_list[line])
+            original_gate_list[line] = rest
+            physical_line = mapping[line]
+            for unary_gate in unary_gates:
+                gate_name, _ = unary_gate
+                instruction = Instruction(gate_name.capitalize(), 1, 0, [])
+                result_circuit.append(instruction, [physical_line])
+
+        def gate_with_unpacked_qubits(gate):
+            name, lines = gate
+            return name, lines[0], lines[1]
+
+        # find binary gates to add
+        binary_gates_to_add = {
+            gate_with_unpacked_qubits(gates[0]) for gates in cx_gate_list.values()
+        }
+
+        # pop first element fx list
+        cx_gate_list = {
+            line: gates[1:] for line, gates in cx_gate_list.items() if len(gates) > 1
+        }
+
+        # insert binary gates
+        for gate in binary_gates_to_add:
+            gate_name, first, second = gate
+            if gate_name == "cx":
+                result_circuit.cx(first, second)
+            elif gate_name == "swap":
+                result_circuit.swap(first, second)
+
+                # fix mapping
+                tmp = mapping[first]
+                mapping[first] = mapping[second]
+                mapping[second] = tmp
+
+    return result_circuit
