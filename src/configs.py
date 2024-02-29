@@ -39,6 +39,9 @@ from synthesizers.cond_iterative_incr_lifted_planning import (
 from synthesizers.temporal_optimal_planning import (
     TemporalOptimalPlanningSynthesizer,
 )
+from synthesizers.temporal_optimal_lifted_planning import (
+    TemporalOptimalLiftedPlanningSynthesizer,
+)
 
 from platforms import TOY, TENERIFE, MELBOURNE, Platform
 
@@ -76,7 +79,7 @@ CONDITIONAL_SYNTHESIZERS = [
     "cond_cost_opt_lift",
     "cond_iter_incr_lift",
 ]
-TEMPORAL_SYNTHESIZERS = ["temp_opt"]
+TEMPORAL_SYNTHESIZERS = ["temp_opt", "temp_opt_lift"]
 
 
 synthesizers: dict[str, Synthesizer] = {
@@ -94,6 +97,7 @@ synthesizers: dict[str, Synthesizer] = {
     "cond_iter_incr": ConditionalIterativeIncrementalPlanningSynthesizer(),
     "cond_iter_incr_lift": ConditionalIterativeIncrementalLiftedPlanningSynthesizer(),
     "temp_opt": TemporalOptimalPlanningSynthesizer(),
+    "temp_opt_lift": TemporalOptimalLiftedPlanningSynthesizer(),
 }
 
 platforms: dict[str, Platform] = {
