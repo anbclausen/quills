@@ -60,7 +60,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
             pass
 
         @PDDLPredicate()
-        def free(l: lqubit):
+        def idle(l: lqubit):
             pass
 
         @PDDLDurativeAction()
@@ -70,18 +70,18 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                 at_start(mapped(l1, p1)),
                 at_start(mapped(l2, p2)),
                 at_start(connected(p1, p2)),
-                at_start(free(l1)),
-                at_start(free(l2)),
+                at_start(idle(l1)),
+                at_start(idle(l2)),
             ]
             effects = [
-                at_start(not_(free(l1))),
-                at_start(not_(free(l2))),
+                at_start(not_(idle(l1))),
+                at_start(not_(idle(l2))),
                 at_end(not_(mapped(l1, p1))),
                 at_end(not_(mapped(l2, p2))),
                 at_end(mapped(l1, p2)),
                 at_end(mapped(l2, p1)),
-                at_end(free(l1)),
-                at_end(free(l2)),
+                at_end(idle(l1)),
+                at_end(idle(l2)),
             ]
             return duration, conditions, effects
 
@@ -105,8 +105,8 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                         conditions = [
                             at_start(not_(done(g[gate_id]))),
                             at_start(connected(p1, p2)),
-                            at_start(free(control_qubit)),
-                            at_start(free(target_qubit)),
+                            at_start(idle(control_qubit)),
+                            at_start(idle(target_qubit)),
                         ]
 
                         one_gate_dependency = len(gate_direct_mapping[gate_id]) == 1
@@ -168,11 +168,11 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                             conditions.append(at_start(mapped(target_qubit, p2)))
 
                         effects = [
-                            at_start(not_(free(l[gate_logical_qubits[0]]))),
-                            at_start(not_(free(l[gate_logical_qubits[1]]))),
+                            at_start(not_(idle(l[gate_logical_qubits[0]]))),
+                            at_start(not_(idle(l[gate_logical_qubits[1]]))),
                             at_end(done(g[gate_id])),
-                            at_end(free(l[gate_logical_qubits[0]])),
-                            at_end(free(l[gate_logical_qubits[1]])),
+                            at_end(idle(l[gate_logical_qubits[0]])),
+                            at_end(idle(l[gate_logical_qubits[1]])),
                         ]
 
                         if no_gate_dependency:
@@ -232,7 +232,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                         duration = 1
                         conditions = [
                             at_start(not_(done(g[gate_id]))),
-                            at_start(free(logical_qubit)),
+                            at_start(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
@@ -243,9 +243,9 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                             conditions.append(at_start(mapped(logical_qubit, p)))
 
                         effects = [
-                            at_start(not_(free(logical_qubit))),
+                            at_start(not_(idle(logical_qubit))),
                             at_end(done(g[gate_id])),
-                            at_end(free(logical_qubit)),
+                            at_end(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
@@ -265,7 +265,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                 mapped,
                 connected,
                 done,
-                free,
+                idle,
             ],
             durative_actions=[
                 swap,
@@ -273,7 +273,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
             ],
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
-                *[free(li) for li in l],
+                *[idle(li) for li in l],
             ],
             goal_state=[
                 *[done(gi) for gi in g],
