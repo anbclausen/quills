@@ -6,8 +6,9 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit.circuit import Qubit
 import operator
-from mqt.qcec import verify, verify_compilation
+from mqt.qcec import verify, EquivalenceCriterion
 
 
 class OutputChecker:
@@ -223,19 +224,70 @@ class OutputChecker:
         initial_mapping: dict[LogicalQubit, PhysicalQubit],
     ) -> bool:
 
+        output_mapping = line_gate_mapping(output_circuit)
+
+        register = QuantumRegister(input_circuit.num_qubits, "p")
+        mapped_output = QuantumCircuit(register)
+        output_circuit_data = output_circuit.data
+
+        reverse_initial = {p.id: l.id for l,p in initial_mapping.items()}
+
+        while not all(len(output_mapping[line]) == 0 for line in output_mapping.keys()):
+            for line in output_mapping.keys():
+                gates = output_mapping[line]
+
+                for gate_num, gate_name in gates:
+                    if gate_name.startswith("swap") or gate_name.startswith("cx"):
+                        break
+                    else: 
+                        instr = output_circuit_data[gate_num].replace(qubits=[Qubit(register, reverse_initial[line])])
+                        mapped_output.append(instr)
+                        output_mapping[line] = output_mapping[line][1:]
+
+            waiting = []
+            matching_binary_gates = []
+            for line in output_mapping.keys():
+                gates = output_mapping[line]
+                if gates:
+                    binary_num, _ = gates[0]
+                    if binary_num in waiting:
+                        waiting.remove(binary_num)
+                        matching_binary_gates.append(binary_num)
+                    else:
+                        waiting.append(binary_num)
+
+            for line in output_mapping.keys():
+                gates = output_mapping[line]
+                if gates:
+                    binary_num, binary_name = gates[0]
+                    if binary_num in matching_binary_gates:
+                        if binary_name.startswith("cx"):
+                            other_line = int(binary_name[4:])
+                            is_control = int(binary_name[2]) == 0
+
+                            if is_control:
+                                instr = output_circuit_data[gate_num].replace(qubits=[Qubit(register, reverse_initial[line]), Qubit(register, reverse_initial[other_line])])
+                            else:
+                                instr = output_circuit_data[gate_num].replace(qubits=[Qubit(register, reverse_initial[other_line]), Qubit(register, reverse_initial[line])])
+                            mapped_output.append(instr)
+                            output_mapping[line] = output_mapping[line][1:]
+                            output_mapping[other_line] = output_mapping[other_line][1:]
+                        else:
+                            #SWAP
+                            other_line = int(binary_name[4:])
+                            output_mapping[line] = output_mapping[line][1:]
+                            output_mapping[other_line] = output_mapping[other_line][1:]
+                            tmp = reverse_initial[line]
+                            reverse_initial[line] = reverse_initial[other_line]
+                            reverse_initial[other_line] = tmp
+
+        mapped_output.measure_all()
         input_circuit.measure_all()
         
-        output_circuit.barrier()
-        output_circuit.add_register(ClassicalRegister(input_circuit.num_qubits, "meas"))
-        for l, p in initial_mapping.items():
-            output_circuit.measure(p.id, l.id)
-
-        print("Input:")
-        print(input_circuit)
-        print("Output:")
-        print(output_circuit)
-        
-        result = verify(input_circuit, output_circuit, run_construction_checker=True, run_alternating_checker=False, run_zx_checker=False, run_simulation_checker=False)
-        print(result)
+        result = verify(input_circuit, mapped_output)
         print(result.equivalence)
-        return False
+        
+        if result.equivalence == EquivalenceCriterion.equivalent:
+            return True
+        else:
+            return False

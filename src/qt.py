@@ -139,7 +139,7 @@ if isinstance(output, SynthesizerSolution):
     else:
         print("✗ Output circuit is not correct")
     correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
-    # if correct_qcec:
-    #     print("✓ Input and output circuits are equivalent (QCEC)")
-    # else:
-    #     print("✗ Input and output circuits are not equivalent (QCEC)")
+    if correct_qcec:
+        print("✓ Input and output circuits are equivalent (QCEC)")
+    else:
+        print("✗ Input and output circuits are not equivalent (QCEC)")
