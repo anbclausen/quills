@@ -37,7 +37,6 @@ parser.add_argument(
     default="cond_cost_opt",
 )
 
-
 parser.add_argument(
     "-p",
     "--platform",
@@ -45,7 +44,6 @@ parser.add_argument(
     help=f"the target platform: {', '.join(platforms.keys())}",
     default="tenerife",
 )
-
 
 parser.add_argument(
     "-s",
@@ -55,6 +53,12 @@ parser.add_argument(
     default="fd_ms",
 )
 
+parser.add_argument(
+    "-cx",
+    "--cx_optimal",
+    help=f"whether to optimize for cx-depth",
+    action="store_true",
+)
 
 parser.add_argument(
     "input",
@@ -128,11 +132,13 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing... ",
+    f"Synthesizing ({"cx-depth" if args.cx_optimal else "depth"}-optimal)... ",
     end="",
     flush=True,
 )
-output = synthesizer.synthesize(input_circuit, platform, solver, time_limit)
+output = synthesizer.synthesize(
+    input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
+)
 print(output)
 print()
 

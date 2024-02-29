@@ -358,6 +358,7 @@ class IterativeIncrementalPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         min_plan_length_lambda = lambda depth: depth + logical_circuit.size()
         max_plan_length_lambda = (
@@ -375,6 +376,7 @@ class IterativeIncrementalPlanningSynthesizer(Synthesizer):
             max_plan_length_lambda,
             min_layers_lambda,
             max_layers_lambda,
+            cx_optimal,
         )
 
     def parse_solution(

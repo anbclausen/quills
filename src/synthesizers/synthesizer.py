@@ -300,6 +300,7 @@ class Synthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         """
         Layout synthesis.
@@ -328,11 +329,17 @@ class Synthesizer(ABC):
         max_plan_length: int,
         min_layers: int,
         max_layers: int,
+        cnot_optimal: bool,
     ) -> SynthesizerOutput:
 
         remove_intermediate_files()
 
-        instance = self.create_instance(logical_circuit, platform)
+        circuit = (
+            remove_all_non_cx_gates(logical_circuit)
+            if cnot_optimal
+            else logical_circuit
+        )
+        instance = self.create_instance(circuit, platform)
         domain, problem = instance.compile()
         solution, total_time = solver.solve(
             domain,
@@ -351,10 +358,10 @@ class Synthesizer(ABC):
                 return SynthesizerNoSolution()
             case SolverSolution(actions):
                 physical_circuit, initial_mapping = self.parse_solution(
-                    logical_circuit, platform, actions
+                    circuit, platform, actions
                 )
                 physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                    logical_circuit, platform, actions, swaps_as_cnots=True
+                    circuit, platform, actions, swaps_as_cnots=True
                 )
                 depth = physical_circuit_with_cnots_as_swap.depth()
                 physical_with_only_cnots = remove_all_non_cx_gates(
@@ -377,18 +384,23 @@ class Synthesizer(ABC):
         max_plan_length_lambda: Callable[[int], int],
         min_layers_lambda: Callable[[int], int],
         max_layers_lambda: Callable[[int], int],
+        cnot_optimal: bool,
     ) -> SynthesizerOutput:
 
         remove_intermediate_files()
 
-        circuit_depth = logical_circuit.depth()
+        circuit = (
+            remove_all_non_cx_gates(logical_circuit)
+            if cnot_optimal
+            else logical_circuit
+        )
+
+        circuit_depth = circuit.depth()
         total_time = 0
         print("Searching: ", end="")
         for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
             print(f"depth {depth}, ", end="", flush=True)
-            instance = self.create_instance(
-                logical_circuit, platform, maximum_depth=depth
-            )
+            instance = self.create_instance(circuit, platform, maximum_depth=depth)
             domain, problem = instance.compile()
 
             time_left = int(time_limit_s - total_time)
@@ -416,10 +428,10 @@ class Synthesizer(ABC):
                 case SolverSolution(actions):
                     print()
                     physical_circuit, initial_mapping = self.parse_solution(
-                        logical_circuit, platform, actions
+                        circuit, platform, actions
                     )
                     physical_circuit_with_cnots_as_swap, _ = self.parse_solution(
-                        logical_circuit, platform, actions, swaps_as_cnots=True
+                        circuit, platform, actions, swaps_as_cnots=True
                     )
                     depth = physical_circuit_with_cnots_as_swap.depth()
                     physical_with_only_cnots = remove_all_non_cx_gates(

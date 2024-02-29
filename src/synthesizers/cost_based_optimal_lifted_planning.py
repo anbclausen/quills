@@ -392,6 +392,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        cx_optimal: bool = False,
     ) -> SynthesizerOutput:
 
         min_plan_length = logical_circuit.size()
@@ -407,6 +408,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             max_plan_length,
             min_plan_length,
             max_plan_length,
+            cx_optimal,
         )
 
     def parse_solution(
