@@ -230,7 +230,7 @@ class OutputChecker:
         mapped_output = QuantumCircuit(register)
         output_circuit_data = output_circuit.data
 
-        reverse_initial = {p.id: l.id for l,p in initial_mapping.items()}
+        reverse_initial = {p.id: l.id for l, p in initial_mapping.items()}
 
         while not all(len(output_mapping[line]) == 0 for line in output_mapping.keys()):
             for line in output_mapping.keys():
@@ -239,8 +239,10 @@ class OutputChecker:
                 for gate_num, gate_name in gates:
                     if gate_name.startswith("swap") or gate_name.startswith("cx"):
                         break
-                    else: 
-                        instr = output_circuit_data[gate_num].replace(qubits=[Qubit(register, reverse_initial[line])])
+                    else:
+                        instr = output_circuit_data[gate_num].replace(
+                            qubits=[Qubit(register, reverse_initial[line])]
+                        )
                         mapped_output.append(instr)
                         output_mapping[line] = output_mapping[line][1:]
 
@@ -266,14 +268,24 @@ class OutputChecker:
                             is_control = int(binary_name[2]) == 0
 
                             if is_control:
-                                instr = output_circuit_data[gate_num].replace(qubits=[Qubit(register, reverse_initial[line]), Qubit(register, reverse_initial[other_line])])
+                                instr = output_circuit_data[gate_num].replace(
+                                    qubits=[
+                                        Qubit(register, reverse_initial[line]),
+                                        Qubit(register, reverse_initial[other_line]),
+                                    ]
+                                )
                             else:
-                                instr = output_circuit_data[gate_num].replace(qubits=[Qubit(register, reverse_initial[other_line]), Qubit(register, reverse_initial[line])])
+                                instr = output_circuit_data[gate_num].replace(
+                                    qubits=[
+                                        Qubit(register, reverse_initial[other_line]),
+                                        Qubit(register, reverse_initial[line]),
+                                    ]
+                                )
                             mapped_output.append(instr)
                             output_mapping[line] = output_mapping[line][1:]
                             output_mapping[other_line] = output_mapping[other_line][1:]
                         else:
-                            #SWAP
+                            # SWAP
                             other_line = int(binary_name[4:])
                             output_mapping[line] = output_mapping[line][1:]
                             output_mapping[other_line] = output_mapping[other_line][1:]
@@ -283,10 +295,9 @@ class OutputChecker:
 
         mapped_output.measure_all()
         input_circuit.measure_all()
-        
+
         result = verify(input_circuit, mapped_output)
-        print(result.equivalence)
-        
+
         if result.equivalence == EquivalenceCriterion.equivalent:
             return True
         else:
