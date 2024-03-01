@@ -129,12 +129,16 @@ def get_cache_key(
     return None, 0, 0
 
 
+def print_and_output_to_file(line: str):
+    print(line)
+    with open("tmp/experiments.txt", "a") as f:
+        f.write(line + "\n")
+
+
 now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-operating_system = os.uname().sysname
 print(
     f"--- EXPERIMENTS ---\n"
     f"Date: {now_str}\n"
-    f"OS: {operating_system}\n"
     f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s\n"
 )
 
@@ -255,15 +259,24 @@ for input_file, platform_name in EXPERIMENTS:
                 f"  Done in {time:.3f}s. Found depth {depth} and CX depth {cx_depth}."
             )
         print(result_string)
-    print("##############################################################")
-    print(
-        f"Results for 'benchmarks/{input_file}' on '{platform_name}' (depth, CX depth, time):"
+    print_and_output_to_file(
+        "##############################################################"
     )
+    print_and_output_to_file("RESULTS")
+    print_and_output_to_file(f"File: 'benchmarks/{input_file}'")
+    print_and_output_to_file(f"Platform: '{platform_name}'")
+    print_and_output_to_file(f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s")
+    print_and_output_to_file(f"Date: {now_str} (UTC)")
+    print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
         result_str = (
             result
             if isinstance(result, str)
             else f"{result[0]}, {result[1]}, {result[2]:.3f}s"
         )
-        print(f"  '{synthesizer_name}' on '{solver_name}': {result_str}")
-    print("##############################################################")
+        print_and_output_to_file(
+            f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
+        )
+    print_and_output_to_file(
+        "##############################################################"
+    )
