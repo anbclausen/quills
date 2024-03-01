@@ -121,6 +121,29 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(idle(l2)),
             ]
             return preconditions, effects
+        
+        @PDDLAction()
+        def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
+            preconditions = [
+                mapped(l1, p1),
+                not_(occupied(p2)),
+                not_(done(l2)),
+                connected(p1, p2),
+                idle(l1),
+                idle(l2),
+            ]
+            effects = [
+                not_(mapped(l1, p1)),
+                occupied(p2),
+                done(l2),
+                mapped(l1, p2),
+                mapped(l2, p1),
+                swap1(l1),
+                swap1(l2),
+                not_(idle(l1)),
+                not_(idle(l2)),
+            ]
+            return preconditions, effects
 
         @PDDLAction()
         def advance(d1: depth, d2: depth):
@@ -150,11 +173,13 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 unary_gate(l, g, l),
                 not_(done(g)),
                 not_(occupied(p)),
+                not_(done(l)),
             ]
             effects = [
                 done(g),
                 mapped(l, p),
                 occupied(p),
+                done(l),
                 busy(l),
                 not_(idle(l)),
             ]
@@ -207,6 +232,7 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l2, p2),
                 not_(occupied(p1)),
+                not_(done(l1)),
                 idle(l2),
             ]
             effects = [
@@ -216,6 +242,7 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(idle(l1)),
                 not_(idle(l2)),
                 occupied(p1),
+                done(l1),
                 mapped(l1, p1),
             ]
             return preconditions, effects
@@ -231,6 +258,7 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l1, p1),
                 not_(occupied(p2)),
+                not_(done(l2)),
                 idle(l1),
             ]
             effects = [
@@ -240,6 +268,7 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(idle(l1)),
                 not_(idle(l2)),
                 occupied(p2),
+                done(l2),
                 mapped(l2, p2),
             ]
             return preconditions, effects
@@ -254,6 +283,8 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 not_(occupied(p1)),
                 not_(occupied(p2)),
+                not_(done(l1)),
+                not_(done(l2)),
             ]
             effects = [
                 done(g),
@@ -263,6 +294,8 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(idle(l2)),
                 occupied(p1),
                 occupied(p2),
+                done(l1),
+                done(l2),
                 mapped(l1, p1),
                 mapped(l2, p2),
             ]
@@ -386,6 +419,7 @@ class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
             ],
             actions=[
                 swap,
+                swap_input,
                 advance,
                 *gate_actions,
             ],

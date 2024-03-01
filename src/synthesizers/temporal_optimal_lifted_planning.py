@@ -92,6 +92,30 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_end(idle(l2)),
             ]
             return duration, conditions, effects
+        
+        @PDDLDurativeAction()
+        def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
+            duration = 3
+            conditions = [
+                at_start(mapped(l1, p1)),
+                at_start(not_(occupied(p2))),
+                at_start(not_(done(l2))),
+                at_start(connected(p1, p2)),
+                at_start(idle(l1)),
+                at_start(idle(l2)),
+            ]
+            effects = [
+                at_start(not_(idle(l1))),
+                at_start(not_(idle(l2))),
+                at_start(occupied(p2)),
+                at_start(done(l2)),
+                at_end(not_(mapped(l1, p1))),
+                at_end(mapped(l1, p2)),
+                at_end(mapped(l2, p1)),
+                at_end(idle(l1)),
+                at_end(idle(l2)),
+            ]
+            return duration, conditions, effects
 
         @PDDLDurativeAction()
         def apply_unary_input(l: lqubit, p: pqubit, g: gate):
@@ -100,12 +124,14 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(unary_gate(l, g, l)),
                 at_start(not_(done(g))),
                 at_start(not_(occupied(p))),
+                at_start(not_(done(l))),
                 at_start(idle(l)),
             ]
             effects = [
                 at_start(not_(idle(l))),
                 at_start(mapped(l, p)),
                 at_start(occupied(p)),
+                at_start(done(l)),
                 at_end(done(g)),
                 at_end(idle(l)),
             ]
@@ -165,6 +191,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(connected(p1, p2)),
                 at_start(mapped(l2, p2)),
                 at_start(not_(occupied(p1))),
+                at_start(not_(done(l1))),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
             ]
@@ -172,6 +199,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
                 at_start(occupied(p1)),
+                at_start(done(l1)),
                 at_start(mapped(l1, p1)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
@@ -191,6 +219,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(connected(p1, p2)),
                 at_start(mapped(l1, p1)),
                 at_start(not_(occupied(p2))),
+                at_start(not_(done(l2))),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
             ]
@@ -198,6 +227,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
                 at_start(occupied(p2)),
+                at_start(done(l2)),
                 at_start(mapped(l2, p2)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
@@ -216,6 +246,8 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(connected(p1, p2)),
                 at_start(not_(occupied(p1))),
                 at_start(not_(occupied(p2))),
+                at_start(not_(done(l1))),
+                at_start(not_(done(l2))),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
             ]
@@ -224,6 +256,8 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_start(not_(idle(l2))),
                 at_start(occupied(p1)),
                 at_start(occupied(p2)),
+                at_start(done(l1)),
+                at_start(done(l2)),
                 at_start(mapped(l1, p1)),
                 at_start(mapped(l2, p2)),
                 at_end(idle(l1)),
@@ -345,6 +379,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             ],
             durative_actions=[
                 swap,
+                swap_input,
                 *gate_actions,
             ],
             initial_state=[

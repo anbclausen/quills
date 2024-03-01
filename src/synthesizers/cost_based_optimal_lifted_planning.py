@@ -97,6 +97,31 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 increase_cost(1),
             ]
             return preconditions, effects
+        
+        @PDDLAction()
+        def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
+            preconditions = [
+                mapped(l1, p1),
+                connected(p1, p2),
+                not_(occupied(p2)),
+                not_(done(l2)),
+                not_(busy(l1)),
+                not_(busy(l2)),
+            ]
+            effects = [
+                not_(mapped(l1, p1)),
+                mapped(l1, p2),
+                mapped(l2, p1),
+                occupied(p2),
+                done(l2),
+                busy(l1),
+                busy(l2),
+                is_swapping1(l1, l2),
+                is_swapping(l1),
+                is_swapping(l2),
+                increase_cost(1),
+            ]
+            return preconditions, effects
 
         @PDDLAction()
         def swap_dummy1(l1: lqubit, l2: lqubit):
@@ -135,11 +160,13 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 unary_gate(l, g, l),
                 not_(done(g)),
                 not_(occupied(p)),
+                not_(done(l)),
             ]
             effects = [
                 done(g),
                 mapped(l, p),
                 occupied(p),
+                done(l),
                 busy(l),
                 increase_cost(1),
             ]
@@ -194,6 +221,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l2, p2),
                 not_(occupied(p1)),
+                not_(done(l1)),
                 not_(is_swapping(l2)),
                 not_(busy(l2)),
             ]
@@ -202,6 +230,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 busy(l1),
                 busy(l2),
                 occupied(p1),
+                done(l1),
                 mapped(l1, p1),
                 increase_cost(1),
             ]
@@ -218,6 +247,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l1, p1),
                 not_(occupied(p2)),
+                not_(done(l2)),
                 not_(is_swapping(l1)),
                 not_(busy(l1)),
             ]
@@ -226,6 +256,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 busy(l1),
                 busy(l2),
                 occupied(p2),
+                done(l2),
                 mapped(l2, p2),
                 increase_cost(1),
             ]
@@ -241,6 +272,8 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 not_(occupied(p1)),
                 not_(occupied(p2)),
+                not_(done(l1)),
+                not_(done(l2)),
             ]
             effects = [
                 done(g),
@@ -248,6 +281,8 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 busy(l2),
                 occupied(p1),
                 occupied(p2),
+                done(l1),
+                done(l2),
                 mapped(l1, p1),
                 mapped(l2, p2),
                 increase_cost(1),
@@ -370,6 +405,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             ],
             actions=[
                 swap,
+                swap_input,
                 swap_dummy1,
                 swap_dummy2,
                 advance,

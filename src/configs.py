@@ -128,6 +128,6 @@ solvers: dict[str, Solver] = {
     # "fd_lmcut": FAST_DOWNWARD_LM_CUT(),
     # "scorpion": SCORPION(),
     # "apx_novelty_tarski": ApxNoveltyTarski(),
-    # "tflap": TFLAP(),
+    "tflap": TFLAP(),
     "tflap_grounded": TFLAPGrounded(),
 }

@@ -13,7 +13,7 @@ from solvers import Solver
 
 
 class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
-    description = "Incremental synthesizer based on planning using local vector clocks for each qubit to keep track of depth."
+    description = "Incremental synthesizer based on lifted planning using local vector clocks for each qubit to keep track of depth."
 
     def create_instance(
         self,
@@ -109,6 +109,32 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
             return preconditions, effects
 
         @PDDLAction()
+        def swap_input(
+            l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, d1: depth, d2: depth
+        ):
+            preconditions = [
+                mapped(l1, p1),
+                not_(occupied(p2)),
+                not_(done(l2)),
+                connected(p1, p2),
+                next_swap_depth(d1, d2),
+                clock(p1, d1),
+                clock(p2, d1),
+            ]
+            effects = [
+                not_(mapped(l1, p1)),
+                occupied(p2),
+                done(l2),
+                mapped(l1, p2),
+                mapped(l2, p1),
+                not_(clock(p1, d1)),
+                not_(clock(p2, d1)),
+                clock(p1, d2),
+                clock(p2, d2),
+            ]
+            return preconditions, effects
+
+        @PDDLAction()
         def nop(p: pqubit, d1: depth, d2: depth):
             preconditions = [next_depth(d1, d2), clock(p, d1)]
             effects = [clock(p, d2), not_(clock(p, d1))]
@@ -126,6 +152,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 unary_gate(l, g, l),
                 not_(done(g)),
                 not_(occupied(p)),
+                not_(done(l)),
                 next_depth(d1, d2),
                 clock(p, d1),
             ]
@@ -133,6 +160,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 done(g),
                 mapped(l, p),
                 occupied(p),
+                done(l),
                 clock(p, d2),
                 not_(clock(p, d1)),
             ]
@@ -204,6 +232,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l2, p2),
                 not_(occupied(p1)),
+                not_(done(l1)),
                 next_depth(d1, d2),
                 clock(p1, d1),
                 clock(p2, d1),
@@ -211,6 +240,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
             effects = [
                 done(g1),
                 occupied(p1),
+                done(l1),
                 mapped(l1, p1),
                 clock(p1, d2),
                 clock(p2, d2),
@@ -237,6 +267,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l1, p1),
                 not_(occupied(p2)),
+                not_(done(l2)),
                 next_depth(d1, d2),
                 clock(p1, d1),
                 clock(p2, d1),
@@ -244,6 +275,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
             effects = [
                 done(g1),
                 occupied(p2),
+                done(l2),
                 mapped(l2, p2),
                 clock(p1, d2),
                 clock(p2, d2),
@@ -268,6 +300,8 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 not_(occupied(p1)),
                 not_(occupied(p2)),
+                not_(done(l1)),
+                not_(done(l2)),
                 next_depth(d1, d2),
                 clock(p1, d1),
                 clock(p2, d1),
@@ -276,6 +310,8 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 done(g),
                 occupied(p1),
                 occupied(p2),
+                done(l1),
+                done(l2),
                 mapped(l1, p1),
                 mapped(l2, p2),
                 clock(p1, d2),
@@ -400,6 +436,7 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
             ],
             actions=[
                 swap,
+                swap_input,
                 nop,
                 nop_swap,
                 *gate_actions,
