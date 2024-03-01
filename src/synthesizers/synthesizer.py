@@ -191,11 +191,16 @@ class Synthesizer(ABC):
                     qubit = int(arguments[0][1:])
                     add_single_gate_qubit(gate_id, qubit)
 
-            elif action.startswith("swap("):
+            elif action.startswith("swap") and "dummy" not in action:
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
 
                 physical_circuit.swap(control, target)
+                if action.startswith("swap_input"):
+                    logical_target = int(arguments[1][1:])
+                    add_to_initial_mapping_if_not_present(
+                        LogicalQubit(logical_target), PhysicalQubit(target)
+                    )
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
