@@ -782,6 +782,12 @@ def reinsert_unary_gates(
 
     result_circuit = QuantumCircuit(QuantumRegister(cx_circuit.num_qubits, "p"))
     mapping = {k.id: v.id for k, v in initial_mapping.items()}
+    all_pqubits_in_mapping = len(set(mapping.values())) == len(mapping.values())
+    all_lqubits_in_mapping = len(set(mapping.keys())) == len(mapping.keys())
+    if not all_pqubits_in_mapping or not all_lqubits_in_mapping:
+        raise ValueError(
+            f"Initial mapping '{mapping}' does not contain all logical and physical qubits. Perhaps the encoding is wrong?"
+        )
     while not all(len(gates) == 0 for gates in original_gate_list.values()):
         # insert unary gates
         for line in range(original_circuit.num_qubits):
