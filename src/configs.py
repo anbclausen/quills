@@ -36,6 +36,9 @@ from synthesizers.temporal_optimal_planning import (
 from synthesizers.temporal_optimal_lifted_planning import (
     TemporalOptimalLiftedPlanningSynthesizer,
 )
+from synthesizers.local_clock_incremental_positive_preconditions_lifted_planning import (
+    LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer,
+)
 
 from platforms import TOY, TENERIFE, MELBOURNE, Platform
 
@@ -57,6 +60,7 @@ from solvers import (
     ApxNoveltyTarski,
     TFLAP,
     TFLAPGrounded,
+    PowerLifted,
     Solver,
 )
 
@@ -76,6 +80,7 @@ synthesizers: dict[str, Synthesizer] = {
     "cond_iter_incr_lift": ConditionalIterativeIncrementalLiftedPlanningSynthesizer(),
     "temp_opt": TemporalOptimalPlanningSynthesizer(),
     "temp_opt_lift": TemporalOptimalLiftedPlanningSynthesizer(),
+    "lc_incr_pos_precond_lift": LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(),
 }
 
 OPTIMAL_SYNTHESIZERS = [name for name, inst in synthesizers.items() if inst.is_optimal]
@@ -127,4 +132,5 @@ solvers: dict[str, Solver] = {
     # "apx_novelty_tarski": ApxNoveltyTarski(),
     "tflap": TFLAP(),
     "tflap_grounded": TFLAPGrounded(),
+    "powerlifted": PowerLifted(),
 }
