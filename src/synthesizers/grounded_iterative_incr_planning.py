@@ -16,7 +16,7 @@ class GroundedIterativeIncrementalPlanningSynthesizer(Synthesizer):
     description = "Incremental synthesizer based on planning building each depth iteratively. V2: The version grounds the actions for advancing to the next depth."
     is_temporal = False
     is_optimal = False
-    uses_conditional_effects = True
+    uses_conditional_effects = False
     uses_negative_preconditions = True
 
     def create_instance(

@@ -16,7 +16,7 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
     description = "Optimal cost-based synthesizer based on planning."
     is_temporal = False
     is_optimal = True
-    uses_conditional_effects = True
+    uses_conditional_effects = False
     uses_negative_preconditions = True
 
     def create_instance(
