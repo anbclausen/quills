@@ -216,7 +216,7 @@ class Synthesizer(ABC):
         This implementation requires:
         - all unary gates actions are named `apply_unary_[gate + input](?, q{id}, g{id}, ...)`
         - all CX gates actions are named `apply_cx_[gate + input]_[gate + input](?, ?, q_control{id}, q_target{id}, g{id}, ...)`
-        - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)`
+        - all swap actions are named `swap(?, ?, q_control{id}, q_target{id}, ...)` or `swap_input(?, l_target{id}, q_control{id}, q_target{id}, ...)`
         - no other actions matter in how the physical circuit is constructed
 
         """
@@ -267,7 +267,7 @@ class Synthesizer(ABC):
                     qubit = int(arguments[1][1:])
                     add_single_gate_qubit(gate_id, qubit)
 
-            elif action.startswith("swap"):
+            elif action.startswith("swap") and "dummy" not in action:
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
 
