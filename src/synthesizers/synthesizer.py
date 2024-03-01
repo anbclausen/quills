@@ -267,7 +267,7 @@ class Synthesizer(ABC):
                     qubit = int(arguments[1][1:])
                     add_single_gate_qubit(gate_id, qubit)
 
-            elif action.startswith("swap("):
+            elif action.startswith("swap"):
                 control = int(arguments[2][1:])
                 target = int(arguments[3][1:])
 
@@ -348,9 +348,12 @@ class Synthesizer(ABC):
             case SolverNoSolution():
                 return SynthesizerNoSolution()
             case SolverSolution(actions):
+                print(actions)
                 physical_circuit, initial_mapping = self.parse_solution(
                     circuit, platform, actions
                 )
+
+                print(physical_circuit)
 
                 if cnot_optimal:
                     physical_circuit = reinsert_unary_gates(
