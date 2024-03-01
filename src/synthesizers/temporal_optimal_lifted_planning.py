@@ -48,7 +48,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
         g = [gate(f"g{i}") for i in range(num_gates)]
 
         @PDDLPredicate()
-        def occupied(p: pqubit):
+        def not_occupied(p: pqubit):
             pass
 
         @PDDLPredicate()
@@ -61,6 +61,10 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
 
         @PDDLPredicate()
         def done(g: gate):
+            pass
+
+        @PDDLPredicate()
+        def required(g: gate):
             pass
 
         @PDDLPredicate()
@@ -102,8 +106,8 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 3
             conditions = [
                 at_start(mapped(l1, p1)),
-                at_start(not_(occupied(p2))),
-                at_start(not_(done(l2))),
+                at_start(not_occupied(p2)),
+                at_start(required(l2)),
                 at_start(connected(p1, p2)),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
@@ -111,8 +115,9 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             effects = [
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
-                at_start(occupied(p2)),
+                at_start(not_(not_occupied(p2))),
                 at_start(done(l2)),
+                at_start(not_(required(l2))),
                 at_end(not_(mapped(l1, p1))),
                 at_end(mapped(l1, p2)),
                 at_end(mapped(l2, p1)),
@@ -126,17 +131,19 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 1
             conditions = [
                 at_start(unary_gate(l, g, l)),
-                at_start(not_(done(g))),
-                at_start(not_(occupied(p))),
-                at_start(not_(done(l))),
+                at_start(required(g)),
+                at_start(not_occupied(p)),
+                at_start(required(l)),
                 at_start(idle(l)),
             ]
             effects = [
                 at_start(not_(idle(l))),
                 at_start(mapped(l, p)),
-                at_start(occupied(p)),
+                at_start(not_(not_occupied(p))),
                 at_start(done(l)),
+                at_start(not_(required(l))),
                 at_end(done(g)),
+                at_end(not_(required(g))),
                 at_end(idle(l)),
             ]
             return duration, conditions, effects
@@ -146,7 +153,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 1
             conditions = [
                 at_start(unary_gate(l, g1, g2)),
-                at_start(not_(done(g1))),
+                at_start(required(g1)),
                 at_start(done(g2)),
                 at_start(mapped(l, p)),
                 at_start(idle(l)),
@@ -154,6 +161,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             effects = [
                 at_start(not_(idle(l))),
                 at_end(done(g1)),
+                at_end(not_(required(g1))),
                 at_end(idle(l)),
             ]
             return duration, conditions, effects
@@ -165,7 +173,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 1
             conditions = [
                 at_start(cx_gate(l1, l2, g1, g2, g3)),
-                at_start(not_(done(g1))),
+                at_start(required(g1)),
                 at_start(done(g2)),
                 at_start(done(g3)),
                 at_start(connected(p1, p2)),
@@ -180,6 +188,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_end(idle(l1)),
                 at_end(idle(l2)),
                 at_end(done(g1)),
+                at_end(not_(required(g1))),
             ]
             return duration, conditions, effects
 
@@ -190,24 +199,26 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 1
             conditions = [
                 at_start(cx_gate(l1, l2, g1, l1, g2)),
-                at_start(not_(done(g1))),
+                at_start(required(g1)),
                 at_start(done(g2)),
                 at_start(connected(p1, p2)),
                 at_start(mapped(l2, p2)),
-                at_start(not_(occupied(p1))),
-                at_start(not_(done(l1))),
+                at_start(not_occupied(p1)),
+                at_start(required(l1)),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
             ]
             effects = [
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
-                at_start(occupied(p1)),
+                at_start(not_(not_occupied(p1))),
                 at_start(done(l1)),
+                at_start(not_(required(l1))),
                 at_start(mapped(l1, p1)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
                 at_end(done(g1)),
+                at_end(not_(required(g1))),
             ]
             return duration, conditions, effects
 
@@ -218,24 +229,26 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 1
             conditions = [
                 at_start(cx_gate(l1, l2, g1, g2, l2)),
-                at_start(not_(done(g1))),
+                at_start(required(g1)),
                 at_start(done(g2)),
                 at_start(connected(p1, p2)),
                 at_start(mapped(l1, p1)),
-                at_start(not_(occupied(p2))),
-                at_start(not_(done(l2))),
+                at_start(not_occupied(p2)),
+                at_start(required(l2)),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
             ]
             effects = [
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
-                at_start(occupied(p2)),
+                at_start(not_(not_occupied(p2))),
                 at_start(done(l2)),
+                at_start(not_(required(l2))),
                 at_start(mapped(l2, p2)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
                 at_end(done(g1)),
+                at_end(not_(required(g1))),
             ]
             return duration, conditions, effects
 
@@ -246,27 +259,30 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             duration = 1
             conditions = [
                 at_start(cx_gate(l1, l2, g, l1, l2)),
-                at_start(not_(done(g))),
+                at_start(required(g)),
                 at_start(connected(p1, p2)),
-                at_start(not_(occupied(p1))),
-                at_start(not_(occupied(p2))),
-                at_start(not_(done(l1))),
-                at_start(not_(done(l2))),
+                at_start(not_occupied(p1)),
+                at_start(not_occupied(p2)),
+                at_start(required(l1)),
+                at_start(required(l2)),
                 at_start(idle(l1)),
                 at_start(idle(l2)),
             ]
             effects = [
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
-                at_start(occupied(p1)),
-                at_start(occupied(p2)),
+                at_start(not_(not_occupied(p1))),
+                at_start(not_(not_occupied(p2))),
                 at_start(done(l1)),
                 at_start(done(l2)),
+                at_start(not_(required(l1))),
+                at_start(not_(required(l2))),
                 at_start(mapped(l1, p1)),
                 at_start(mapped(l2, p2)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
                 at_end(done(g)),
+                at_end(not_(required(g))),
             ]
             return duration, conditions, effects
 
@@ -373,10 +389,11 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             constants=[*l, *g],
             objects=[*p],
             predicates=[
-                occupied,
+                not_occupied,
                 mapped,
                 connected,
                 done,
+                required,
                 unary_gate,
                 cx_gate,
                 idle,
@@ -389,6 +406,8 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
                 *[idle(li) for li in l],
+                *[not_occupied(pi) for pi in p],
+                *[required(gi) for gi in g],
                 *gate_predicates,
             ],
             goal_state=[
