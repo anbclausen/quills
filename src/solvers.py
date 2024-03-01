@@ -683,3 +683,25 @@ class TFLAPGrounded(Solver):
             for parts in actions_as_parts
         ]
         return actions
+
+class PowerLifted(Solver):
+    solver_class = SATISFYING
+    description = "The PowerLifted lifted planner.\nSource: https://github.com/abcorrea/powerlifted"
+    accepts_conditional = False
+    accepts_negative_preconditions = False
+
+    def command(
+        self,
+        domain: str,
+        problem: str,
+        output: str,
+        time_limit_s: str,
+        min_plan_length: int,
+        max_plan_length: int,
+        min_layers: int,
+        max_layers: int,
+    ) -> str:
+        return f"powerlifted.py -d {domain} -i {problem} -s alt-bfws1 -e ff -g yannakakis --time-limit {time_limit_s} --plan-file {output} --stop-after-first-plan"
+    
+    def parse_actions(self, solution: str) -> list[str]:
+        raise NotImplementedError
