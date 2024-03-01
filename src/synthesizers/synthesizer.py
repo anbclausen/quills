@@ -272,6 +272,11 @@ class Synthesizer(ABC):
                 target = int(arguments[3][1:])
 
                 physical_circuit.swap(control, target)
+                if action.startswith("swap_input"):
+                    logical_target = int(arguments[1][1:])
+                    add_to_initial_mapping_if_not_present(
+                        LogicalQubit(logical_target), PhysicalQubit(target)
+                    )
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
@@ -348,12 +353,9 @@ class Synthesizer(ABC):
             case SolverNoSolution():
                 return SynthesizerNoSolution()
             case SolverSolution(actions):
-                print(actions)
                 physical_circuit, initial_mapping = self.parse_solution(
                     circuit, platform, actions
                 )
-
-                print(physical_circuit)
 
                 if cnot_optimal:
                     physical_circuit = reinsert_unary_gates(

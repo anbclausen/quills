@@ -110,7 +110,6 @@ print(f"{BOLD_START}INPUT CIRCUIT{BOLD_END}")
 print(f"'{args.input}'")
 print(input_circuit)
 input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
-print(input_circuit_only_cx)
 print(f"(depth {input_circuit.depth()}, cx-depth {input_circuit_only_cx.depth()})")
 print()
 

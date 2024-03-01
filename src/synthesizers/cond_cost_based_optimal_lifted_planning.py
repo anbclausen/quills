@@ -107,7 +107,7 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             return preconditions, effects
 
         @PDDLAction()
-        def swap_input1(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
+        def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
             preconditions = [
                 mapped(l1, p1),
                 not_(occupied(p2)),
@@ -234,30 +234,6 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             ]
             return preconditions, effects
 
-        # @PDDLAction()
-        # def apply_cx_input_mapped_gate(
-        #     l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, g1: gate, g2: gate
-        # ):
-        #     preconditions = [
-        #         cx_gate(l1, l2, g1, l1, g2),
-        #         not_(done(g1)),
-        #         done(g2),
-        #         connected(p1, p2),
-        #         mapped(l2, p2),
-        #         mapped(l1, p1),
-        #         idle(l1),
-        #         idle(l2),
-        #     ]
-        #     effects = [
-        #         done(g1),
-        #         busy(l1),
-        #         busy(l2),
-        #         not_(idle(l1)),
-        #         not_(idle(l2)),
-        #         increase_cost(1),
-        #     ]
-        #     return preconditions, effects
-
         @PDDLAction()
         def apply_cx_gate_input(
             l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, g1: gate, g2: gate
@@ -284,30 +260,6 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 increase_cost(1),
             ]
             return preconditions, effects
-
-        # @PDDLAction()
-        # def apply_cx_gate_input_mapped(
-        #     l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, g1: gate, g2: gate
-        # ):
-        #     preconditions = [
-        #         cx_gate(l1, l2, g1, g2, l2),
-        #         not_(done(g1)),
-        #         done(g2),
-        #         connected(p1, p2),
-        #         mapped(l1, p1),
-        #         mapped(l2, p2),
-        #         idle(l1),
-        #         idle(l2),
-        #     ]
-        #     effects = [
-        #         done(g1),
-        #         busy(l1),
-        #         busy(l2),
-        #         not_(idle(l1)),
-        #         not_(idle(l2)),
-        #         increase_cost(1),
-        #     ]
-        #     return preconditions, effects
 
         @PDDLAction()
         def apply_cx_input_input(
@@ -338,92 +290,15 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             ]
             return preconditions, effects
 
-        # @PDDLAction()
-        # def apply_cx_input_mapped_input(
-        #     l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, g: gate
-        # ):
-        #     preconditions = [
-        #         cx_gate(l1, l2, g, l1, l2),
-        #         not_(done(g)),
-        #         connected(p1, p2),
-        #         mapped(l1, p1),
-        #         not_(occupied(p2)),
-        #         idle(l1)
-        #     ]
-        #     effects = [
-        #         done(g),
-        #         busy(l1),
-        #         busy(l2),
-        #         not_(idle(l1)),
-        #         not_(idle(l2)),
-        #         occupied(p2),
-        #         mapped(l2, p2),
-        #         increase_cost(1),
-        #     ]
-        #     return preconditions, effects
-
-        # @PDDLAction()
-        # def apply_cx_input_input_mapped(
-        #     l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, g: gate
-        # ):
-        #     preconditions = [
-        #         cx_gate(l1, l2, g, l1, l2),
-        #         not_(done(g)),
-        #         connected(p1, p2),
-        #         not_(occupied(p1)),
-        #         mapped(l2, p2),
-        #         idle(l2),
-        #     ]
-        #     effects = [
-        #         done(g),
-        #         busy(l1),
-        #         busy(l2),
-        #         not_(idle(l1)),
-        #         not_(idle(l2)),
-        #         occupied(p1),
-        #         mapped(l1, p1),
-        #         increase_cost(1),
-        #     ]
-        #     return preconditions, effects
-
-        # @PDDLAction()
-        # def apply_cx_input_mapped_input_mapped(
-        #     l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, g: gate
-        # ):
-        #     preconditions = [
-        #         cx_gate(l1, l2, g, l1, l2),
-        #         not_(done(g)),
-        #         connected(p1, p2),
-        #         mapped(l1, p1),
-        #         mapped(l2, p2),
-        #         idle(l1),
-        #         idle(l2),
-        #     ]
-        #     effects = [
-        #         done(g),
-        #         busy(l1),
-        #         busy(l2),
-        #         not_(idle(l1)),
-        #         not_(idle(l2)),
-        #         increase_cost(1),
-        #     ]
-        #     return preconditions, effects
-
         # can we end up with a logical qubit mapped to more than one physical qubit???
 
         gate_actions = [
             apply_unary_input,
-            # apply_unary_input_mapped,
             apply_unary_gate,
             apply_cx_gate_gate,
             apply_cx_gate_input,
-            # apply_cx_gate_input_mapped,
             apply_cx_input_gate,
-            # apply_cx_input_mapped_gate,
             apply_cx_input_input,
-            # apply_cx_input_input_mapped,
-            # apply_cx_input_mapped_input,
-            # apply_cx_input_mapped_input_mapped
         ]
 
         gate_line_mapping = gate_line_dependency_mapping(circuit)
@@ -533,7 +408,7 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             ],
             actions=[
                 swap,
-                swap_input1,
+                swap_input,
                 advance,
                 *gate_actions,
             ],
