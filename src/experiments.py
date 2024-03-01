@@ -162,12 +162,17 @@ for synthesizer in synthesizers:
             synthesizer not in TEMPORAL_SYNTHESIZERS
             and solvers[solver].solver_class == TEMPORAL
         )
+        synthesizer_uses_negative_preconds_and_solver_does_not = (
+            synthesizers[synthesizer].uses_negative_preconditions
+            and not solvers[solver].accepts_negative_preconditions
+        )
 
         if (
             not optimal_synthesizer_and_satisfying_solver
             and not conditional_synthesizer_and_non_conditional_solver
             and not temporal_synthesizer_and_non_temporal_solver
             and not non_temporal_synthesizer_and_temporal_solver
+            and not synthesizer_uses_negative_preconds_and_solver_does_not
         ):
             configurations.append((synthesizer, solver))
 
