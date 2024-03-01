@@ -48,7 +48,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
         g = [gate(f"g{i}") for i in range(num_gates)]
 
         @PDDLPredicate()
-        def occupied(p: pqubit):
+        def not_occupied(p: pqubit):
             pass
 
         @PDDLPredicate()
@@ -61,6 +61,10 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
 
         @PDDLPredicate()
         def done(g: gate):
+            pass
+
+        @PDDLPredicate()
+        def required(g: gate):
             pass
 
         @PDDLPredicate()
@@ -107,7 +111,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
 
                         duration = 1
                         conditions = [
-                            at_start(not_(done(g[gate_id]))),
+                            at_start(required(g[gate_id])),
                             at_start(connected(p1, p2)),
                             at_start(idle(control_qubit)),
                             at_start(idle(target_qubit)),
@@ -116,8 +120,8 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                         one_gate_dependency = len(gate_direct_mapping[gate_id]) == 1
 
                         if no_gate_dependency:
-                            conditions.append(at_start(not_(occupied(p1))))
-                            conditions.append(at_start(not_(occupied(p2))))
+                            conditions.append(at_start(not_occupied(p1)))
+                            conditions.append(at_start(not_occupied(p2)))
                         elif one_gate_dependency:
                             earlier_gate = direct_predecessor_gates[0]
                             _, earlier_gate_logical_qubits = gate_line_mapping[
@@ -159,7 +163,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
 
                             # preconds for the unoccupied line
                             conditions.append(
-                                at_start(not_(occupied(unoccupied_physical_qubit)))
+                                at_start(not_occupied(unoccupied_physical_qubit))
                             )
                         else:
                             conditions.extend(
@@ -175,13 +179,14 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                             at_start(not_(idle(l[gate_logical_qubits[0]]))),
                             at_start(not_(idle(l[gate_logical_qubits[1]]))),
                             at_end(done(g[gate_id])),
+                            at_end(not_(required(g[gate_id]))),
                             at_end(idle(l[gate_logical_qubits[0]])),
                             at_end(idle(l[gate_logical_qubits[1]])),
                         ]
 
                         if no_gate_dependency:
-                            effects.append(at_start(occupied(p1)))
-                            effects.append(at_start(occupied(p2)))
+                            effects.append(at_start(not_(not_occupied(p1))))
+                            effects.append(at_start(not_(not_occupied(p2))))
                             effects.append(
                                 at_start(mapped(l[gate_logical_qubits[0]], p1))
                             )
@@ -215,7 +220,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                             ]
 
                             effects.append(
-                                at_start(occupied(unoccupied_physical_qubit))
+                                at_start(not_(not_occupied(unoccupied_physical_qubit)))
                             )
                             effects.append(
                                 at_start(
@@ -235,12 +240,12 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                         logical_qubit = l[gate_logical_qubits[0]]
                         duration = 1
                         conditions = [
-                            at_start(not_(done(g[gate_id]))),
+                            at_start(required(g[gate_id])),
                             at_start(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
-                            conditions.append(at_start(not_(occupied(p))))
+                            conditions.append(at_start(not_occupied(p)))
                         else:
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]
                             conditions.append(at_start(done(direct_predecessor_gate)))
@@ -249,11 +254,12 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                         effects = [
                             at_start(not_(idle(logical_qubit))),
                             at_end(done(g[gate_id])),
+                            at_end(not_(required(g[gate_id]))),
                             at_end(idle(logical_qubit)),
                         ]
 
                         if no_gate_dependency:
-                            effects.append(at_start(occupied(p)))
+                            effects.append(at_start(not_(not_occupied(p))))
                             effects.append(at_start(mapped(logical_qubit, p)))
 
                         return duration, conditions, effects
@@ -265,10 +271,11 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
             constants=[*l, *g],
             objects=[*p],
             predicates=[
-                occupied,
+                not_occupied,
                 mapped,
                 connected,
                 done,
+                required,
                 idle,
             ],
             durative_actions=[
@@ -278,6 +285,8 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
             initial_state=[
                 *[connected(p[i], p[j]) for i, j in platform.connectivity_graph],
                 *[idle(li) for li in l],
+                *[not_occupied(pi) for pi in p],
+                *[required(gi) for gi in g],
             ],
             goal_state=[
                 *[done(gi) for gi in g],

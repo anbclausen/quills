@@ -13,7 +13,7 @@ from solvers import Solver
 
 
 class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthesizer):
-    description = "Incremental synthesizer based on lifted planning using local vector clocks for each qubit to keep track of depth."
+    description = "Incremental synthesizer based on lifted planning using local vector clocks for each qubit to keep track of depth. This version does not use negative preconditions."
     is_temporal = False
     is_optimal = False
     uses_conditional_effects = False
@@ -54,8 +54,12 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         g = [gate(f"g{i}") for i in range(num_gates)]
         d = [depth(f"d{i}") for i in range(maximum_depth)]
 
+        # @PDDLPredicate()
+        # def occupied(p: pqubit):
+        #    pass
+
         @PDDLPredicate()
-        def occupied(p: pqubit):
+        def not_occupied(p: pqubit):
             pass
 
         @PDDLPredicate()
@@ -68,6 +72,10 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
 
         @PDDLPredicate()
         def done(g: gate):
+            pass
+
+        @PDDLPredicate()
+        def required(g: gate):
             pass
 
         @PDDLPredicate()
@@ -118,8 +126,8 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         ):
             preconditions = [
                 mapped(l1, p1),
-                not_(occupied(p2)),
-                not_(done(l2)),
+                not_occupied(p2),
+                required(l2),
                 connected(p1, p2),
                 next_swap_depth(d1, d2),
                 clock(p1, d1),
@@ -127,8 +135,9 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
             ]
             effects = [
                 not_(mapped(l1, p1)),
-                occupied(p2),
+                not_(not_occupied(p2)),
                 done(l2),
+                not_(required(l2)),
                 mapped(l1, p2),
                 mapped(l2, p1),
                 not_(clock(p1, d1)),
@@ -154,17 +163,19 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         def apply_unary_input(l: lqubit, p: pqubit, g: gate, d1: depth, d2: depth):
             preconditions = [
                 unary_gate(l, g, l),
-                not_(done(g)),
-                not_(occupied(p)),
-                not_(done(l)),
+                required(g),
+                not_occupied(p),
+                required(l),
                 next_depth(d1, d2),
                 clock(p, d1),
             ]
             effects = [
                 done(g),
+                not_(required(g)),
                 mapped(l, p),
-                occupied(p),
+                not_(not_occupied(p)),
                 done(l),
+                not_(required(l)),
                 clock(p, d2),
                 not_(clock(p, d1)),
             ]
@@ -176,13 +187,13 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         ):
             preconditions = [
                 unary_gate(l, g1, g2),
-                not_(done(g1)),
+                required(g1),
                 done(g2),
                 mapped(l, p),
                 next_depth(d1, d2),
                 clock(p, d1),
             ]
-            effects = [done(g1), clock(p, d2), not_(clock(p, d1))]
+            effects = [done(g1), not_(required(g1)), clock(p, d2), not_(clock(p, d1))]
             return preconditions, effects
 
         @PDDLAction()
@@ -199,7 +210,7 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         ):
             preconditions = [
                 cx_gate(l1, l2, g1, g2, g3),
-                not_(done(g1)),
+                required(g1),
                 done(g2),
                 done(g3),
                 connected(p1, p2),
@@ -211,6 +222,7 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
             ]
             effects = [
                 done(g1),
+                not_(required(g1)),
                 clock(p1, d2),
                 clock(p2, d2),
                 not_(clock(p1, d1)),
@@ -231,20 +243,22 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         ):
             preconditions = [
                 cx_gate(l1, l2, g1, l1, g2),
-                not_(done(g1)),
+                required(g1),
                 done(g2),
                 connected(p1, p2),
                 mapped(l2, p2),
-                not_(occupied(p1)),
-                not_(done(l1)),
+                not_occupied(p1),
+                required(l1),
                 next_depth(d1, d2),
                 clock(p1, d1),
                 clock(p2, d1),
             ]
             effects = [
                 done(g1),
-                occupied(p1),
+                not_(required(g1)),
+                not_(not_occupied(p1)),
                 done(l1),
+                not_(required(l1)),
                 mapped(l1, p1),
                 clock(p1, d2),
                 clock(p2, d2),
@@ -266,20 +280,22 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         ):
             preconditions = [
                 cx_gate(l1, l2, g1, g2, l2),
-                not_(done(g1)),
+                required(g1),
                 done(g2),
                 connected(p1, p2),
                 mapped(l1, p1),
-                not_(occupied(p2)),
-                not_(done(l2)),
+                not_occupied(p2),
+                required(l2),
                 next_depth(d1, d2),
                 clock(p1, d1),
                 clock(p2, d1),
             ]
             effects = [
                 done(g1),
-                occupied(p2),
+                not_(required(g1)),
+                not_(not_occupied(p2)),
                 done(l2),
+                not_(required(l2)),
                 mapped(l2, p2),
                 clock(p1, d2),
                 clock(p2, d2),
@@ -300,22 +316,25 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
         ):
             preconditions = [
                 cx_gate(l1, l2, g, l1, l2),
-                not_(done(g)),
+                required(g),
                 connected(p1, p2),
-                not_(occupied(p1)),
-                not_(occupied(p2)),
-                not_(done(l1)),
-                not_(done(l2)),
+                not_occupied(p1),
+                not_occupied(p2),
+                required(l1),
+                required(l2),
                 next_depth(d1, d2),
                 clock(p1, d1),
                 clock(p2, d1),
             ]
             effects = [
                 done(g),
-                occupied(p1),
-                occupied(p2),
+                not_(required(g)),
+                not_(not_occupied(p1)),
+                not_(not_occupied(p2)),
                 done(l1),
+                not_(required(l1)),
                 done(l2),
+                not_(required(l2)),
                 mapped(l1, p1),
                 mapped(l2, p2),
                 clock(p1, d2),
@@ -428,10 +447,11 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
             constants=[*l, *g, *d],
             objects=[*p],
             predicates=[
-                occupied,
+                not_occupied,
                 mapped,
                 connected,
                 done,
+                required,
                 unary_gate,
                 cx_gate,
                 clock,
@@ -450,6 +470,9 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
                 *[next_depth(d[i], d[i + 1]) for i in range(maximum_depth - 1)],
                 *[next_swap_depth(d[i], d[i + 3]) for i in range(1, maximum_depth - 3)],
                 *[clock(pi, d[0]) for pi in p],
+                *[not_occupied(pi) for pi in p],
+                *[required(li) for li in l],
+                *[required(gi) for gi in g],
                 *gate_predicates,
             ],
             goal_state=[

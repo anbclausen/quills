@@ -137,8 +137,8 @@ class Solver(ABC):
                 command, 
                 start_new_session=True, 
                 shell=True,
-                stdout=subprocess.DEVNULL, 
-                stderr=subprocess.DEVNULL,
+                #stdout=subprocess.DEVNULL, 
+                #stderr=subprocess.DEVNULL,
             )
             p.wait(timeout=time_limit_s)
         except subprocess.TimeoutExpired:
@@ -704,4 +704,10 @@ class PowerLifted(Solver):
         return f"powerlifted.py -d {domain} -i {problem} -s alt-bfws1 -e ff -g yannakakis --time-limit {time_limit_s} --plan-file {output} --stop-after-first-plan"
     
     def parse_actions(self, solution: str) -> list[str]:
-        raise NotImplementedError
+        lines = solution.strip().split("\n")
+        without_cost_line = lines[:-1]
+        without_index = [line.split(": ")[1] for line in without_cost_line]
+        without_parentheses = [line[1:-1] for line in without_index]
+        actions_as_parts = [line.split(" ") for line in without_parentheses]
+        actions = [f"{parts[0]}({",".join([p for p in parts[1:]])})" for parts in actions_as_parts]
+        return actions
