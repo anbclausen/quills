@@ -137,8 +137,8 @@ class Solver(ABC):
                 command, 
                 start_new_session=True, 
                 shell=True,
-                #stdout=subprocess.DEVNULL, 
-                #stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL,
             )
             p.wait(timeout=time_limit_s)
         except subprocess.TimeoutExpired:
