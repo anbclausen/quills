@@ -89,8 +89,6 @@ synthesizers: dict[str, Synthesizer] = {
     "cond_cost_opt_lift": ConditionalCostBasedOptimalLiftedPlanningSynthesizer(),
     "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
     "lc_incr_lift": LocalClockIncrementalLiftedPlanningSynthesizer(),
-    # "gc_incr": GlobalClockIncrementalPlanningSynthesizer(),
-    # "gc_incr_lift": GlobalClockIncrementalLiftedPlanningSynthesizer(),
     "iter_incr": IterativeIncrementalPlanningSynthesizer(),
     "iter_incr_lift": IterativeIncrementalLiftedPlanningSynthesizer(),
     "grounded_iter_incr": GroundedIterativeIncrementalPlanningSynthesizer(),
