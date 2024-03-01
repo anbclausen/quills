@@ -20,8 +20,9 @@ from configs import (
 from datetime import datetime
 from output_checker import OutputChecker
 
+CX_OPTIMAL = True
 EXPERIMENT_TIME_LIMIT_S = 180
-CACHE_FILE = "tmp/experiments_cache.json"
+CACHE_FILE = f"tmp/experiments_cache{"_cx" if CX_OPTIMAL else ""}.json"
 EXPERIMENTS = [
     ("toy_example.qasm", "toy"),
     ("or.qasm", "toy"),
@@ -141,6 +142,7 @@ print(
     f"--- EXPERIMENTS ---\n"
     f"Date: {now_str}\n"
     f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s\n"
+    f"CX optimal: {CX_OPTIMAL}\n"
 )
 
 
@@ -206,7 +208,7 @@ for input_file, platform_name in EXPERIMENTS:
             platform = platforms[platform_name]
             input_circuit = QuantumCircuit.from_qasm_file(f"benchmarks/{input_file}")
             experiment = synthesizer.synthesize(
-                input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S
+                input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
             )
             match experiment:
                 case SynthesizerSolution():
@@ -291,6 +293,7 @@ for input_file, platform_name in EXPERIMENTS:
     print_and_output_to_file(f"Platform: '{platform_name}'")
     print_and_output_to_file(f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s")
     print_and_output_to_file(f"Date: {now_str} (UTC)")
+    print_and_output_to_file(f"CX optimal: {CX_OPTIMAL}")
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
         result_str = (
