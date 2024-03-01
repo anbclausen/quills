@@ -52,6 +52,7 @@ class Solver(ABC):
     solver_class: str
     description: str = "No description."
     accepts_conditional: bool
+    accepts_negative_preconditions: bool
 
     @abstractmethod
     def command(
@@ -171,6 +172,7 @@ class M_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
     description = "The (M) Madagascar sequential planner is a SAT-based planner with geometric rates and linear horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -195,6 +197,7 @@ class M_FORALL_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (M) Madagascar parallel (∀-step) planner is a SAT-based planner with geometric rates and linear horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -221,6 +224,7 @@ class M_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (M) Madagascar parallel (∃-step) planner is a SAT-based planner with geometric rates and linear horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -247,6 +251,7 @@ class MpC_SEQUENTIAL_PLANS(Solver):
     solver_class = SATISFYING
     description = "The (MpC) Madagascar sequential planner is a SAT-based planner with constant rates and exponential horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -271,6 +276,7 @@ class MpC_FORALL_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (MpC) Madagascar parallel (∀-step) planner is a SAT-based planner with constant rates and exponential horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -297,6 +303,7 @@ class MpC_EXISTS_STEPS(Solver):
     solver_class = SATISFYING
     description = "The (MpC) Madagascar parallel (∃-step) planner is a SAT-based planner with constant rates and exponential horizons.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -323,6 +330,7 @@ class MpC_FORALL_STEPS_EXTENDED(Solver):
     solver_class = SATISFYING
     description = f"The (MpC) Madagascar parallel (∀-step) planner is a SAT-based planner extended with a custom SAT solver.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def __init__(self, sat_solver: str) -> None:
         self.sat_solver = sat_solver
@@ -361,6 +369,7 @@ class MpC_EXISTS_STEPS_EXTENDED(Solver):
     solver_class = SATISFYING
     description = f"The (MpC) Madagascar parallel (∃-step) planner is a SAT-based planner extended with a custom SAT solver.\nSource: https://research.ics.aalto.fi/software/sat/madagascar/"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def __init__(self, sat_solver: str) -> None:
         self.sat_solver = sat_solver
@@ -399,6 +408,7 @@ class FAST_DOWNWARD_MERGE_AND_SHRINK(Solver):
     solver_class = OPTIMAL
     description = "The Fast-Downward Merge and Shrink planner.\nSource: https://www.fast-downward.org"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -431,6 +441,7 @@ class FAST_DOWNWARD_LAMA_FIRST(Solver):
         "The Fast-Downward Lama First planner.\nSource: https://www.fast-downward.org"
     )
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -463,6 +474,7 @@ class FAST_DOWNWARD_LAMA(Solver):
         "The Fast-Downward Lama planner.\nSource: https://www.fast-downward.org"
     )
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -495,6 +507,7 @@ class FAST_DOWNWARD_BJOLP(Solver):
         "The Fast-Downward BJOLP planner.\nSource: https://www.fast-downward.org"
     )
     accepts_conditional = False
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -524,6 +537,7 @@ class FAST_DOWNWARD_LM_CUT(Solver):
     solver_class = OPTIMAL
     description = "The Fast-Downward LM Cut planner.\nSource: https://www.fast-downward.org"
     accepts_conditional = False
+    accepts_negative_preconditions = True
 
     def command(
         self, domain: str, 
@@ -550,6 +564,7 @@ class SCORPION(Solver):
     solver_class = OPTIMAL
     description = "The Scorpion 2023 planner.\nSource: https://github.com/ipc2023-classical/planner25"
     accepts_conditional = False
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -580,6 +595,7 @@ class ApxNoveltyTarski(Solver):
     solver_class = SATISFYING
     description = "The ApxNoveltyTarski planner.\nSource: https://github.com/ipc2023-classical/planner29"
     accepts_conditional = True
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -608,6 +624,7 @@ class TFLAP(Solver):
     solver_class = TEMPORAL
     description = "The TFLAP temporal planner.\nSource: https://bitbucket.org/ipc2018-temporal/team2.git"
     accepts_conditional = False
+    accepts_negative_preconditions = True
 
     def command(
         self,
@@ -639,6 +656,7 @@ class TFLAPGrounded(Solver):
     solver_class = TEMPORAL
     description = "The TFLAP temporal planner.\nSource: https://bitbucket.org/ipc2018-temporal/team2.git"
     accepts_conditional = False
+    accepts_negative_preconditions = True
 
     def command(
         self,

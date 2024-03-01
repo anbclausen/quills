@@ -22,6 +22,10 @@ from solvers import Solver
 
 class TemporalOptimalPlanningSynthesizer(Synthesizer):
     description = "Optimal synthesizer based on temporal planning."
+    is_temporal = True
+    is_optimal = False
+    uses_conditional_effects = False
+    uses_negative_preconditions = False
 
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform

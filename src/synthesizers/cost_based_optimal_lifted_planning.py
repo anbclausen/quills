@@ -14,6 +14,10 @@ from solvers import Solver
 
 class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
     description = "Optimal cost-based synthesizer based on lifted planning."
+    is_temporal = False
+    is_optimal = True
+    uses_conditional_effects = True
+    uses_negative_preconditions = True
 
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
@@ -97,7 +101,7 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 increase_cost(1),
             ]
             return preconditions, effects
-        
+
         @PDDLAction()
         def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
             preconditions = [

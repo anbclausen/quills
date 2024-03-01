@@ -14,6 +14,10 @@ from solvers import Solver
 
 class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
     description = "Incremental synthesizer based on lifted planning building each depth iteratively."
+    is_temporal = False
+    is_optimal = False
+    uses_conditional_effects = True
+    uses_negative_preconditions = True
 
     def create_instance(
         self,
@@ -122,7 +126,7 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 is_swapping1(l1, l2),
             ]
             return preconditions, effects
-        
+
         @PDDLAction()
         def swap_input(
             l1: lqubit,

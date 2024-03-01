@@ -14,6 +14,10 @@ from solvers import Solver
 
 class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
     description = "Incremental synthesizer based on planning using local vector clocks for each qubit to keep track of depth."
+    is_temporal = False
+    is_optimal = False
+    uses_conditional_effects = True
+    uses_negative_preconditions = True
 
     def create_instance(
         self,

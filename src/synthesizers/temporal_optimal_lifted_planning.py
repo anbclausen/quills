@@ -22,6 +22,10 @@ from solvers import Solver
 
 class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
     description = "Optimal synthesizer based on lifted temporal planning."
+    is_temporal = True
+    is_optimal = False
+    uses_conditional_effects = False
+    uses_negative_preconditions = False
 
     def create_instance(
         self, circuit: QuantumCircuit, platform: Platform
@@ -92,7 +96,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 at_end(idle(l2)),
             ]
             return duration, conditions, effects
-        
+
         @PDDLDurativeAction()
         def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
             duration = 3

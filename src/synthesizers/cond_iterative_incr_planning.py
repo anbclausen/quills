@@ -14,6 +14,10 @@ from solvers import Solver
 
 class ConditionalIterativeIncrementalPlanningSynthesizer(Synthesizer):
     description = "Incremental synthesizer based on planning building each depth iteratively. V3: This version uses conditional effects and forall quantifiers to get rid of swap dummies."
+    is_temporal = False
+    is_optimal = False
+    uses_conditional_effects = True
+    uses_negative_preconditions = True
 
     def create_instance(
         self,

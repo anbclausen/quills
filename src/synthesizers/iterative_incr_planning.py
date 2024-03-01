@@ -16,6 +16,10 @@ class IterativeIncrementalPlanningSynthesizer(Synthesizer):
     description = (
         "Incremental synthesizer based on planning building each depth iteratively."
     )
+    is_temporal = False
+    is_optimal = False
+    uses_conditional_effects = True
+    uses_negative_preconditions = True
 
     def create_instance(
         self,

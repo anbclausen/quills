@@ -61,20 +61,6 @@ from solvers import (
 )
 
 DEFAULT_TIME_LIMIT_S = 1800
-OPTIMAL_SYNTHESIZERS = [
-    "cost_opt",
-    "cond_cost_opt",
-    "cond_cost_opt_lift",
-    "cost_opt_lift",
-]
-CONDITIONAL_SYNTHESIZERS = [
-    "cond_cost_opt",
-    "cond_iter_incr",
-    "cond_cost_opt_lift",
-    "cond_iter_incr_lift",
-]
-TEMPORAL_SYNTHESIZERS = ["temp_opt", "temp_opt_lift"]
-
 
 synthesizers: dict[str, Synthesizer] = {
     "cost_opt": CostBasedOptimalPlanningSynthesizer(),
@@ -91,6 +77,17 @@ synthesizers: dict[str, Synthesizer] = {
     "temp_opt": TemporalOptimalPlanningSynthesizer(),
     "temp_opt_lift": TemporalOptimalLiftedPlanningSynthesizer(),
 }
+
+OPTIMAL_SYNTHESIZERS = [name for name, inst in synthesizers.items() if inst.is_optimal]
+CONDITIONAL_SYNTHESIZERS = [
+    name for name, inst in synthesizers.items() if inst.uses_conditional_effects
+]
+TEMPORAL_SYNTHESIZERS = [
+    name for name, inst in synthesizers.items() if inst.is_temporal
+]
+NEGATIVE_PRECONDITION_SYNTHESIZERS = [
+    name for name, inst in synthesizers.items() if inst.uses_negative_preconditions
+]
 
 platforms: dict[str, Platform] = {
     "toy": TOY,

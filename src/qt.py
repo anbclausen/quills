@@ -11,6 +11,7 @@ from configs import (
     OPTIMAL_SYNTHESIZERS,
     CONDITIONAL_SYNTHESIZERS,
     TEMPORAL_SYNTHESIZERS,
+    NEGATIVE_PRECONDITION_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
 
@@ -102,6 +103,13 @@ if uses_temporal and solver.solver_class != TEMPORAL:
     raise ValueError(
         f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal.\n"
         f"Please choose one of the following temporal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == TEMPORAL)}"
+    )
+
+uses_negative_preconditions = args.model in NEGATIVE_PRECONDITION_SYNTHESIZERS
+if uses_negative_preconditions and not solver.accepts_negative_preconditions:
+    raise ValueError(
+        f"Model '{args.model}' uses negative preconditions, but solver '{args.solver}' does not support those.\n"
+        f"Please choose one of the following solvers: {', '.join(s for s in solvers if solvers[s].accepts_negative_preconditions)}"
     )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)

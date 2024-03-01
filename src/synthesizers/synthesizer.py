@@ -99,6 +99,10 @@ class SynthesizerSolution(SynthesizerOutput):
 
 class Synthesizer(ABC):
     description: str = "No description."
+    is_temporal: bool
+    is_optimal: bool
+    uses_conditional_effects: bool
+    uses_negative_preconditions: bool
 
     @abstractmethod
     def create_instance(
