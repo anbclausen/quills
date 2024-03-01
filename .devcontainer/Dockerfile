@@ -46,3 +46,10 @@ RUN chmod +x MpC
 RUN git clone https://bitbucket.org/ipc2018-temporal/team2.git tflap
 RUN cd tflap/src && make clean && make all
 ENV PATH="${PATH}:/dependencies/tflap/src"
+
+# Install PowerLifted
+RUN apt-get -qq -y install libboost-all-dev
+RUN git clone https://github.com/abcorrea/powerlifted.git powerlifted
+RUN sed -i 's/index_to_args.push_back({pid, {}});/int pid_int = pid \& 2147483647;index_to_args.push_back({pid_int, {}});/g' powerlifted/src/search/states/extensional_states.cc
+RUN cd powerlifted && ./build.py
+ENV PATH="${PATH}:/dependencies/powerlifted"
