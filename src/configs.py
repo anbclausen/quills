@@ -15,12 +15,6 @@ from synthesizers.local_clock_incremental_planning import (
 from synthesizers.local_clock_incremental_lifted_planning import (
     LocalClockIncrementalLiftedPlanningSynthesizer,
 )
-from synthesizers.global_clock_incremental_planning import (
-    GlobalClockIncrementalPlanningSynthesizer,
-)
-from synthesizers.global_clock_incremental_lifted_planning import (
-    GlobalClockIncrementalLiftedPlanningSynthesizer,
-)
 from synthesizers.iterative_incr_planning import (
     IterativeIncrementalPlanningSynthesizer,
 )
