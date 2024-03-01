@@ -408,6 +408,7 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
                 *[idle(li) for li in l],
                 *[not_occupied(pi) for pi in p],
                 *[required(gi) for gi in g],
+                *[required(li) for li in l],
                 *gate_predicates,
             ],
             goal_state=[
