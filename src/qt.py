@@ -1,5 +1,5 @@
 import argparse
-from qiskit import QuantumCircuit, qasm2
+from qiskit import QuantumCircuit
 from synthesizers.synthesizer import remove_all_non_cx_gates
 from synthesizers.synthesizer import SynthesizerSolution
 from output_checker import OutputChecker

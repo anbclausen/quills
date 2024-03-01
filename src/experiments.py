@@ -18,6 +18,7 @@ from configs import (
     TEMPORAL_SYNTHESIZERS,
 )
 from datetime import datetime
+from output_checker import OutputChecker
 
 EXPERIMENT_TIME_LIMIT_S = 180
 CACHE_FILE = "tmp/experiments_cache.json"
@@ -208,18 +209,36 @@ for input_file, platform_name in EXPERIMENTS:
                 input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S
             )
             match experiment:
-                case SynthesizerSolution(actions):
-                    results[(synthesizer_name, solver_name)] = (
-                        experiment.depth,
-                        experiment.cx_depth,
-                        experiment.time,
+                case SynthesizerSolution():
+                    correct_output = OutputChecker.check(
+                        input_circuit,
+                        experiment.circuit,
+                        experiment.initial_mapping,
+                        platform,
                     )
+                    correct_qcec = OutputChecker.check_qcec(
+                        input_circuit, experiment.circuit, experiment.initial_mapping
+                    )
+                    if correct_output and correct_qcec:
+                        print("  ✓ Input and output circuits are equivalent.")
+                        results[(synthesizer_name, solver_name)] = (
+                            experiment.depth,
+                            experiment.cx_depth,
+                            experiment.time,
+                        )
+                    else:
+                        print(
+                            "  ✗ Input and output circuits are not equivalent! Not caching result."
+                        )
+
                 case SynthesizerNoSolution():
                     results[(synthesizer_name, solver_name)] = "NS"
                 case SynthesizerTimeout():
                     results[(synthesizer_name, solver_name)] = "TO"
         result_string = ""
-        if results[(synthesizer_name, solver_name)] == "NS":
+        if (synthesizer_name, solver_name) not in results:
+            result_string = "  No result found."
+        elif results[(synthesizer_name, solver_name)] == "NS":
             result_string = "  No solution found."
             update_cache(
                 input_file,
