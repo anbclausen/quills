@@ -400,7 +400,7 @@ class Synthesizer(ABC):
         circuit_depth = circuit.depth()
         total_time = 0
         print("Searching: ", end="")
-        for depth in range(circuit_depth, 4 * circuit_depth + 1, 1):
+        for depth in range(circuit_depth, 4 * circuit_depth + 2, 1):
             print(f"depth {depth}, ", end="", flush=True)
             instance = self.create_instance(circuit, platform, maximum_depth=depth)
             domain, problem = instance.compile()
@@ -508,7 +508,7 @@ class Synthesizer(ABC):
         largest_fail = circuit_depth - 1
         failed_depths.add(largest_fail)
 
-        max_depth = 4 * circuit_depth + 1
+        max_depth = 4 * circuit_depth + 2
         smallest_success = max_depth + 1
         successful_depths: dict[int, list[str]] = {}
 
