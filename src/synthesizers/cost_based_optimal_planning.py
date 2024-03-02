@@ -32,7 +32,7 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
         class gate(object_):
             pass
 
-        class lqubit(object_):
+        class lqubit(gate):
             pass
 
         p = [pqubit(f"p{i}") for i in range(num_pqubits)]
@@ -79,10 +79,39 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 not_(busy(l1)),
                 not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
             ]
             effects = [
                 not_(mapped(l1, p1)),
                 not_(mapped(l2, p2)),
+                mapped(l1, p2),
+                mapped(l2, p1),
+                busy(l1),
+                busy(l2),
+                is_swapping1(l1, l2),
+                is_swapping(l1),
+                is_swapping(l2),
+                increase_cost(1),
+            ]
+            return preconditions, effects
+        
+        @PDDLAction()
+        def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
+            preconditions = [
+                mapped(l1, p1),
+                not_(occupied(p2)),
+                not_(done(l2)),
+                connected(p1, p2),
+                not_(busy(l1)),
+                not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
+            ]
+            effects = [
+                not_(mapped(l1, p1)),
+                occupied(p2),
+                done(l2),
                 mapped(l1, p2),
                 mapped(l2, p1),
                 busy(l1),
@@ -135,34 +164,126 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
 
             match gate_type:
                 case "cx":
+                    one_gate_dependency = len(gate_direct_mapping[gate_id]) == 1
+                    if no_gate_dependency:
+                        l1 = l[gate_logical_qubits[0]]
+                        l2 = l[gate_logical_qubits[1]]
 
-                    @PDDLAction(name=f"apply_cx_g{gate_id}")
-                    def apply_gate(p1: pqubit, p2: pqubit):
-                        preconditions = [
-                            not_(done(g[gate_id])),
-                            connected(p1, p2),
-                        ]
-
-                        one_gate_dependency = len(gate_direct_mapping[gate_id]) == 1
-
-                        if no_gate_dependency:
-                            preconditions.append(not_(occupied(p1)))
-                            preconditions.append(not_(occupied(p2)))
-                        elif one_gate_dependency:
-                            earlier_gate = direct_predecessor_gates[0]
-                            _, earlier_gate_logical_qubits = gate_line_mapping[
-                                earlier_gate
+                        @PDDLAction(name=f"apply_cx_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                not_(occupied(p1)),
+                                not_(occupied(p2)),
+                                not_(done(l1)),
+                                not_(done(l2)),
                             ]
-                            gate_occupied_logical_qubit = (
-                                set(gate_logical_qubits)
-                                .intersection(earlier_gate_logical_qubits)
-                                .pop()
-                            )
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l1),
+                                busy(l2),
+                                occupied(p1),
+                                occupied(p2),
+                                done(l1),
+                                done(l2),
+                                mapped(l1, p1),
+                                mapped(l2, p2),
+                                increase_cost(1),
+                            ]
 
+                            return preconditions, effects
+                        
+                        gate_actions.append(apply_gate)
+
+                        @PDDLAction(name=f"apply_cx_input1_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                not_(occupied(p1)),
+                                not_(done(l1)),
+                                mapped(l2, p2),
+                                not_(busy(l2)),
+                                not_(is_swapping(l2)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l1),
+                                busy(l2),
+                                occupied(p1),
+                                done(l1),
+                                mapped(l1, p1),
+                                increase_cost(1),
+                            ]
+
+                            return preconditions, effects
+                        
+                        gate_actions.append(apply_gate)
+
+                        @PDDLAction(name=f"apply_cx_input2_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                not_(occupied(p2)),
+                                not_(done(l2)),
+                                mapped(l1, p1),
+                                not_(busy(l1)),
+                                not_(is_swapping(l1)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l1),
+                                busy(l2),
+                                occupied(p2),
+                                done(l2),
+                                mapped(l2, p2),
+                                increase_cost(1),
+                            ]
+
+                            return preconditions, effects
+                        
+                        gate_actions.append(apply_gate)
+
+                        @PDDLAction(name=f"apply_cx_input3_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                mapped(l1, p1),
+                                mapped(l2, p2),
+                                not_(busy(l1)),
+                                not_(busy(l2)),
+                                not_(is_swapping(l1)),
+                                not_(is_swapping(l2)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l1),
+                                busy(l2),
+                                increase_cost(1),
+                            ]
+
+                            return preconditions, effects
+                        
+                    elif one_gate_dependency:
+                        earlier_gate = direct_predecessor_gates[0]
+                        _, earlier_gate_logical_qubits = gate_line_mapping[
+                            earlier_gate
+                        ]
+                        occupied_logical_qubit = (
+                            set(gate_logical_qubits)
+                            .intersection(earlier_gate_logical_qubits)
+                            .pop()
+                        )
+
+                        @PDDLAction(name=f"apply_cx_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
                             occupied_physical_qubit = (
                                 p1
                                 if gate_logical_qubits.index(
-                                    gate_occupied_logical_qubit
+                                    occupied_logical_qubit
                                 )
                                 == 0
                                 else p2
@@ -170,123 +291,182 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
                             unoccupied_physical_qubit = (
                                 p2
                                 if gate_logical_qubits.index(
-                                    gate_occupied_logical_qubit
+                                    occupied_logical_qubit
                                 )
                                 == 0
                                 else p1
                             )
-
-                            # preconds for the occupied line
-                            preconditions.append(done(g[earlier_gate]))
-                            preconditions.append(
-                                mapped(
-                                    l[gate_occupied_logical_qubit],
-                                    occupied_physical_qubit,
+                            unoccupied_logical_qubit = gate_logical_qubits[
+                                1
+                                - gate_logical_qubits.index(
+                                    occupied_logical_qubit
                                 )
-                            )
-                            preconditions.append(
-                                not_(is_swapping(l[gate_occupied_logical_qubit]))
-                            )
-                            preconditions.append(
-                                not_(busy(l[gate_occupied_logical_qubit]))
-                            )
-
-                            # preconds for the unoccupied line
-                            preconditions.append(
-                                not_(occupied(unoccupied_physical_qubit))
-                            )
-                        else:
-                            preconditions.extend(
-                                [done(g[dep]) for dep in direct_predecessor_gates]
-                            )
-                            control_qubit = l[gate_logical_qubits[0]]
-                            target_qubit = l[gate_logical_qubits[1]]
-
-                            preconditions.append(mapped(control_qubit, p1))
-                            preconditions.append(mapped(target_qubit, p2))
-                            preconditions.append(not_(is_swapping(control_qubit)))
-                            preconditions.append(not_(is_swapping(target_qubit)))
-                            preconditions.append(not_(busy(control_qubit)))
-                            preconditions.append(not_(busy(target_qubit)))
-
-                        effects = [
-                            done(g[gate_id]),
-                            busy(l[gate_logical_qubits[0]]),
-                            busy(l[gate_logical_qubits[1]]),
-                            increase_cost(1),
-                        ]
-
-                        if no_gate_dependency:
-                            effects.append(occupied(p1))
-                            effects.append(occupied(p2))
-                            effects.append(mapped(l[gate_logical_qubits[0]], p1))
-                            effects.append(mapped(l[gate_logical_qubits[1]], p2))
-
-                        elif one_gate_dependency:
-                            earlier_gate = direct_predecessor_gates[0]
-                            _, earlier_gate_logical_qubits = gate_line_mapping[
-                                earlier_gate
                             ]
-                            gate_occupied_logical_qubit = (
-                                set(gate_logical_qubits)
-                                .intersection(earlier_gate_logical_qubits)
-                                .pop()
-                            )
 
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                done(g[earlier_gate]),
+                                mapped(
+                                    l[occupied_logical_qubit],
+                                    occupied_physical_qubit,
+                                ),
+                                not_(busy(l[occupied_logical_qubit])),
+                                not_(is_swapping(l[occupied_logical_qubit])),
+                                not_(occupied(unoccupied_physical_qubit)),
+                                not_(done(l[unoccupied_logical_qubit])),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l[gate_logical_qubits[0]]),
+                                busy(l[gate_logical_qubits[1]]),
+                                occupied(unoccupied_physical_qubit),
+                                done(l[unoccupied_logical_qubit]),
+                                mapped(
+                                    l[unoccupied_logical_qubit],
+                                    unoccupied_physical_qubit,
+                                ),
+                                increase_cost(1),
+                            ]
+
+                            return preconditions, effects
+                        
+                        gate_actions.append(apply_gate)
+                        
+                        @PDDLAction(name=f"apply_cx_input_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
+                            
+                            occupied_physical_qubit = (
+                                p1
+                                if gate_logical_qubits.index(
+                                    occupied_logical_qubit
+                                )
+                                == 0
+                                else p2
+                            )
                             unoccupied_physical_qubit = (
                                 p2
                                 if gate_logical_qubits.index(
-                                    gate_occupied_logical_qubit
+                                    occupied_logical_qubit
                                 )
                                 == 0
                                 else p1
                             )
-
-                            gate_unoccupied_logical_qubit = gate_logical_qubits[
+                            unoccupied_logical_qubit = gate_logical_qubits[
                                 1
-                                - gate_logical_qubits.index(gate_occupied_logical_qubit)
+                                - gate_logical_qubits.index(
+                                    occupied_logical_qubit
+                                )
                             ]
 
-                            effects.append(occupied(unoccupied_physical_qubit))
-                            effects.append(
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                done(g[earlier_gate]),
                                 mapped(
-                                    l[gate_unoccupied_logical_qubit],
+                                    l[occupied_logical_qubit],
+                                    occupied_physical_qubit,
+                                ),
+                                mapped(
+                                    l[unoccupied_logical_qubit],
                                     unoccupied_physical_qubit,
-                                )
-                            )
+                                ),
+                                not_(busy(l[occupied_logical_qubit])),
+                                not_(is_swapping(l[occupied_logical_qubit])),
+                                not_(busy(l[unoccupied_logical_qubit])),
+                                not_(is_swapping(l[unoccupied_logical_qubit])),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l[gate_logical_qubits[0]]),
+                                busy(l[gate_logical_qubits[1]]),
+                                increase_cost(1),
+                            ]
 
-                        return preconditions, effects
+                            return preconditions, effects
+                    else:
+                        @PDDLAction(name=f"apply_cx_g{gate_id}")
+                        def apply_gate(p1: pqubit, p2: pqubit):
+                            control_qubit = l[gate_logical_qubits[0]]
+                            target_qubit = l[gate_logical_qubits[1]]
+                            
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                connected(p1, p2),
+                                *[done(g[dep]) for dep in direct_predecessor_gates],
+                                mapped(control_qubit, p1),
+                                mapped(target_qubit, p2),
+                                not_(busy(control_qubit)),
+                                not_(busy(target_qubit)),
+                                not_(is_swapping(control_qubit)),
+                                not_(is_swapping(target_qubit)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(l[gate_logical_qubits[0]]),
+                                busy(l[gate_logical_qubits[1]]),
+                                increase_cost(1),
+                            ]
+
+                            return preconditions, effects
 
                 case _:
+                    logical_qubit = l[gate_logical_qubits[0]]
+                    if no_gate_dependency:
+                        @PDDLAction(name=f"apply_gate_g{gate_id}")
+                        def apply_gate(p: pqubit):
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                not_(occupied(p)),
+                                not_(done(logical_qubit)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(logical_qubit),
+                                occupied(p),
+                                done(logical_qubit),
+                                mapped(logical_qubit, p),
+                                increase_cost(1),
+                            ]
 
-                    @PDDLAction(name=f"apply_gate_g{gate_id}")
-                    def apply_gate(p: pqubit):
-                        logical_qubit = l[gate_logical_qubits[0]]
+                            return preconditions, effects
+                        
+                        gate_actions.append(apply_gate)
 
-                        preconditions = [
-                            not_(done(g[gate_id])),
-                        ]
+                        @PDDLAction(name=f"apply_gate_input_g{gate_id}")
+                        def apply_gate(p: pqubit):
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                mapped(logical_qubit, p),
+                                not_(busy(logical_qubit)),
+                                not_(is_swapping(logical_qubit)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(logical_qubit),
+                                increase_cost(1),
+                            ]
 
-                        if no_gate_dependency:
-                            preconditions.append(not_(occupied(p)))
-                        else:
+                            return preconditions, effects
+
+                    else:
+                        @PDDLAction(name=f"apply_gate_g{gate_id}")
+                        def apply_gate(p: pqubit):
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]
-                            preconditions.append(done(direct_predecessor_gate))
-                            preconditions.append(mapped(logical_qubit, p))
-                            preconditions.append(not_(is_swapping(logical_qubit)))
-                            preconditions.append(not_(busy(logical_qubit)))
+                            preconditions = [
+                                not_(done(g[gate_id])),
+                                done(direct_predecessor_gate),
+                                mapped(logical_qubit, p),
+                                not_(busy(logical_qubit)),
+                                not_(is_swapping(logical_qubit)),
+                            ]
+                            effects = [
+                                done(g[gate_id]),
+                                busy(logical_qubit),
+                                increase_cost(1),
+                            ]
 
-                        effects = [
-                            done(g[gate_id]),
-                            busy(logical_qubit),
-                            increase_cost(1),
-                        ]
-
-                        if no_gate_dependency:
-                            effects.append(occupied(p))
-                            effects.append(mapped(logical_qubit, p))
-
-                        return preconditions, effects
+                            return preconditions, effects
 
             gate_actions.append(apply_gate)
 
@@ -306,6 +486,7 @@ class CostBasedOptimalPlanningSynthesizer(Synthesizer):
             ],
             actions=[
                 swap,
+                swap_input,
                 swap_dummy1,
                 swap_dummy2,
                 advance,

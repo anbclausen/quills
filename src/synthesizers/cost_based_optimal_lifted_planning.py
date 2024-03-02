@@ -87,6 +87,8 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 not_(busy(l1)),
                 not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
             ]
             effects = [
                 not_(mapped(l1, p1)),
@@ -111,6 +113,8 @@ class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 not_(done(l2)),
                 not_(busy(l1)),
                 not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
             ]
             effects = [
                 not_(mapped(l1, p1)),
