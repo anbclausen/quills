@@ -127,10 +127,9 @@ class LocalClockIncrementalLiftedPlanningSynthesizer(Synthesizer):
             ]
             effects = [
                 not_(mapped(l1, p1)),
-                occupied(p2),
-                done(l2),
                 mapped(l1, p2),
-                mapped(l2, p1),
+                not_(occupied(p1)),
+                occupied(p2),
                 not_(clock(p1, d1)),
                 not_(clock(p2, d1)),
                 clock(p1, d2),

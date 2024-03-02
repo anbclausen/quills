@@ -107,12 +107,10 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
             effects = [
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
+                at_start(not_occupied(p1)),
                 at_start(not_(not_occupied(p2))),
-                at_start(done(l2)),
-                at_start(not_(required(l2))),
                 at_end(not_(mapped(l1, p1))),
                 at_end(mapped(l1, p2)),
-                at_end(mapped(l2, p1)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
             ]
@@ -158,88 +156,6 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                                 at_start(done(l2)),
                                 at_end(mapped(l1, p1)),
                                 at_end(mapped(l2, p2)),
-                                at_end(done(g[gate_id])),
-                                at_end(not_(required(g[gate_id]))),
-                                at_end(idle(l1)),
-                                at_end(idle(l2)),
-                            ]
-
-                            return duration, conditions, effects
-
-                        gate_actions.append(apply_gate)
-
-                        @PDDLDurativeAction(name=f"apply_cx_input1_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            duration = 1
-                            conditions = [
-                                at_start(required(g[gate_id])),
-                                at_start(connected(p1, p2)),
-                                at_start(idle(l1)),
-                                at_start(idle(l2)),
-                                at_start(mapped(l1, p1)),
-                                at_start(not_occupied(p2)),
-                                at_start(required(l2)),
-                            ]
-                            effects = [
-                                at_start(not_(idle(l1))),
-                                at_start(not_(idle(l2))),
-                                at_start(not_(not_occupied(p2))),
-                                at_start(not_(required(l2))),
-                                at_start(done(l2)),
-                                at_end(mapped(l2, p2)),
-                                at_end(done(g[gate_id])),
-                                at_end(not_(required(g[gate_id]))),
-                                at_end(idle(l1)),
-                                at_end(idle(l2)),
-                            ]
-
-                            return duration, conditions, effects
-
-                        gate_actions.append(apply_gate)
-
-                        @PDDLDurativeAction(name=f"apply_cx_input2_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            duration = 1
-                            conditions = [
-                                at_start(required(g[gate_id])),
-                                at_start(connected(p1, p2)),
-                                at_start(idle(l1)),
-                                at_start(idle(l2)),
-                                at_start(not_occupied(p1)),
-                                at_start(required(l1)),
-                                at_start(mapped(l2, p2)),
-                            ]
-                            effects = [
-                                at_start(not_(idle(l1))),
-                                at_start(not_(idle(l2))),
-                                at_start(not_(not_occupied(p1))),
-                                at_start(not_(required(l1))),
-                                at_start(done(l1)),
-                                at_end(mapped(l1, p1)),
-                                at_end(done(g[gate_id])),
-                                at_end(not_(required(g[gate_id]))),
-                                at_end(idle(l1)),
-                                at_end(idle(l2)),
-                            ]
-
-                            return duration, conditions, effects
-
-                        gate_actions.append(apply_gate)
-
-                        @PDDLDurativeAction(name=f"apply_cx_input3_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            duration = 1
-                            conditions = [
-                                at_start(required(g[gate_id])),
-                                at_start(connected(p1, p2)),
-                                at_start(idle(l1)),
-                                at_start(idle(l2)),
-                                at_start(mapped(l1, p1)),
-                                at_start(mapped(l2, p2)),
-                            ]
-                            effects = [
-                                at_start(not_(idle(l1))),
-                                at_start(not_(idle(l2))),
                                 at_end(done(g[gate_id])),
                                 at_end(not_(required(g[gate_id]))),
                                 at_end(idle(l1)),
@@ -311,57 +227,6 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
 
                             return duration, conditions, effects
 
-                        gate_actions.append(apply_gate)
-
-                        @PDDLDurativeAction(name=f"apply_cx_input_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            occupied_physical_qubit = (
-                                p1
-                                if gate_logical_qubits.index(occupied_logical_qubit)
-                                == 0
-                                else p2
-                            )
-                            unoccupied_physical_qubit = (
-                                p2
-                                if gate_logical_qubits.index(occupied_logical_qubit)
-                                == 0
-                                else p1
-                            )
-                            unoccupied_logical_qubit = gate_logical_qubits[
-                                1 - gate_logical_qubits.index(occupied_logical_qubit)
-                            ]
-
-                            duration = 1
-                            conditions = [
-                                at_start(required(g[gate_id])),
-                                at_start(connected(p1, p2)),
-                                at_start(idle(l[occupied_logical_qubit])),
-                                at_start(idle(l[unoccupied_logical_qubit])),
-                                at_start(done(g[earlier_gate])),
-                                at_start(
-                                    mapped(
-                                        l[occupied_logical_qubit],
-                                        occupied_physical_qubit,
-                                    )
-                                ),
-                                at_start(
-                                    mapped(
-                                        l[unoccupied_logical_qubit],
-                                        unoccupied_physical_qubit,
-                                    )
-                                ),
-                            ]
-                            effects = [
-                                at_start(not_(idle(l[gate_logical_qubits[0]]))),
-                                at_start(not_(idle(l[gate_logical_qubits[1]]))),
-                                at_end(done(g[gate_id])),
-                                at_end(not_(required(g[gate_id]))),
-                                at_end(idle(l[gate_logical_qubits[0]])),
-                                at_end(idle(l[gate_logical_qubits[1]])),
-                            ]
-
-                            return duration, conditions, effects
-
                     else:
                         control_qubit = l[gate_logical_qubits[0]]
                         target_qubit = l[gate_logical_qubits[1]]
@@ -407,25 +272,6 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                                 at_start(not_(required(logical_qubit))),
                                 at_start(done(logical_qubit)),
                                 at_end(mapped(logical_qubit, p)),
-                                at_end(done(g[gate_id])),
-                                at_end(not_(required(g[gate_id]))),
-                                at_end(idle(logical_qubit)),
-                            ]
-
-                            return duration, conditions, effects
-
-                        gate_actions.append(apply_gate)
-
-                        @PDDLDurativeAction(name=f"apply_gate_input_g{gate_id}")
-                        def apply_gate(p: pqubit):
-                            duration = 1
-                            conditions = [
-                                at_start(required(g[gate_id])),
-                                at_start(idle(logical_qubit)),
-                                at_start(mapped(logical_qubit, p))
-                            ]
-                            effects = [
-                                at_start(not_(idle(logical_qubit))),
                                 at_end(done(g[gate_id])),
                                 at_end(not_(required(g[gate_id]))),
                                 at_end(idle(logical_qubit)),

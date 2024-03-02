@@ -135,11 +135,9 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
             ]
             effects = [
                 not_(mapped(l1, p1)),
-                not_(not_occupied(p2)),
-                done(l2),
-                not_(required(l2)),
                 mapped(l1, p2),
-                mapped(l2, p1),
+                not_occupied(p1),
+                not_(not_occupied(p2)),
                 not_(clock(p1, d1)),
                 not_(clock(p2, d1)),
                 clock(p1, d2),
@@ -332,8 +330,8 @@ class LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(Synthe
                 not_(not_occupied(p1)),
                 not_(not_occupied(p2)),
                 done(l1),
-                not_(required(l1)),
                 done(l2),
+                not_(required(l1)),
                 not_(required(l2)),
                 mapped(l1, p1),
                 mapped(l2, p2),

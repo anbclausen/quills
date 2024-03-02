@@ -115,12 +115,10 @@ class TemporalOptimalLiftedPlanningSynthesizer(Synthesizer):
             effects = [
                 at_start(not_(idle(l1))),
                 at_start(not_(idle(l2))),
+                at_start(not_occupied(p1)),
                 at_start(not_(not_occupied(p2))),
-                at_start(done(l2)),
-                at_start(not_(required(l2))),
                 at_end(not_(mapped(l1, p1))),
                 at_end(mapped(l1, p2)),
-                at_end(mapped(l2, p1)),
                 at_end(idle(l1)),
                 at_end(idle(l2)),
             ]

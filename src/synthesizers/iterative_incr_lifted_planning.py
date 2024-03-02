@@ -148,10 +148,9 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
             ]
             effects = [
                 not_(mapped(l1, p1)),
-                occupied(p2),
-                done(l2),
                 mapped(l1, p2),
-                mapped(l2, p1),
+                not_(occupied(p1)),
+                occupied(p2),
                 busy(l1),
                 busy(l2),
                 is_swapping(l1),
@@ -208,6 +207,8 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(done(g)),
                 not_(occupied(p)),
                 not_(done(l)),
+                not_(busy(l)),
+                not_(is_swapping(l)),
             ]
             effects = [
                 done(g),
@@ -225,7 +226,7 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(done(g1)),
                 done(g2),
                 mapped(l, p),
-                not_(is_swapping((l))),
+                not_(is_swapping(l)),
                 not_(busy(l)),
             ]
             effects = [done(g1), busy(l)]
@@ -243,8 +244,8 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l1, p1),
                 mapped(l2, p2),
-                not_(is_swapping((l1))),
-                not_(is_swapping((l2))),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
                 not_(busy(l1)),
                 not_(busy(l2)),
             ]
@@ -267,8 +268,10 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 mapped(l2, p2),
                 not_(occupied(p1)),
                 not_(done(l1)),
-                not_(is_swapping((l2))),
+                not_(busy(l1)),
                 not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
             ]
             effects = [
                 done(g1),
@@ -291,9 +294,11 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 connected(p1, p2),
                 mapped(l1, p1),
                 not_(occupied(p2)),
-                not_(done(l1)),
-                not_(is_swapping((l1))),
+                not_(done(l2)),
                 not_(busy(l1)),
+                not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
             ]
             effects = [
                 done(g1),
@@ -317,6 +322,10 @@ class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
                 not_(occupied(p2)),
                 not_(done(l1)),
                 not_(done(l2)),
+                not_(busy(l1)),
+                not_(busy(l2)),
+                not_(is_swapping(l1)),
+                not_(is_swapping(l2)),
             ]
             effects = [
                 done(g),

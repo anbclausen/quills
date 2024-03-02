@@ -114,10 +114,9 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
             ]
             effects = [
                 not_(mapped(l1, p1)),
-                occupied(p2),
-                done(l2),
                 mapped(l1, p2),
-                mapped(l2, p1),
+                not_(occupied(p1)),
+                occupied(p2),
                 swap1(l1),
                 swap1(l2),
                 not_(idle(l1)),
@@ -171,6 +170,8 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                                 not_(occupied(p2)),
                                 not_(done(l1)),
                                 not_(done(l2)),
+                                idle(l1),
+                                idle(l2),
                             ]
                             effects = [
                                 done(g[gate_id]),
@@ -184,81 +185,6 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                                 done(l2),
                                 mapped(l1, p1),
                                 mapped(l2, p2),
-                                increase_cost(1),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_cx_input1_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            preconditions = [
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                not_(occupied(p1)),
-                                not_(done(l1)),
-                                mapped(l2, p2),
-                                idle(l2),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                busy(l1),
-                                busy(l2),
-                                not_(idle(l1)),
-                                not_(idle(l2)),
-                                occupied(p1),
-                                done(l1),
-                                mapped(l1, p1),
-                                increase_cost(1),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_cx_input2_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            preconditions = [
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                not_(occupied(p2)),
-                                not_(done(l2)),
-                                mapped(l1, p1),
-                                idle(l1),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                busy(l1),
-                                busy(l2),
-                                not_(idle(l1)),
-                                not_(idle(l2)),
-                                occupied(p2),
-                                done(l2),
-                                mapped(l2, p2),
-                                increase_cost(1),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_cx_input3_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            preconditions = [
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                mapped(l1, p1),
-                                mapped(l2, p2),
-                                idle(l1),
-                                idle(l2),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                busy(l1),
-                                busy(l2),
-                                not_(idle(l1)),
-                                not_(idle(l2)),
                                 increase_cost(1),
                             ]
 
@@ -309,6 +235,7 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                                     occupied_physical_qubit,
                                 ),
                                 idle(l[occupied_logical_qubit]),
+                                idle(l[unoccupied_logical_qubit]),
                                 not_(occupied(unoccupied_physical_qubit)),
                                 not_(done(l[unoccupied_logical_qubit])),
                             ]
@@ -328,60 +255,7 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                             ]
 
                             return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-                        
-                        @PDDLAction(name=f"apply_cx_input_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit):
-                            
-                            occupied_physical_qubit = (
-                                p1
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
-                                == 0
-                                else p2
-                            )
-                            unoccupied_physical_qubit = (
-                                p2
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
-                                == 0
-                                else p1
-                            )
-                            unoccupied_logical_qubit = gate_logical_qubits[
-                                1
-                                - gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
-                            ]
 
-                            preconditions = [
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                done(g[earlier_gate]),
-                                mapped(
-                                    l[occupied_logical_qubit],
-                                    occupied_physical_qubit,
-                                ),
-                                mapped(
-                                    l[unoccupied_logical_qubit],
-                                    unoccupied_physical_qubit,
-                                ),
-                                idle(l[occupied_logical_qubit]),
-                                idle(l[unoccupied_logical_qubit]),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                busy(l[gate_logical_qubits[0]]),
-                                busy(l[gate_logical_qubits[1]]),
-                                not_(idle(l[gate_logical_qubits[0]])),
-                                not_(idle(l[gate_logical_qubits[1]])),
-                                increase_cost(1),
-                            ]
-
-                            return preconditions, effects
                     else:
                         @PDDLAction(name=f"apply_cx_g{gate_id}")
                         def apply_gate(p1: pqubit, p2: pqubit):
@@ -417,6 +291,7 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                                 not_(done(g[gate_id])),
                                 not_(occupied(p)),
                                 not_(done(logical_qubit)),
+                                idle(logical_qubit),
                             ]
                             effects = [
                                 done(g[gate_id]),
@@ -425,24 +300,6 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                                 occupied(p),
                                 done(logical_qubit),
                                 mapped(logical_qubit, p),
-                                increase_cost(1),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_gate_input_g{gate_id}")
-                        def apply_gate(p: pqubit):
-                            preconditions = [
-                                not_(done(g[gate_id])),
-                                mapped(logical_qubit, p),
-                                idle(logical_qubit),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                busy(logical_qubit),
-                                not_(idle(logical_qubit)),
                                 increase_cost(1),
                             ]
 

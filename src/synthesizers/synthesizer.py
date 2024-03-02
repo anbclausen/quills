@@ -163,7 +163,7 @@ class Synthesizer(ABC):
 
             logical_qubit = gate_logical_mapping[id][1][0]
             add_to_initial_mapping_if_not_present(
-                LogicalQubit(logical_qubit), PhysicalQubit(qubit)
+                LogicalQubit(logical_qubit), PhysicalQubit(current_phys_map[qubit])
             )
 
         def add_cx_gate_qubits(id: int, control: int, target: int):
@@ -172,12 +172,13 @@ class Synthesizer(ABC):
             logical_control = gate_logical_mapping[id][1][0]
             logical_target = gate_logical_mapping[id][1][1]
             add_to_initial_mapping_if_not_present(
-                LogicalQubit(logical_control), PhysicalQubit(control)
+                LogicalQubit(logical_control), PhysicalQubit(current_phys_map[control])
             )
             add_to_initial_mapping_if_not_present(
-                LogicalQubit(logical_target), PhysicalQubit(target)
+                LogicalQubit(logical_target), PhysicalQubit(current_phys_map[target])
             )
 
+        current_phys_map = {i : i for i in range(platform.qubits)}
         for action in solver_solution:
             arguments = action.split("(")[1].split(")")[0].split(",")
             if action.startswith("apply"):
@@ -196,11 +197,10 @@ class Synthesizer(ABC):
                 target = int(arguments[3][1:])
 
                 physical_circuit.swap(control, target)
-                if action.startswith("swap_input"):
-                    logical_target = int(arguments[1][1:])
-                    add_to_initial_mapping_if_not_present(
-                        LogicalQubit(logical_target), PhysicalQubit(target)
-                    )
+
+                tmp = current_phys_map[control]
+                current_phys_map[control] = current_phys_map[target]
+                current_phys_map[target] = tmp
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
@@ -247,7 +247,7 @@ class Synthesizer(ABC):
 
             logical_qubit = gate_logical_mapping[id][1][0]
             add_to_initial_mapping_if_not_present(
-                LogicalQubit(logical_qubit), PhysicalQubit(qubit)
+                LogicalQubit(logical_qubit), PhysicalQubit(current_phys_map[qubit])
             )
 
         def add_cx_gate_qubits(id: int, control: int, target: int):
@@ -256,12 +256,13 @@ class Synthesizer(ABC):
             logical_control = gate_logical_mapping[id][1][0]
             logical_target = gate_logical_mapping[id][1][1]
             add_to_initial_mapping_if_not_present(
-                LogicalQubit(logical_control), PhysicalQubit(control)
+                LogicalQubit(logical_control), PhysicalQubit(current_phys_map[control])
             )
             add_to_initial_mapping_if_not_present(
-                LogicalQubit(logical_target), PhysicalQubit(target)
+                LogicalQubit(logical_target), PhysicalQubit(current_phys_map[target])
             )
 
+        current_phys_map = {i : i for i in range(platform.qubits)}
         for action in solver_solution:
             arguments = action.split("(")[1].split(")")[0].split(",")
             if action.startswith("apply"):
@@ -281,11 +282,11 @@ class Synthesizer(ABC):
                 target = int(arguments[3][1:])
 
                 physical_circuit.swap(control, target)
-                if action.startswith("swap_input"):
-                    logical_target = int(arguments[1][1:])
-                    add_to_initial_mapping_if_not_present(
-                        LogicalQubit(logical_target), PhysicalQubit(target)
-                    )
+
+                tmp = current_phys_map[control]
+                current_phys_map[control] = current_phys_map[target]
+                current_phys_map[target] = tmp
+
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
@@ -432,12 +433,10 @@ class Synthesizer(ABC):
 
             match solution:
                 case SolverTimeout():
-                    print()
                     return SynthesizerTimeout()
                 case SolverNoSolution():
                     continue
                 case SolverSolution(actions):
-                    print()
                     physical_circuit, initial_mapping = self.parse_solution(
                         circuit, platform, actions
                     )

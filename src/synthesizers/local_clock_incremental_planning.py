@@ -105,7 +105,9 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
             return preconditions, effects
         
         @PDDLAction()
-        def swap_input(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, d1: depth, d2: depth):
+        def swap_input(
+            l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, d1: depth, d2: depth
+        ):
             preconditions = [
                 mapped(l1, p1),
                 not_(occupied(p2)),
@@ -118,9 +120,8 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
             effects = [
                 not_(mapped(l1, p1)),
                 mapped(l1, p2),
-                mapped(l2, p1),
+                not_(occupied(p1)),
                 occupied(p2),
-                done(l2),
                 not_(clock(p1, d1)),
                 not_(clock(p2, d1)),
                 clock(p1, d2),
@@ -176,83 +177,6 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                                 done(l2),
                                 mapped(l1, p1),
                                 mapped(l2, p2),
-                                clock(p1, d2),
-                                clock(p2, d2),
-                                not_(clock(p1, d1)),
-                                not_(clock(p2, d1)),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_cx_input1_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
-                            preconditions = [
-                                next_depth(d1, d2),
-                                clock(p1, d1),
-                                clock(p2, d1),
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                not_(occupied(p1)),
-                                not_(done(l1)),
-                                mapped(l2, p2),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                occupied(p1),
-                                done(l1),
-                                mapped(l1, p1),
-                                clock(p1, d2),
-                                clock(p2, d2),
-                                not_(clock(p1, d1)),
-                                not_(clock(p2, d1)),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_cx_input2_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
-                            preconditions = [
-                                next_depth(d1, d2),
-                                clock(p1, d1),
-                                clock(p2, d1),
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                not_(occupied(p2)),
-                                not_(done(l2)),
-                                mapped(l1, p1),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                occupied(p2),
-                                done(l2),
-                                mapped(l2, p2),
-                                clock(p1, d2),
-                                clock(p2, d2),
-                                not_(clock(p1, d1)),
-                                not_(clock(p2, d1)),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_cx_input3_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
-                            preconditions = [
-                                next_depth(d1, d2),
-                                clock(p1, d1),
-                                clock(p2, d1),
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                mapped(l1, p1),
-                                mapped(l2, p2),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
                                 clock(p1, d2),
                                 clock(p2, d2),
                                 not_(clock(p1, d1)),
@@ -327,59 +251,6 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
 
                             return preconditions, effects
                         
-                        gate_actions.append(apply_gate)
-                        
-                        @PDDLAction(name=f"apply_cx_input_g{gate_id}")
-                        def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
-                            
-                            occupied_physical_qubit = (
-                                p1
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
-                                == 0
-                                else p2
-                            )
-                            unoccupied_physical_qubit = (
-                                p2
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
-                                == 0
-                                else p1
-                            )
-                            unoccupied_logical_qubit = gate_logical_qubits[
-                                1
-                                - gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
-                            ]
-
-                            preconditions = [
-                                next_depth(d1, d2),
-                                clock(p1, d1),
-                                clock(p2, d1),
-                                not_(done(g[gate_id])),
-                                connected(p1, p2),
-                                done(g[earlier_gate]),
-                                mapped(
-                                    l[occupied_logical_qubit],
-                                    occupied_physical_qubit,
-                                ),
-                                mapped(
-                                    l[unoccupied_logical_qubit],
-                                    unoccupied_physical_qubit,
-                                ),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
-                                clock(p1, d2),
-                                clock(p2, d2),
-                                not_(clock(p1, d1)),
-                                not_(clock(p2, d1)),
-                            ]
-
-                            return preconditions, effects
                     else:
                         @PDDLAction(name=f"apply_cx_g{gate_id}")
                         def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
@@ -423,24 +294,6 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                                 occupied(p),
                                 done(logical_qubit),
                                 mapped(logical_qubit, p),
-                                clock(p, d2),
-                                not_(clock(p, d1)),
-                            ]
-
-                            return preconditions, effects
-                        
-                        gate_actions.append(apply_gate)
-
-                        @PDDLAction(name=f"apply_gate_input_g{gate_id}")
-                        def apply_gate(p: pqubit, d1: depth, d2: depth):
-                            preconditions = [
-                                next_depth(d1, d2),
-                                clock(p, d1),
-                                not_(done(g[gate_id])),
-                                mapped(logical_qubit, p),
-                            ]
-                            effects = [
-                                done(g[gate_id]),
                                 clock(p, d2),
                                 not_(clock(p, d1)),
                             ]

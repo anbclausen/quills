@@ -122,10 +122,9 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
             ]
             effects = [
                 not_(mapped(l1, p1)),
-                occupied(p2),
-                done(l2),
                 mapped(l1, p2),
-                mapped(l2, p1),
+                not_(occupied(p1)),
+                occupied(p2),
                 swap1(l1),
                 swap1(l2),
                 not_(idle(l1)),
@@ -162,6 +161,7 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 not_(done(g)),
                 not_(occupied(p)),
                 not_(done(l)),
+                idle(l),
             ]
             effects = [
                 done(g),
@@ -223,6 +223,7 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 mapped(l2, p2),
                 not_(occupied(p1)),
                 not_(done(l1)),
+                idle(l1),
                 idle(l2),
             ]
             effects = [
@@ -251,6 +252,7 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 not_(occupied(p2)),
                 not_(done(l2)),
                 idle(l1),
+                idle(l2),
             ]
             effects = [
                 done(g1),
@@ -277,6 +279,8 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 not_(occupied(p2)),
                 not_(done(l1)),
                 not_(done(l2)),
+                idle(l1),
+                idle(l2),
             ]
             effects = [
                 done(g),
@@ -293,8 +297,6 @@ class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
                 increase_cost(1),
             ]
             return preconditions, effects
-
-        # can we end up with a logical qubit mapped to more than one physical qubit???
 
         gate_actions = [
             apply_unary_input,
