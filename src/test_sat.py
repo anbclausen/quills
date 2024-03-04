@@ -40,7 +40,8 @@ for t in range(0, max_depth + 1):
     if solution:
         print(f"{t}: Solution found")
         for atom in solution:
-            print(atom)
+            if isinstance(atom, Atom):
+                print(atom)
 
         break
     else:
