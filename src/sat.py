@@ -206,7 +206,7 @@ def parse_solution(solution: list[int] | None) -> list[Atom] | None:
     for atom_str in pysat_atom_strs:
         if atom_str.startswith("~"):
             id = int(atom_str[1:])
-            result.append(atoms[id])
+            result.append(Neg(atoms[id]))
         else:
             id = int(atom_str)
             result.append(atoms[id])
