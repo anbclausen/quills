@@ -11,6 +11,7 @@ mqt-qcec = "^2.5.0"
 ruamel-yaml = "^0.18.6"
 tarski-lapkt = {extras = ["arithmetic", "gringo"], version = "^0.1.3"}
 python-sat = {extras = ["aiger", "approxmc", "cryptosat", "pblib"], version = "^1.8.dev1"}
+setuptools = "^69.1.1"
 
 
 [build-system]
