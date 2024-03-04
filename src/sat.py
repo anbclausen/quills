@@ -175,22 +175,26 @@ class Neg(Formula):
 
 def exactly_one(atoms: list[Atom]):
     global next_id
-    lits = [atom.clausify() for atom in atoms]
+    lits = [atom.id for atom in atoms]
     result = CardEnc.equals(lits, bound=1, top_id=next_id - 1)
-    for clause in result:
+    result.clausify()
+    clauses = result.clauses
+    for clause in clauses:
         biggest = max(clause)
         next_id = max(next_id, biggest + 1)
-    return result
+    return clauses
 
 
 def at_most_one(atoms: list[Atom]):
     global next_id
-    lits = [atom.clausify() for atom in atoms]
+    lits = [atom.id for atom in atoms]
     result = CardEnc.atmost(lits, bound=1, top_id=next_id - 1)
-    for clause in result:
+    result.clausify()
+    clauses = result.clauses
+    for clause in clauses:
         biggest = max(clause)
         next_id = max(next_id, biggest + 1)
-    return result
+    return clauses
 
 
 def parse_solution(solution: list[int] | None) -> list[Atom] | None:
