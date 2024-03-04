@@ -23,7 +23,8 @@ solvers: dict = {
 }
 
 parser = argparse.ArgumentParser(
-    description="This is a wrapper for the pysat library", prog="python src/sat.py"
+    description="This is a wrapper for the pysat library",
+    prog="python src/sat_extension.py",
 )
 
 parser.add_argument(
