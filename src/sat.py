@@ -179,9 +179,7 @@ def exactly_one(atoms: list[Atom]) -> list[list[int]]:
     result = CardEnc.equals(lits, bound=1, top_id=next_id - 1)
     result.clausify()
     clauses = result.clauses
-    for clause in clauses:
-        biggest = max(clause)
-        next_id = max(next_id, biggest + 1)
+    update_id_from(clauses)
     return clauses
 
 
@@ -191,9 +189,7 @@ def at_most_one(atoms: list[Atom]) -> list[list[int]]:
     result = CardEnc.atmost(lits, bound=1, top_id=next_id - 1)
     result.clausify()
     clauses = result.clauses
-    for clause in clauses:
-        biggest = max(clause)
-        next_id = max(next_id, biggest + 1)
+    update_id_from(clauses)
     return clauses
 
 

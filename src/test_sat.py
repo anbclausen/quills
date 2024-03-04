@@ -10,10 +10,10 @@ from sat import (
 )
 from pysat.solvers import Glucose42
 
-max_depth = 9
+max_depth = 1
 circuit_depth = 2
-lq = [i for i in range(4)]
-pq = [i for i in range(4)]
+lq = [i for i in range(2)]
+pq = [i for i in range(2)]
 gates = [i for i in range(4)]
 connectivity_graph = {(0, 1), (1, 2), (1, 3)}
 
@@ -27,21 +27,24 @@ occupied = {t: {p: Atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_dep
 
 for t in range(0, max_depth + 1):
     for l in lq:
-        solver.append_formula(exactly_one([mapped[0][l][p] for p in pq]))
+        f = exactly_one([mapped[0][l][p] for p in pq])
+        print(f)
+        solver.append_formula(f)
     for p in pq:
-        solver.append_formula(at_most_one([mapped[0][l][p] for l in lq]))
+        f = at_most_one([mapped[0][l][p] for l in lq])
+        print(f)
+        solver.append_formula(f)
     for p in pq:
-        solver.append_formula(
-            Iff(occupied[t][p], Or(*[mapped[t][l][p] for l in lq])).clausify()
-        )
+        f = Implies(Or(*[mapped[t][l][p] for l in lq]), occupied[t][p]).clausify()
+        print(f)
+        solver.append_formula(f)
 
     solver.solve()
     solution = parse_solution(solver.get_model())
     if solution:
         print(f"{t}: Solution found")
         for atom in solution:
-            if isinstance(atom, Atom):
-                print(atom)
+            print(atom)
 
         break
     else:
