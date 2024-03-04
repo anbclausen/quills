@@ -193,7 +193,9 @@ def at_most_one(atoms: list[Atom]):
     return result
 
 
-def parse_solution(solution: list[int]) -> list[Atom]:
+def parse_solution(solution: list[int] | None) -> list[Atom] | None:
+    if solution is None:
+        return None
     pysat_atoms = pysat.formula.Formula.formulas(solution, atoms_only=True)
     pysat_atom_strs = [str(atom) for atom in pysat_atoms]
     result = []
