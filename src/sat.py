@@ -173,7 +173,7 @@ class Neg(Formula):
         return f"~{self.a}"
 
 
-def exactly_one(atoms: list[Atom]):
+def exactly_one(atoms: list[Atom]) -> list[list[int]]:
     global next_id
     lits = [atom.id for atom in atoms]
     result = CardEnc.equals(lits, bound=1, top_id=next_id - 1)
@@ -185,7 +185,7 @@ def exactly_one(atoms: list[Atom]):
     return clauses
 
 
-def at_most_one(atoms: list[Atom]):
+def at_most_one(atoms: list[Atom]) -> list[list[int]]:
     global next_id
     lits = [atom.id for atom in atoms]
     result = CardEnc.atmost(lits, bound=1, top_id=next_id - 1)
