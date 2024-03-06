@@ -28,16 +28,16 @@ occupied = {t: {p: Atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_dep
 for t in range(0, max_depth + 1):
     for l in lq:
         f = exactly_one([mapped[0][l][p] for p in pq])
-        print(f)
         solver.append_formula(f)
     for p in pq:
         f = at_most_one([mapped[0][l][p] for l in lq])
-        print(f)
         solver.append_formula(f)
     for p in pq:
-        f = Implies(Or(*[mapped[t][l][p] for l in lq]), occupied[t][p]).clausify()
+        for atom in [mapped[t][l][p] for l in lq]:
+            print(atom)
+        f = Or(*[mapped[t][l][p] for l in lq]) >> occupied[t][p]
         print(f)
-        solver.append_formula(f)
+        solver.append_formula(f.clausify())
 
     solver.solve()
     solution = parse_solution(solver.get_model())

@@ -1,10 +1,11 @@
 from pysat.card import CardEnc
-import pysat.formula
+import sympy
 from abc import ABC, abstractmethod
 
 
 next_id = 1
 atoms = {}
+atoms_by_id = {}
 
 
 def get_next_id():
@@ -32,17 +33,54 @@ class Formula(ABC):
     - `f @ f'` for biimplication
     """
 
-    @abstractmethod
-    def clausify(self) -> list[list[int]]:
-        pass
-
-    @abstractmethod
-    def inner(self):
-        pass
+    inner_repr: sympy.logic.boolalg.Boolean
 
     @abstractmethod
     def __str__(self):
         pass
+
+    def clausify(self) -> list[list[int]]:
+        def clausify_atom(atom: sympy.Symbol | sympy.Not) -> int:
+            match atom:
+                case sympy.Symbol():
+                    name = atom.name
+                    return atoms[name].id
+                case sympy.Not():
+                    arg = atom.args[0]
+                    if not isinstance(arg, sympy.Symbol):
+                        raise ValueError(
+                            f"Clausifying failed: non-symbol in inner representation of negation: {sympy.Not(arg)}"
+                        )
+                    name = arg.name
+                    return -atoms[name].id
+
+        cnf = sympy.to_cnf(self.inner_repr)
+        clauses = cnf.args
+        result = []
+        for clause in clauses:
+            match clause:
+                case sympy.Or():
+                    args = [arg for arg in clause.args]
+
+                    clausified_args = [
+                        clausify_atom(arg)
+                        for arg in args
+                        if isinstance(arg, sympy.Symbol) or isinstance(arg, sympy.Not)
+                    ]
+
+                    result.append(clausified_args)
+
+                case _:
+                    is_symbol = isinstance(clause, sympy.Symbol)
+                    is_negated_symbol = isinstance(clause, sympy.Not)
+                    if is_symbol or is_negated_symbol:
+                        clausified_atom = clausify_atom(clause)
+                        result.append([clausified_atom])
+                    else:
+                        raise ValueError(
+                            f"Clausifying failed: non-disjunction in inner representation: {clause}"
+                        )
+        return result
 
     def __or__(self, other):
         return Or(self, other)
@@ -64,14 +102,10 @@ class Atom(Formula):
     def __init__(self, name: str):
         self.name = name
         self.id = get_next_id()
-        atoms[self.id] = self
-        self.inner_repr = pysat.formula.Atom(self.id)
+        atoms[self.name] = self
+        atoms_by_id[self.id] = self
 
-    def clausify(self) -> list[list[int]]:
-        return [[self.id]]
-
-    def inner(self):
-        return self.inner_repr
+        self.inner_repr = sympy.symbols(name)
 
     def __str__(self):
         return self.name
@@ -81,17 +115,8 @@ class Or(Formula):
     def __init__(self, *args: Formula):
         self.args = args
 
-        pysat_args = [arg.inner() for arg in self.args]
-        self.inner_repr = pysat.formula.Or(*pysat_args)
-        self.inner_repr.clausify()
-        self.clauses = self.inner_repr.clauses
-        update_id_from(self.clauses)
-
-    def clausify(self) -> list[list[int]]:
-        return self.clauses
-
-    def inner(self):
-        return self.inner_repr
+        sympy_args = [arg.inner_repr for arg in self.args]
+        self.inner_repr = sympy.Or(*sympy_args)
 
     def __str__(self):
         return f"({' | '.join([str(arg) for arg in self.args])})"
@@ -101,17 +126,8 @@ class And(Formula):
     def __init__(self, *args: Formula):
         self.args = args
 
-        pysat_args = [arg.inner() for arg in self.args]
-        self.inner_repr = pysat.formula.And(*pysat_args)
-        self.inner_repr.clausify()
-        self.clauses = self.inner_repr.clauses
-        update_id_from(self.clauses)
-
-    def clausify(self) -> list[list[int]]:
-        return self.clauses
-
-    def inner(self):
-        return self.inner_repr
+        sympy_args = [arg.inner_repr for arg in self.args]
+        self.inner_repr = sympy.And(*sympy_args)
 
     def __str__(self):
         return f"({' & '.join([str(arg) for arg in self.args])})"
@@ -121,16 +137,11 @@ class Iff(Formula):
     def __init__(self, a: Formula, b: Formula):
         self.a = a
         self.b = b
-        self.inner_repr = pysat.formula.Equals(a.inner(), b.inner())
-        self.inner_repr.clausify()
-        self.clauses = self.inner_repr.clauses
-        update_id_from(self.clauses)
 
-    def clausify(self) -> list[list[int]]:
-        return self.clauses
-
-    def inner(self):
-        return self.inner_repr
+        self.inner_repr = sympy.And(
+            sympy.Implies(a.inner_repr, b.inner_repr),
+            sympy.Implies(b.inner_repr, a.inner_repr),
+        )
 
     def __str__(self):
         return f"({self.a} <=> {self.b})"
@@ -140,16 +151,8 @@ class Implies(Formula):
     def __init__(self, a: Formula, b: Formula):
         self.a = a
         self.b = b
-        self.inner_repr = pysat.formula.Implies(a.inner(), b.inner())
-        self.inner_repr.clausify()
-        self.clauses = self.inner_repr.clauses
-        update_id_from(self.clauses)
 
-    def clausify(self) -> list[list[int]]:
-        return self.clauses
-
-    def inner(self):
-        return self.inner_repr
+        self.inner_repr = sympy.Implies(a.inner_repr, b.inner_repr)
 
     def __str__(self):
         return f"({self.a} => {self.b})"
@@ -158,16 +161,8 @@ class Implies(Formula):
 class Neg(Formula):
     def __init__(self, a: Formula):
         self.a = a
-        self.inner_repr = pysat.formula.Neg(a.inner())
-        self.inner_repr.clausify()
-        self.clauses = self.inner_repr.clauses
-        update_id_from(self.clauses)
 
-    def clausify(self) -> list[list[int]]:
-        return self.clauses
-
-    def inner(self):
-        return self.inner_repr
+        self.inner_repr = ~a.inner_repr
 
     def __str__(self):
         return f"~{self.a}"
@@ -196,14 +191,12 @@ def at_most_one(atoms: list[Atom]) -> list[list[int]]:
 def parse_solution(solution: list[int] | None) -> list[Atom | Neg] | None:
     if solution is None:
         return None
-    pysat_atoms = pysat.formula.Formula.formulas(solution, atoms_only=True)
-    pysat_atom_strs = [str(atom) for atom in pysat_atoms]
     result = []
-    for atom_str in pysat_atom_strs:
-        if atom_str.startswith("~"):
-            id = int(atom_str[1:])
-            result.append(Neg(atoms[id]))
+    for var in solution:
+        if var < 0:
+            id = -var
+            result.append(Neg(atoms_by_id[id]))
         else:
-            id = int(atom_str)
-            result.append(atoms[id])
+            id = var
+            result.append(atoms_by_id[id])
     return result
