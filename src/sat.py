@@ -100,6 +100,12 @@ class Formula(ABC):
 
 class Atom(Formula):
     def __init__(self, name: str):
+        name_contains_comma = "," in name
+        name_contains_space = " " in name
+        if name_contains_comma or name_contains_space:
+            raise ValueError(
+                f"Atom name must not contain a comma or a space. Found '{name}'."
+            )
         self.name = name
         self.id = get_next_id()
         atoms[self.name] = self

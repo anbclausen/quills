@@ -20,7 +20,7 @@ connectivity_graph = {(0, 1), (1, 2), (1, 3)}
 solver = Glucose42()
 
 mapped = {
-    t: {l: {p: Atom(f"mapped^{t}_{l},{p}") for p in pq} for l in lq}
+    t: {l: {p: Atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq}
     for t in range(max_depth + 1)
 }
 occupied = {t: {p: Atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_depth + 1)}
