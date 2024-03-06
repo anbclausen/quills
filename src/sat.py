@@ -39,7 +39,14 @@ class Formula(ABC):
     def __str__(self):
         pass
 
-    def clausify(self) -> list[list[int]]:
+    def clausify(self, remove_redundant: bool = False) -> list[list[int]]:
+        """
+        Convert the formula to a list of clauses, where each clause is a list of literals.
+
+        Args:
+        - `remove_redundant`: whether to remove redundant clauses (O(n) for each clause where n is the number of literals in the clause)
+        """
+
         def clausify_atom(atom: sympy.Symbol | sympy.Not) -> int:
             match atom:
                 case sympy.Symbol():
@@ -67,6 +74,11 @@ class Formula(ABC):
                         for arg in args
                         if isinstance(arg, sympy.Symbol) or isinstance(arg, sympy.Not)
                     ]
+
+                    if remove_redundant:
+                        set_of_vars = set(map(abs, clausified_args))  # O(n)
+                        if len(set_of_vars) < len(clausified_args):  # O(1)
+                            continue
 
                     result.append(clausified_args)
 
