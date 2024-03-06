@@ -12,8 +12,8 @@ from pysat.solvers import Glucose42
 
 max_depth = 1
 circuit_depth = 2
-lq = [i for i in range(2)]
-pq = [i for i in range(2)]
+lq = [i for i in range(4)]
+pq = [i for i in range(4)]
 gates = [i for i in range(4)]
 connectivity_graph = {(0, 1), (1, 2), (1, 3)}
 
@@ -33,11 +33,8 @@ for t in range(0, max_depth + 1):
         f = at_most_one([mapped[0][l][p] for l in lq])
         solver.append_formula(f)
     for p in pq:
-        for atom in [mapped[t][l][p] for l in lq]:
-            print(atom)
-        f = Or(*[mapped[t][l][p] for l in lq]) >> occupied[t][p]
-        print(f)
-        solver.append_formula(f.clausify())
+        f = Implies(Or(*[mapped[t][l][p] for l in lq]), occupied[t][p]).clausify()
+        solver.append_formula(f)
 
     solver.solve()
     solution = parse_solution(solver.get_model())
