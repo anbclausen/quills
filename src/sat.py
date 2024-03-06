@@ -1,4 +1,4 @@
-from pysat.card import CardEnc
+from pysat.card import CardEnc, EncType
 import sympy
 from abc import ABC, abstractmethod
 
@@ -177,7 +177,7 @@ class Neg(Formula):
 def exactly_one(atoms: list[Atom]) -> list[list[int]]:
     global next_id
     lits = [atom.id for atom in atoms]
-    result = CardEnc.equals(lits, bound=1, top_id=next_id - 1)
+    result = CardEnc.equals(lits, bound=1, encoding=EncType.pairwise)
     result.clausify()
     clauses = result.clauses
     update_id_from(clauses)
@@ -187,7 +187,7 @@ def exactly_one(atoms: list[Atom]) -> list[list[int]]:
 def at_most_one(atoms: list[Atom]) -> list[list[int]]:
     global next_id
     lits = [atom.id for atom in atoms]
-    result = CardEnc.atmost(lits, bound=1, top_id=next_id - 1)
+    result = CardEnc.atmost(lits, bound=1, encoding=EncType.pairwise)
     result.clausify()
     clauses = result.clauses
     update_id_from(clauses)
