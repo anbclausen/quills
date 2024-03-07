@@ -69,6 +69,7 @@ from synthesizers.planning.solvers import (
 )
 
 import pysat.solvers
+import atexit
 
 DEFAULT_TIME_LIMIT_S = 1800
 
@@ -152,3 +153,12 @@ solvers: dict[str, Solver | pysat.solvers.Glucose42] = {
     "powerlifted": PowerLifted(),
     "glucose42": pysat.solvers.Glucose42(),
 }
+
+
+def clean_up():
+    for solver in solvers.values():
+        if not isinstance(solver, Solver):
+            solver.delete()
+
+
+atexit.register(clean_up)

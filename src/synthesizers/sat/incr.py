@@ -25,5 +25,4 @@ class IncrSynthesizer(SATSynthesizer):
         time_limit_s: int,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
-        solver.delete()  # have to call this to clean up
         raise NotImplementedError
