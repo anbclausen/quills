@@ -7,12 +7,15 @@ from configs import (
     synthesizers,
     platforms,
     solvers,
-    OPTIMAL_SYNTHESIZERS,
-    CONDITIONAL_SYNTHESIZERS,
-    TEMPORAL_SYNTHESIZERS,
-    NEGATIVE_PRECONDITION_SYNTHESIZERS,
+    OPTIMAL_PLANNING_SYNTHESIZERS,
+    CONDITIONAL_PLANNING_SYNTHESIZERS,
+    TEMPORAL_PLANNING_SYNTHESIZERS,
+    NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
+from synthesizers.planning.synthesizer import PlanningSynthesizer
+from synthesizers.sat.synthesizer import SATSynthesizer
+import synthesizers.planning.solvers as planning
 
 BOLD_START = "\033[1m"
 BOLD_END = "\033[0m"
@@ -84,32 +87,32 @@ print("#                                                  #")
 print("#    A tool for depth-optimal layout synthesis.    #")
 print("####################################################")
 print()
+if isinstance(solver, planning.Solver) and isinstance(solver, PlanningSynthesizer):
+    optimal_planner = args.model in OPTIMAL_PLANNING_SYNTHESIZERS
+    if optimal_planner and solver.solver_class != OPTIMAL:
+        raise ValueError(
+            f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal.\n"
+            f"Please choose one of the following optimal solvers: {', '.join(s for s in OPTIMAL_PLANNING_SYNTHESIZERS)}"
+        )
+    uses_conditionals = args.model in CONDITIONAL_PLANNING_SYNTHESIZERS
+    if uses_conditionals and not solver.accepts_conditional:
+        raise ValueError(
+            f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
+            f"Please choose one of the following solvers: {', '.join(s for s in CONDITIONAL_PLANNING_SYNTHESIZERS)}"
+        )
+    uses_temporal = args.model in TEMPORAL_PLANNING_SYNTHESIZERS
+    if uses_temporal and solver.solver_class != TEMPORAL:
+        raise ValueError(
+            f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal.\n"
+            f"Please choose one of the following temporal solvers: {', '.join(s for s in TEMPORAL_PLANNING_SYNTHESIZERS)}"
+        )
 
-optimal_planner = args.model in OPTIMAL_SYNTHESIZERS
-if optimal_planner and solver.solver_class != OPTIMAL:
-    raise ValueError(
-        f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal.\n"
-        f"Please choose one of the following optimal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == OPTIMAL)}"
-    )
-uses_conditionals = args.model in CONDITIONAL_SYNTHESIZERS
-if uses_conditionals and not solver.accepts_conditional:
-    raise ValueError(
-        f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
-        f"Please choose one of the following solvers: {', '.join(s for s in solvers if solvers[s].accepts_conditional)}"
-    )
-uses_temporal = args.model in TEMPORAL_SYNTHESIZERS
-if uses_temporal and solver.solver_class != TEMPORAL:
-    raise ValueError(
-        f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal.\n"
-        f"Please choose one of the following temporal solvers: {', '.join(s for s in solvers if solvers[s].solver_class == TEMPORAL)}"
-    )
-
-uses_negative_preconditions = args.model in NEGATIVE_PRECONDITION_SYNTHESIZERS
-if uses_negative_preconditions and not solver.accepts_negative_preconditions:
-    raise ValueError(
-        f"Model '{args.model}' uses negative preconditions, but solver '{args.solver}' does not support those.\n"
-        f"Please choose one of the following solvers: {', '.join(s for s in solvers if solvers[s].accepts_negative_preconditions)}"
-    )
+    uses_negative_preconditions = args.model in NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS
+    if uses_negative_preconditions and not solver.accepts_negative_preconditions:
+        raise ValueError(
+            f"Model '{args.model}' uses negative preconditions, but solver '{args.solver}' does not support those.\n"
+            f"Please choose one of the following solvers: {', '.join(s for s in NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS)}"
+        )
 
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 
@@ -132,9 +135,12 @@ print(f"'{args.model}': {synthesizer.description}")
 print()
 
 print(f"{BOLD_START}SOLVER{BOLD_END}")
-print(
-    f"'{args.solver}' ({'optimal' if solver.solver_class == OPTIMAL else 'satisfying'}): {solver.description}"
-)
+if isinstance(solver, planning.Solver):
+    print(
+        f"'{args.solver}' ({'optimal' if solver.solver_class == OPTIMAL else 'satisfying'}): {solver.description}"
+    )
+else:
+    print(f"'{args.solver}' from the pysat library.")
 print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
@@ -143,9 +149,20 @@ print(
     end="",
     flush=True,
 )
-output = synthesizer.synthesize(
-    input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
-)
+match synthesizer, solver:
+    case PlanningSynthesizer(), planning.Solver():
+        output = synthesizer.synthesize(
+            input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
+        )
+    case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
+        output = synthesizer.synthesize(
+            input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
+        )
+    case _: 
+        raise ValueError(
+            f"Invalid synthesizer-solver combination: '{args.model}' on '{args.solver}'."
+            " Something must be configured incorrectly."
+            )
 print(output)
 print()
 

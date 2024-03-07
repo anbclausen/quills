@@ -41,6 +41,8 @@ from synthesizers.planning.temporal_optimal_lifted_planning import (
 from synthesizers.planning.local_clock_incremental_positive_preconditions_lifted_planning import (
     LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer,
 )
+from synthesizers.sat.synthesizer import SATSynthesizer
+from synthesizers.sat.incr import IncrSynthesizer
 
 from platforms import TOY, TENERIFE, MELBOURNE, Platform
 
@@ -66,9 +68,11 @@ from synthesizers.planning.solvers import (
     Solver,
 )
 
+import pysat.solvers
+
 DEFAULT_TIME_LIMIT_S = 1800
 
-synthesizers: dict[str, PlanningSynthesizer] = {
+synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
     "cost_opt": CostBasedOptimalPlanningSynthesizer(),
     "cost_opt_lift": CostBasedOptimalLiftedPlanningSynthesizer(),
     "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
@@ -83,17 +87,28 @@ synthesizers: dict[str, PlanningSynthesizer] = {
     "temp_opt": TemporalOptimalPlanningSynthesizer(),
     "temp_opt_lift": TemporalOptimalLiftedPlanningSynthesizer(),
     "lc_incr_pos_precond_lift": LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(),
+    "sat_incr": IncrSynthesizer(),
 }
 
-OPTIMAL_SYNTHESIZERS = [name for name, inst in synthesizers.items() if inst.is_optimal]
-CONDITIONAL_SYNTHESIZERS = [
-    name for name, inst in synthesizers.items() if inst.uses_conditional_effects
+OPTIMAL_PLANNING_SYNTHESIZERS = [
+    name
+    for name, inst in synthesizers.items()
+    if isinstance(inst, PlanningSynthesizer) and inst.is_optimal
 ]
-TEMPORAL_SYNTHESIZERS = [
-    name for name, inst in synthesizers.items() if inst.is_temporal
+CONDITIONAL_PLANNING_SYNTHESIZERS = [
+    name
+    for name, inst in synthesizers.items()
+    if isinstance(inst, PlanningSynthesizer) and inst.uses_conditional_effects
 ]
-NEGATIVE_PRECONDITION_SYNTHESIZERS = [
-    name for name, inst in synthesizers.items() if inst.uses_negative_preconditions
+TEMPORAL_PLANNING_SYNTHESIZERS = [
+    name
+    for name, inst in synthesizers.items()
+    if isinstance(inst, PlanningSynthesizer) and inst.is_temporal
+]
+NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS = [
+    name
+    for name, inst in synthesizers.items()
+    if isinstance(inst, PlanningSynthesizer) and inst.uses_negative_preconditions
 ]
 
 platforms: dict[str, Platform] = {
@@ -102,7 +117,7 @@ platforms: dict[str, Platform] = {
     "melbourne": MELBOURNE,
 }
 
-solvers: dict[str, Solver] = {
+solvers: dict[str, Solver | pysat.solvers.Glucose42] = {
     # "M_seq": M_SEQUENTIAL_PLANS(),
     # "M_all": M_FORALL_STEPS(),
     # "M_exist": M_EXISTS_STEPS(),
@@ -135,4 +150,5 @@ solvers: dict[str, Solver] = {
     "tflap": TFLAP(),
     "tflap_grounded": TFLAPGrounded(),
     "powerlifted": PowerLifted(),
+    "glucose42": pysat.solvers.Glucose42(),
 }

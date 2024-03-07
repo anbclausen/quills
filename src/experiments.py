@@ -9,16 +9,19 @@ from util.circuits import (
     SynthesizerTimeout,
 )
 from synthesizers.planning.solvers import SATISFYING, TEMPORAL
+from synthesizers.planning.synthesizer import PlanningSynthesizer
+from synthesizers.sat.synthesizer import SATSynthesizer
 from configs import (
     synthesizers,
     platforms,
     solvers,
-    OPTIMAL_SYNTHESIZERS,
-    CONDITIONAL_SYNTHESIZERS,
-    TEMPORAL_SYNTHESIZERS,
+    OPTIMAL_PLANNING_SYNTHESIZERS,
+    CONDITIONAL_PLANNING_SYNTHESIZERS,
+    TEMPORAL_PLANNING_SYNTHESIZERS,
 )
 from datetime import datetime
 from util.output_checker import OutputChecker
+import synthesizers.planning.solvers as planning
 
 CX_OPTIMAL = True
 EXPERIMENT_TIME_LIMIT_S = 180
@@ -149,34 +152,39 @@ print(
 configurations = []
 for synthesizer in synthesizers:
     for solver in solvers:
-        optimal_synthesizer_and_satisfying_solver = (
-            synthesizer in OPTIMAL_SYNTHESIZERS
-            and solvers[solver].solver_class == SATISFYING
-        )
-        conditional_synthesizer_and_non_conditional_solver = (
-            synthesizer in CONDITIONAL_SYNTHESIZERS
-            and not solvers[solver].accepts_conditional
-        )
-        temporal_synthesizer_and_non_temporal_solver = (
-            synthesizer in TEMPORAL_SYNTHESIZERS
-            and solvers[solver].solver_class != TEMPORAL
-        )
-        non_temporal_synthesizer_and_temporal_solver = (
-            synthesizer not in TEMPORAL_SYNTHESIZERS
-            and solvers[solver].solver_class == TEMPORAL
-        )
-        synthesizer_uses_negative_preconds_and_solver_does_not = (
-            synthesizers[synthesizer].uses_negative_preconditions
-            and not solvers[solver].accepts_negative_preconditions
-        )
+        synthesizer_instance = synthesizers[synthesizer]
+        solver_instance = solvers[solver]
+        if isinstance(solver_instance, planning.Solver) and isinstance(synthesizer_instance, PlanningSynthesizer):
+            optimal_synthesizer_and_satisfying_solver = (
+                synthesizer in OPTIMAL_PLANNING_SYNTHESIZERS
+                and solver_instance.solver_class == SATISFYING
+            )
+            conditional_synthesizer_and_non_conditional_solver = (
+                synthesizer in CONDITIONAL_PLANNING_SYNTHESIZERS
+                and not solver_instance.accepts_conditional
+            )
+            temporal_synthesizer_and_non_temporal_solver = (
+                synthesizer in TEMPORAL_PLANNING_SYNTHESIZERS
+                and solver_instance.solver_class != TEMPORAL
+            )
+            non_temporal_synthesizer_and_temporal_solver = (
+                synthesizer not in TEMPORAL_PLANNING_SYNTHESIZERS
+                and solver_instance.solver_class == TEMPORAL
+            )
+            synthesizer_uses_negative_preconds_and_solver_does_not = (
+                synthesizer_instance.uses_negative_preconditions
+                and not solver_instance.accepts_negative_preconditions
+            )
 
-        if (
-            not optimal_synthesizer_and_satisfying_solver
-            and not conditional_synthesizer_and_non_conditional_solver
-            and not temporal_synthesizer_and_non_temporal_solver
-            and not non_temporal_synthesizer_and_temporal_solver
-            and not synthesizer_uses_negative_preconds_and_solver_does_not
-        ):
+            if (
+                not optimal_synthesizer_and_satisfying_solver
+                and not conditional_synthesizer_and_non_conditional_solver
+                and not temporal_synthesizer_and_non_temporal_solver
+                and not non_temporal_synthesizer_and_temporal_solver
+                and not synthesizer_uses_negative_preconds_and_solver_does_not
+            ):
+                configurations.append((synthesizer, solver))
+        else:
             configurations.append((synthesizer, solver))
 
 for input_file, platform_name in EXPERIMENTS:
@@ -187,6 +195,7 @@ for input_file, platform_name in EXPERIMENTS:
         )
         synthesizer = synthesizers[synthesizer_name]
         solver = solvers[solver_name]
+        
         if platform_name not in platforms:
             print(f"  Platform '{platform_name}' not found. Skipping experiment...")
             continue
@@ -207,9 +216,20 @@ for input_file, platform_name in EXPERIMENTS:
         else:
             platform = platforms[platform_name]
             input_circuit = QuantumCircuit.from_qasm_file(f"benchmarks/{input_file}")
-            experiment = synthesizer.synthesize(
-                input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
-            )
+            match synthesizer, solver:
+                case PlanningSynthesizer(), planning.Solver():
+                    experiment = synthesizer.synthesize(
+                        input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
+                    )
+                case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
+                    experiment = synthesizer.synthesize(
+                        input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
+                    )
+                case _: 
+                    raise ValueError(
+                        f"Invalid synthesizer-solver combination: '{synthesizer_name}' on '{solver_name}'."
+                        " Something must be configured incorrectly."
+                        )
             match experiment:
                 case SynthesizerSolution():
                     correct_output = OutputChecker.check(

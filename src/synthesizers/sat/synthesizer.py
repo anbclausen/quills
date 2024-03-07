@@ -5,6 +5,8 @@ from util.sat import Atom, Neg
 from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
 
+type Solver = pysat.solvers.Glucose42 | pysat.solvers.MapleCM
+
 
 class SATSynthesizer(ABC):
     description: str = "No description."
@@ -23,7 +25,7 @@ class SATSynthesizer(ABC):
         self,
         logical_circuit: QuantumCircuit,
         platform: Platform,
-        solver: pysat.solvers.Solver,
+        solver: Solver,
         time_limit_s: int,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:

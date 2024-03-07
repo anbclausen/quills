@@ -6,7 +6,7 @@ from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
 
 
-class IncrSynthezier(SATSynthesizer):
+class IncrSynthesizer(SATSynthesizer):
     description = "Incremental SAT-based synthesizer."
 
     def parse_solution(
