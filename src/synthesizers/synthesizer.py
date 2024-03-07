@@ -179,7 +179,7 @@ class Synthesizer(ABC):
                 LogicalQubit(logical_target), PhysicalQubit(current_phys_map[target])
             )
 
-        current_phys_map = {i : i for i in range(platform.qubits)}
+        current_phys_map = {i: i for i in range(platform.qubits)}
         for action in solver_solution:
             arguments = action.split("(")[1].split(")")[0].split(",")
             if action.startswith("apply"):
@@ -263,7 +263,7 @@ class Synthesizer(ABC):
                 LogicalQubit(logical_target), PhysicalQubit(current_phys_map[target])
             )
 
-        current_phys_map = {i : i for i in range(platform.qubits)}
+        current_phys_map = {i: i for i in range(platform.qubits)}
         for action in solver_solution:
             arguments = action.split("(")[1].split(")")[0].split(",")
             if action.startswith("apply"):
@@ -287,7 +287,6 @@ class Synthesizer(ABC):
                 tmp = current_phys_map[control]
                 current_phys_map[control] = current_phys_map[target]
                 current_phys_map[target] = tmp
-
 
         num_lqubits = original_circuit.num_qubits
         if len(initial_mapping) != num_lqubits:
