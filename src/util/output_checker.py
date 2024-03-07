@@ -1,8 +1,7 @@
-from synthesizers.planning.synthesizer import (
+from util.circuits import (
     PhysicalQubit,
     LogicalQubit,
     line_gate_mapping,
-    remove_all_non_swap_gates,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister

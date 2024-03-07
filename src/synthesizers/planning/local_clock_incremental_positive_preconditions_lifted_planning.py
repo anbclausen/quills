@@ -1,5 +1,7 @@
 from synthesizers.planning.synthesizer import (
     PlanningSynthesizer,
+)
+from util.circuits import (
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,

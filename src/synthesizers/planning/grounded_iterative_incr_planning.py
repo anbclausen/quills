@@ -1,10 +1,12 @@
 from synthesizers.planning.synthesizer import (
-    LogicalQubit,
-    PhysicalQubit,
     PlanningSynthesizer,
+)
+from util.circuits import (
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
+    LogicalQubit,
+    PhysicalQubit,
 )
 from platforms import Platform
 from qiskit import QuantumCircuit

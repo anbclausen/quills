@@ -1,7 +1,6 @@
 import argparse
 from qiskit import QuantumCircuit
-from synthesizers.planning.synthesizer import remove_all_non_cx_gates
-from synthesizers.planning.synthesizer import SynthesizerSolution
+from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
 from util.output_checker import OutputChecker
 from solvers import OPTIMAL, TEMPORAL
 from configs import (
