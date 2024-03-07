@@ -37,13 +37,9 @@ circuit_depth = 2
 lq = [i for i in range(4)]
 pq = [i for i in range(4)]
 gates = [i for i in range(4)]
-directed_connectivity_graph = {(0, 1), (1, 2), (1, 3)}
-undirected_connectivity_graph = {(0, 1), (1, 0), (1, 2), (2, 1), (1, 3), (3, 1)}
-undirected_non_connectivity_graph = {
-    (p, p_prime)
-    for p in pq
-    for p_prime in pq
-    if (p, p_prime) not in undirected_connectivity_graph
+connectivity_graph = {(0, 1), (1, 0), (1, 2), (2, 1), (1, 3), (3, 1)}
+inv_connectivity_graph = {
+    (p, p_prime) for p in pq for p_prime in pq if (p, p_prime) not in connectivity_graph
 }
 
 # auxiliary
@@ -97,22 +93,16 @@ for t in range(0, max_depth + 1):
     for l, l_prime in lq_pairs:
         conj1 = And(
             *[
-                (
-                    (mapped[t][l][p] & mapped[t][l_prime][p_prime])
-                    | (mapped[t][l][p_prime] & mapped[t][l_prime][p])
-                )
+                (mapped[t][l][p] & mapped[t][l_prime][p_prime])
                 >> enabled[t][l][l_prime]
-                for p, p_prime in undirected_connectivity_graph
+                for p, p_prime in connectivity_graph
             ]
         )
         conj2 = And(
             *[
-                (
-                    (mapped[t][l][p] & mapped[t][l_prime][p_prime])
-                    | (mapped[t][l][p_prime] & mapped[t][l_prime][p])
-                )
+                (mapped[t][l][p] & mapped[t][l_prime][p_prime])
                 >> ~enabled[t][l][l_prime]
-                for p, p_prime in undirected_non_connectivity_graph
+                for p, p_prime in inv_connectivity_graph
             ]
         )
         inner.append(conj1 & conj2)
