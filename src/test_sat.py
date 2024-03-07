@@ -75,6 +75,10 @@ free = {t: {l: Atom(f"free^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
 swap1 = {t: {l: Atom(f"swap1^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
 swap2 = {t: {l: Atom(f"swap2^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
 swap3 = {t: {l: Atom(f"swap3^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
+swap = {
+    t: {l: {l_prime: Atom(f"swap^{t}_{l}_{l_prime}") for l_prime in lq} for l in lq}
+    for t in range(max_depth + 1)
+}
 
 for t in range(0, max_depth + 1):
     # mappings and occupancy
@@ -147,9 +151,48 @@ for t in range(0, max_depth + 1):
         f = exactly_one([free[t][l], swap1[t][l], swap2[t][l], swap3[t][l]])
         solver.append_formula(f)
 
-        f = at_most_one
+        f = at_most_one(
+            [swap[t][l][l_prime] for l_prime in lq]
+            + [swap[t][l_prime][l] for l_prime in lq]
+        )
+        solver.append_formula(f)
+
         if t > 0:
-            pass
+            f = And(
+                *[free[t][l] >> Iff(mapped[t - 1][l][p], mapped[t][l][p]) for p in pq]
+            ).clausify()
+            solver.append_formula(f)
+
+            f = Iff(swap1[t - 1][l], swap2[t][l]).clausify()
+            solver.append_formula(f)
+
+            f = Iff(swap2[t - 1][l], swap3[t][l]).clausify()
+            solver.append_formula(f)
+
+            for l_prime in lq:
+
+                f = And(
+                    *[
+                        swap[t][l][l_prime]
+                        >> (
+                            Iff(mapped[t - 1][l][p], mapped[t][l][p_prime])
+                            & Iff(
+                                mapped[t - 1][l_prime][p_prime], mapped[t][l_prime][p]
+                            )
+                        )
+                        for p, p_prime in connectivity_graph
+                    ]
+                )
+                solver.append_formula(f)
+        for l_prime in lq:
+            f = swap[t][l][l_prime] >> enabled[t][l][l_prime]
+            solver.append_formula(f)
+
+            f = swap[t][l][l_prime] >> (
+                (swap1[t][l] & swap1[t][l_prime])
+                | (swap2[t][l] & swap2[t][l_prime])
+                | (swap3[t][l] & swap3[t][l_prime])
+            )
 
     # goal
     # nothing delayed at the end
