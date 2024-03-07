@@ -3,8 +3,7 @@ import os
 from itertools import takewhile
 from abc import ABC, abstractmethod
 from typing import Callable
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
-from qiskit.circuit import Instruction
+from qiskit import QuantumCircuit, QuantumRegister
 from platforms import Platform
 from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from util.pddl import PDDLInstance
