@@ -1,4 +1,4 @@
-from synthesizers.sat.synthesizer import SATSynthesizer
+from synthesizers.sat.synthesizer import SATSynthesizer, Solver
 from qiskit import QuantumCircuit
 from platforms import Platform
 from util.sat import Atom, Neg
@@ -21,8 +21,9 @@ class IncrSynthesizer(SATSynthesizer):
         self,
         logical_circuit: QuantumCircuit,
         platform: Platform,
-        solver: pysat.solvers.Solver,
+        solver: Solver,
         time_limit_s: int,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
+        solver.delete()  # have to call this to clean up
         raise NotImplementedError
