@@ -1,42 +1,44 @@
 from synthesizers.synthesizer import Synthesizer
-from synthesizers.cost_based_optimal_planning import CostBasedOptimalPlanningSynthesizer
-from synthesizers.cost_based_optimal_lifted_planning import (
+from synthesizers.planning.cost_based_optimal_planning import (
+    CostBasedOptimalPlanningSynthesizer,
+)
+from synthesizers.planning.cost_based_optimal_lifted_planning import (
     CostBasedOptimalLiftedPlanningSynthesizer,
 )
-from synthesizers.cond_cost_based_optimal_planning import (
+from synthesizers.planning.cond_cost_based_optimal_planning import (
     ConditionalCostBasedOptimalPlanningSynthesizer,
 )
-from synthesizers.cond_cost_based_optimal_lifted_planning import (
+from synthesizers.planning.cond_cost_based_optimal_lifted_planning import (
     ConditionalCostBasedOptimalLiftedPlanningSynthesizer,
 )
-from synthesizers.local_clock_incremental_planning import (
+from synthesizers.planning.local_clock_incremental_planning import (
     LocalClockIncrementalPlanningSynthesizer,
 )
-from synthesizers.local_clock_incremental_lifted_planning import (
+from synthesizers.planning.local_clock_incremental_lifted_planning import (
     LocalClockIncrementalLiftedPlanningSynthesizer,
 )
-from synthesizers.iterative_incr_planning import (
+from synthesizers.planning.iterative_incr_planning import (
     IterativeIncrementalPlanningSynthesizer,
 )
-from synthesizers.iterative_incr_lifted_planning import (
+from synthesizers.planning.iterative_incr_lifted_planning import (
     IterativeIncrementalLiftedPlanningSynthesizer,
 )
-from synthesizers.grounded_iterative_incr_planning import (
+from synthesizers.planning.grounded_iterative_incr_planning import (
     GroundedIterativeIncrementalPlanningSynthesizer,
 )
-from synthesizers.cond_iterative_incr_planning import (
+from synthesizers.planning.cond_iterative_incr_planning import (
     ConditionalIterativeIncrementalPlanningSynthesizer,
 )
-from synthesizers.cond_iterative_incr_lifted_planning import (
+from synthesizers.planning.cond_iterative_incr_lifted_planning import (
     ConditionalIterativeIncrementalLiftedPlanningSynthesizer,
 )
-from synthesizers.temporal_optimal_planning import (
+from synthesizers.planning.temporal_optimal_planning import (
     TemporalOptimalPlanningSynthesizer,
 )
-from synthesizers.temporal_optimal_lifted_planning import (
+from synthesizers.planning.temporal_optimal_lifted_planning import (
     TemporalOptimalLiftedPlanningSynthesizer,
 )
-from synthesizers.local_clock_incremental_positive_preconditions_lifted_planning import (
+from synthesizers.planning.local_clock_incremental_positive_preconditions_lifted_planning import (
     LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer,
 )
 
