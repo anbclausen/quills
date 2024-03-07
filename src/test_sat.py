@@ -57,7 +57,7 @@ mapped = {
     for t in range(max_depth + 1)
 }
 occupied = {t: {p: Atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_depth + 1)}
-lconnected = {
+enabled = {
     t: {
         l: {l_prime: Atom(f"lconnected^{t}_{l}_{l_prime}") for l_prime in lq}
         for l in lq
@@ -95,7 +95,7 @@ for t in range(0, max_depth + 1):
                     (mapped[t][l][p] & mapped[t][l_prime][p_prime])
                     | (mapped[t][l][p_prime] & mapped[t][l_prime][p])
                 )
-                >> lconnected[t][l][l_prime]
+                >> enabled[t][l][l_prime]
                 for p, p_prime in undirected_connectivity_graph
             ]
         )
@@ -105,7 +105,7 @@ for t in range(0, max_depth + 1):
                     (mapped[t][l][p] & mapped[t][l_prime][p_prime])
                     | (mapped[t][l][p_prime] & mapped[t][l_prime][p])
                 )
-                >> ~lconnected[t][l][l_prime]
+                >> ~enabled[t][l][l_prime]
                 for p, p_prime in undirected_non_connectivity_graph
             ]
         )
@@ -117,7 +117,7 @@ for t in range(0, max_depth + 1):
     # similar for gate 2
     # FIXME: Hardcoded, should be generated from the circuit
     f = (
-        current[t][1] >> lconnected[t][2][3] & current[t][2] >> lconnected[t][0][1]
+        current[t][1] >> enabled[t][2][3] & current[t][2] >> enabled[t][0][1]
     ).clausify()
     solver.append_formula(f)
 
