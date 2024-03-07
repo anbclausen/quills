@@ -27,6 +27,11 @@ g[1] = cx(2, 3)
 g[2] = cx(0, 1)
 g[3] = x(2)
 """
+
+# mock preset and succ set of gates.
+pre = [[], [], [0], [1]]
+succ = [[2], [3], [], []]
+
 max_depth = 8
 circuit_depth = 2
 lq = [i for i in range(4)]
@@ -111,11 +116,34 @@ for t in range(0, max_depth + 1):
     # if gate 1 (cnot) is scheduled, then l2 and l3 are connected
     # similar for gate 2
     # FIXME: Hardcoded, should be generated from the circuit
-    solver.append_formula(
+    f = (
         current[t][1] >> lconnected[t][2][3] & current[t][2] >> lconnected[t][0][1]
-    )
+    ).clausify()
+    solver.append_formula(f)
 
     # gate stuff
+    for g in gates:
+        f = exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
+        solver.append_formula(f)
+
+        f = And(*[current[t][g] >> advanced[t][pred] for pred in pre[g]]).clausify()
+        solver.append_formula(f)
+
+        f = And(*[current[t][g] >> advanced[t][succ] for succ in succ[g]]).clausify()
+        solver.append_formula(f)
+
+        if t > 0:
+            f = (advanced[t][g] >> (current[t - 1][g] | advanced[t - 1][g])).clausify()
+            solver.append_formula(f)
+
+            f = (delayed[t - 1][g] >> (current[t][g] | delayed[t][g])).clausify()
+            solver.append_formula(f)
+
+        f = And(*[advanced[t][g] >> advanced[t][pred] for pred in pre[g]]).clausify()
+        solver.append_formula(f)
+
+        f = And(*[delayed[t][g] >> delayed[t][succ] for succ in succ[g]]).clausify()
+        solver.append_formula(f)
 
     # swap stuff
 
