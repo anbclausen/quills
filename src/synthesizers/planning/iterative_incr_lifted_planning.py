@@ -1,5 +1,5 @@
-from synthesizers.synthesizer import (
-    Synthesizer,
+from synthesizers.planning.synthesizer import (
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -12,7 +12,7 @@ from util.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from solvers import Solver
 
 
-class IterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
+class IterativeIncrementalLiftedPlanningSynthesizer(PlanningSynthesizer):
     description = "Incremental synthesizer based on lifted planning building each depth iteratively."
     is_temporal = False
     is_optimal = False

@@ -1,7 +1,7 @@
-from synthesizers.synthesizer import (
+from synthesizers.planning.synthesizer import (
     LogicalQubit,
     PhysicalQubit,
-    Synthesizer,
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -20,7 +20,7 @@ from util.pddl import (
 from solvers import Solver
 
 
-class TemporalOptimalPlanningSynthesizer(Synthesizer):
+class TemporalOptimalPlanningSynthesizer(PlanningSynthesizer):
     description = "Optimal synthesizer based on temporal planning."
     is_temporal = True
     is_optimal = False

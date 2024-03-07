@@ -1,4 +1,4 @@
-from synthesizers.synthesizer import Synthesizer
+from synthesizers.planning.synthesizer import PlanningSynthesizer
 from synthesizers.planning.cost_based_optimal_planning import (
     CostBasedOptimalPlanningSynthesizer,
 )
@@ -68,7 +68,7 @@ from solvers import (
 
 DEFAULT_TIME_LIMIT_S = 1800
 
-synthesizers: dict[str, Synthesizer] = {
+synthesizers: dict[str, PlanningSynthesizer] = {
     "cost_opt": CostBasedOptimalPlanningSynthesizer(),
     "cost_opt_lift": CostBasedOptimalLiftedPlanningSynthesizer(),
     "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),

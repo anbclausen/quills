@@ -1,4 +1,4 @@
-from synthesizers.synthesizer import (
+from synthesizers.planning.synthesizer import (
     PhysicalQubit,
     LogicalQubit,
     line_gate_mapping,

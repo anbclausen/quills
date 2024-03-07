@@ -1,5 +1,5 @@
-from synthesizers.synthesizer import (
-    Synthesizer,
+from synthesizers.planning.synthesizer import (
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -20,7 +20,7 @@ from util.pddl import (
 from solvers import Solver
 
 
-class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(Synthesizer):
+class ConditionalIterativeIncrementalLiftedPlanningSynthesizer(PlanningSynthesizer):
     description = "Incremental synthesizer based on lifted planning building each depth iteratively. V3: This version uses conditional effects and forall quantifiers to get rid of swap dummies."
     is_temporal = False
     is_optimal = False

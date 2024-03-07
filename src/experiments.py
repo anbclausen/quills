@@ -3,7 +3,7 @@ import json
 
 from qiskit import QuantumCircuit
 from typing import Literal
-from synthesizers.synthesizer import (
+from synthesizers.planning.synthesizer import (
     SynthesizerSolution,
     SynthesizerNoSolution,
     SynthesizerTimeout,

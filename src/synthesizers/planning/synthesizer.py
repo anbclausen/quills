@@ -97,7 +97,7 @@ class SynthesizerSolution(SynthesizerOutput):
         return f"Done! Took {self.time:.3f} seconds.\n{self.circuit}\n(depth {self.depth}, cx-depth {self.cx_depth})\nwith initial mapping: {initial_mapping_str}"
 
 
-class Synthesizer(ABC):
+class PlanningSynthesizer(ABC):
     description: str = "No description."
     is_temporal: bool
     is_optimal: bool

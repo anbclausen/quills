@@ -1,7 +1,7 @@
-from synthesizers.synthesizer import (
+from synthesizers.planning.synthesizer import (
     LogicalQubit,
     PhysicalQubit,
-    Synthesizer,
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -19,7 +19,7 @@ from util.pddl import (
 from solvers import Solver
 
 
-class CostBasedOptimalPlanningSynthesizer(Synthesizer):
+class CostBasedOptimalPlanningSynthesizer(PlanningSynthesizer):
     description = "Optimal cost-based synthesizer based on planning."
     is_temporal = False
     is_optimal = True

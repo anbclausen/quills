@@ -1,7 +1,7 @@
-from synthesizers.synthesizer import (
+from synthesizers.planning.synthesizer import (
     LogicalQubit,
     PhysicalQubit,
-    Synthesizer,
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -20,7 +20,7 @@ from util.pddl import (
 from solvers import Solver
 
 
-class ConditionalIterativeIncrementalPlanningSynthesizer(Synthesizer):
+class ConditionalIterativeIncrementalPlanningSynthesizer(PlanningSynthesizer):
     description = "Incremental synthesizer based on planning building each depth iteratively. V3: This version uses conditional effects and forall quantifiers to get rid of swap dummies."
     is_temporal = False
     is_optimal = False

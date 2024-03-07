@@ -1,5 +1,5 @@
-from synthesizers.synthesizer import (
-    Synthesizer,
+from synthesizers.planning.synthesizer import (
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -19,7 +19,7 @@ from util.pddl import (
 from solvers import Solver
 
 
-class CostBasedOptimalLiftedPlanningSynthesizer(Synthesizer):
+class CostBasedOptimalLiftedPlanningSynthesizer(PlanningSynthesizer):
     description = "Optimal cost-based synthesizer based on lifted planning."
     is_temporal = False
     is_optimal = True

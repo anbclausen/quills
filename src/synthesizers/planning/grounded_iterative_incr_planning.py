@@ -1,7 +1,7 @@
-from synthesizers.synthesizer import (
+from synthesizers.planning.synthesizer import (
     LogicalQubit,
     PhysicalQubit,
-    Synthesizer,
+    PlanningSynthesizer,
     SynthesizerOutput,
     gate_line_dependency_mapping,
     gate_direct_dependency_mapping,
@@ -12,7 +12,7 @@ from util.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from solvers import Solver
 
 
-class GroundedIterativeIncrementalPlanningSynthesizer(Synthesizer):
+class GroundedIterativeIncrementalPlanningSynthesizer(PlanningSynthesizer):
     description = "Incremental synthesizer based on planning building each depth iteratively. V2: The version grounds the actions for advancing to the next depth."
     is_temporal = False
     is_optimal = False
