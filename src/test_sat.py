@@ -64,6 +64,7 @@ enabled = {
     }
     for t in range(max_depth + 1)
 }
+
 current = {
     t: {g: Atom(f"current^{t}_{g}") for g in gates} for t in range(max_depth + 1)
 }
@@ -73,6 +74,11 @@ advanced = {
 delayed = {
     t: {g: Atom(f"delayed^{t}_{g}") for g in gates} for t in range(max_depth + 1)
 }
+
+free = {t: {l: Atom(f"free^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
+swap1 = {t: {l: Atom(f"swap1^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
+swap2 = {t: {l: Atom(f"swap2^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
+swap3 = {t: {l: Atom(f"swap3^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
 
 for t in range(0, max_depth + 1):
     # mappings and occupancy
@@ -147,6 +153,17 @@ for t in range(0, max_depth + 1):
         solver.append_formula(f)
 
     # swap stuff
+    for l in lq:
+        f = exactly_one([free[t][l], swap1[t][l], swap2[t][l], swap3[t][l]])
+        solver.append_formula(f)
+
+        f = at_most_one
+        if t > 0:
+            pass
+
+    # goal
+    # nothing delayed at the end
+    # no swap1 and swap2
 
     solver.solve()
     solution = parse_solution(solver.get_model())
