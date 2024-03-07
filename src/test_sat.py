@@ -111,7 +111,7 @@ for tmax in range(circuit_depth, max_depth + 1):
                 ]
             )
             inner.append(conj1 & conj2)
-        f = And(*inner).clausify()
+        f = And(*inner).clausify(remove_redundant=True)
         solver.append_formula(f)
 
         # if gate 1 (cnot) is scheduled, then l2 and l3 are connected
@@ -170,7 +170,7 @@ for tmax in range(circuit_depth, max_depth + 1):
                         free[t][l] >> Iff(mapped[t - 1][l][p], mapped[t][l][p])
                         for p in pq
                     ]
-                ).clausify()
+                ).clausify(remove_redundant=True)
                 solver.append_formula(f)
 
                 f = Iff(swap1[t - 1][l], swap2[t][l]).clausify()
@@ -193,17 +193,21 @@ for tmax in range(circuit_depth, max_depth + 1):
                             )
                             for p, p_prime in connectivity_graph
                         ]
-                    )
+                    ).clausify(remove_redundant=True)
                     solver.append_formula(f)
             for l_prime in lq:
-                f = swap[t][l][l_prime] >> enabled[t][l][l_prime]
+                f = (swap[t][l][l_prime] >> enabled[t][l][l_prime]).clausify()
                 solver.append_formula(f)
 
-                f = swap[t][l][l_prime] >> (
-                    (swap1[t][l] & swap1[t][l_prime])
-                    | (swap2[t][l] & swap2[t][l_prime])
-                    | (swap3[t][l] & swap3[t][l_prime])
-                )
+                f = (
+                    swap[t][l][l_prime]
+                    >> (
+                        (swap1[t][l] & swap1[t][l_prime])
+                        | (swap2[t][l] & swap2[t][l_prime])
+                        | (swap3[t][l] & swap3[t][l_prime])
+                    )
+                ).clausify(remove_redundant=True)
+                solver.append_formula(f)
 
     # goal
     f = And(*[~delayed[tmax][g] for g in gates]).clausify()
