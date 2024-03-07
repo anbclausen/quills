@@ -349,7 +349,7 @@ class MpC_FORALL_STEPS_EXTENDED(Solver):
         # It turns out MpC is also super slow at finding a satisfying assignment, but lama first is super fast.
         return (
             f"MpC -O -P 1 -F {min_layers} -T {max_layers} -t {time_limit_s} {domain} {problem}"
-            f" && python src/sat_extension.py quantum-circuit.{min_layers:03}.cnf -s {self.sat_solver}"
+            f" && python src/util/sat_extension.py quantum-circuit.{min_layers:03}.cnf -s {self.sat_solver}"
             f" && fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
         )
     
@@ -388,7 +388,7 @@ class MpC_EXISTS_STEPS_EXTENDED(Solver):
         # It turns out MpC is also super slow at finding a satisfying assignment, but lama first is super fast.
         return (
             f"MpC -O -P 2 -F {min_layers} -T {max_layers} -t {time_limit_s} {domain} {problem}"
-            f" && python src/sat_extension.py quantum-circuit.{min_layers:03}.cnf -s {self.sat_solver}"
+            f" && python src/util/sat_extension.py quantum-circuit.{min_layers:03}.cnf -s {self.sat_solver}"
             f" && fast-downward.py --alias lama-first --plan-file {output} --overall-time-limit {time_limit_s}s {domain} {problem}"
         )
 

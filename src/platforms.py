@@ -31,7 +31,7 @@ TOY = Platform(
 TOY2 = Platform(
     "toy",
     4,
-    {(0, 1), (1, 2), (2, 3), (3,0)},
+    {(0, 1), (1, 2), (2, 3), (3, 0)},
     description="A simple platform designed to require no swaps for 'benchmarks/toy_example.qasm'.",
 )
 TENERIFE = Platform(

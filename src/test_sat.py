@@ -1,4 +1,4 @@
-from sat import (
+from util.sat import (
     Atom,
     Or,
     Iff,

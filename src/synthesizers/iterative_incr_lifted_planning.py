@@ -8,7 +8,7 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from util.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from solvers import Solver
 
 

@@ -8,7 +8,7 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
+from util.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from solvers import Solver
 
 
@@ -103,7 +103,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                 clock(p2, d2),
             ]
             return preconditions, effects
-        
+
         @PDDLAction()
         def swap_input(
             l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit, d1: depth, d2: depth
@@ -184,12 +184,10 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                             ]
 
                             return preconditions, effects
-                        
+
                     elif one_gate_dependency:
                         earlier_gate = direct_predecessor_gates[0]
-                        _, earlier_gate_logical_qubits = gate_line_mapping[
-                            earlier_gate
-                        ]
+                        _, earlier_gate_logical_qubits = gate_line_mapping[earlier_gate]
                         occupied_logical_qubit = (
                             set(gate_logical_qubits)
                             .intersection(earlier_gate_logical_qubits)
@@ -200,25 +198,18 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                         def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
                             occupied_physical_qubit = (
                                 p1
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
+                                if gate_logical_qubits.index(occupied_logical_qubit)
                                 == 0
                                 else p2
                             )
                             unoccupied_physical_qubit = (
                                 p2
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
+                                if gate_logical_qubits.index(occupied_logical_qubit)
                                 == 0
                                 else p1
                             )
                             unoccupied_logical_qubit = gate_logical_qubits[
-                                1
-                                - gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
+                                1 - gate_logical_qubits.index(occupied_logical_qubit)
                             ]
 
                             preconditions = [
@@ -250,13 +241,14 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                             ]
 
                             return preconditions, effects
-                        
+
                     else:
+
                         @PDDLAction(name=f"apply_cx_g{gate_id}")
                         def apply_gate(p1: pqubit, p2: pqubit, d1: depth, d2: depth):
                             control_qubit = l[gate_logical_qubits[0]]
                             target_qubit = l[gate_logical_qubits[1]]
-                            
+
                             preconditions = [
                                 next_depth(d1, d2),
                                 clock(p1, d1),
@@ -280,6 +272,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                 case _:
                     logical_qubit = l[gate_logical_qubits[0]]
                     if no_gate_dependency:
+
                         @PDDLAction(name=f"apply_gate_g{gate_id}")
                         def apply_gate(p: pqubit, d1: depth, d2: depth):
                             preconditions = [
@@ -301,6 +294,7 @@ class LocalClockIncrementalPlanningSynthesizer(Synthesizer):
                             return preconditions, effects
 
                     else:
+
                         @PDDLAction(name=f"apply_gate_g{gate_id}")
                         def apply_gate(p: pqubit, d1: depth, d2: depth):
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]

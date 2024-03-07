@@ -18,7 +18,7 @@ from configs import (
     TEMPORAL_SYNTHESIZERS,
 )
 from datetime import datetime
-from output_checker import OutputChecker
+from util.output_checker import OutputChecker
 
 CX_OPTIMAL = True
 EXPERIMENT_TIME_LIMIT_S = 180

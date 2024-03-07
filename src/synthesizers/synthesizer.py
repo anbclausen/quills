@@ -7,7 +7,7 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Instruction
 from platforms import Platform
 from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
-from pddl import PDDLInstance
+from util.pddl import PDDLInstance
 
 JUNK_FILES = [
     "output.sas",

@@ -8,7 +8,7 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import (
+from util.pddl import (
     PDDLInstance,
     PDDLAction,
     PDDLPredicate,
@@ -189,12 +189,10 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                             ]
 
                             return preconditions, effects
-                        
+
                     elif one_gate_dependency:
                         earlier_gate = direct_predecessor_gates[0]
-                        _, earlier_gate_logical_qubits = gate_line_mapping[
-                            earlier_gate
-                        ]
+                        _, earlier_gate_logical_qubits = gate_line_mapping[earlier_gate]
                         occupied_logical_qubit = (
                             set(gate_logical_qubits)
                             .intersection(earlier_gate_logical_qubits)
@@ -205,25 +203,18 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                         def apply_gate(p1: pqubit, p2: pqubit):
                             occupied_physical_qubit = (
                                 p1
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
+                                if gate_logical_qubits.index(occupied_logical_qubit)
                                 == 0
                                 else p2
                             )
                             unoccupied_physical_qubit = (
                                 p2
-                                if gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
+                                if gate_logical_qubits.index(occupied_logical_qubit)
                                 == 0
                                 else p1
                             )
                             unoccupied_logical_qubit = gate_logical_qubits[
-                                1
-                                - gate_logical_qubits.index(
-                                    occupied_logical_qubit
-                                )
+                                1 - gate_logical_qubits.index(occupied_logical_qubit)
                             ]
 
                             preconditions = [
@@ -257,11 +248,12 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                             return preconditions, effects
 
                     else:
+
                         @PDDLAction(name=f"apply_cx_g{gate_id}")
                         def apply_gate(p1: pqubit, p2: pqubit):
                             control_qubit = l[gate_logical_qubits[0]]
                             target_qubit = l[gate_logical_qubits[1]]
-                            
+
                             preconditions = [
                                 not_(done(g[gate_id])),
                                 connected(p1, p2),
@@ -285,6 +277,7 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                 case _:
                     logical_qubit = l[gate_logical_qubits[0]]
                     if no_gate_dependency:
+
                         @PDDLAction(name=f"apply_gate_g{gate_id}")
                         def apply_gate(p: pqubit):
                             preconditions = [
@@ -306,6 +299,7 @@ class ConditionalCostBasedOptimalPlanningSynthesizer(Synthesizer):
                             return preconditions, effects
 
                     else:
+
                         @PDDLAction(name=f"apply_gate_g{gate_id}")
                         def apply_gate(p: pqubit):
                             direct_predecessor_gate = g[direct_predecessor_gates[0]]

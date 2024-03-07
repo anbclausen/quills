@@ -8,7 +8,15 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_, when, forall
+from util.pddl import (
+    PDDLInstance,
+    PDDLAction,
+    PDDLPredicate,
+    object_,
+    not_,
+    when,
+    forall,
+)
 from solvers import Solver
 
 

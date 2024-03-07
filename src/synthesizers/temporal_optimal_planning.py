@@ -8,7 +8,7 @@ from synthesizers.synthesizer import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
-from pddl import (
+from util.pddl import (
     PDDLDurativeAction,
     PDDLInstance,
     PDDLPredicate,
@@ -70,7 +70,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
         @PDDLPredicate()
         def idle(l: lqubit):
             pass
-        
+
         @PDDLDurativeAction()
         def swap(l1: lqubit, l2: lqubit, p1: pqubit, p2: pqubit):
             duration = 3
@@ -230,7 +230,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                     else:
                         control_qubit = l[gate_logical_qubits[0]]
                         target_qubit = l[gate_logical_qubits[1]]
-                        
+
                         @PDDLDurativeAction(name=f"apply_cx_g{gate_id}")
                         def apply_gate(p1: pqubit, p2: pqubit):
                             duration = 1
@@ -239,7 +239,10 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                                 at_start(connected(p1, p2)),
                                 at_start(idle(control_qubit)),
                                 at_start(idle(target_qubit)),
-                                *[at_start(done(g[dep])) for dep in direct_predecessor_gates],
+                                *[
+                                    at_start(done(g[dep]))
+                                    for dep in direct_predecessor_gates
+                                ],
                                 at_start(mapped(control_qubit, p1)),
                                 at_start(mapped(target_qubit, p2)),
                             ]
@@ -257,6 +260,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                 case _:
                     logical_qubit = l[gate_logical_qubits[0]]
                     if no_gate_dependency:
+
                         @PDDLDurativeAction(name=f"apply_gate_g{gate_id}")
                         def apply_gate(p: pqubit):
                             duration = 1
@@ -281,6 +285,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
 
                     else:
                         direct_predecessor_gate = g[direct_predecessor_gates[0]]
+
                         @PDDLDurativeAction(name=f"apply_gate_g{gate_id}")
                         def apply_gate(p: pqubit):
                             duration = 1
@@ -288,7 +293,7 @@ class TemporalOptimalPlanningSynthesizer(Synthesizer):
                                 at_start(required(g[gate_id])),
                                 at_start(done(direct_predecessor_gate)),
                                 at_start(idle(logical_qubit)),
-                                at_start(mapped(logical_qubit, p))
+                                at_start(mapped(logical_qubit, p)),
                             ]
                             effects = [
                                 at_start(not_(idle(logical_qubit))),
