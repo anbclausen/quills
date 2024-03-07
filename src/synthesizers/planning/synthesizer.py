@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Callable
 from qiskit import QuantumCircuit, QuantumRegister
 from platforms import Platform
-from solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
+from synthesizers.planning.solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
 from util.pddl import PDDLInstance
 from util.circuits import (
     SynthesizerOutput,

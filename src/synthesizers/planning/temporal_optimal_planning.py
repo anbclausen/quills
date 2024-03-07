@@ -19,7 +19,7 @@ from util.pddl import (
     at_end,
     at_start,
 )
-from solvers import Solver
+from synthesizers.planning.solvers import Solver
 
 
 class TemporalOptimalPlanningSynthesizer(PlanningSynthesizer):

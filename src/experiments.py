@@ -8,7 +8,7 @@ from util.circuits import (
     SynthesizerNoSolution,
     SynthesizerTimeout,
 )
-from solvers import SATISFYING, TEMPORAL
+from synthesizers.planning.solvers import SATISFYING, TEMPORAL
 from configs import (
     synthesizers,
     platforms,

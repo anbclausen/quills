@@ -18,7 +18,7 @@ from util.pddl import (
     not_,
     increase_cost,
 )
-from solvers import Solver
+from synthesizers.planning.solvers import Solver
 
 
 class CostBasedOptimalLiftedPlanningSynthesizer(PlanningSynthesizer):

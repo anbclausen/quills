@@ -44,7 +44,7 @@ from synthesizers.planning.local_clock_incremental_positive_preconditions_lifted
 
 from platforms import TOY, TENERIFE, MELBOURNE, Platform
 
-from solvers import (
+from synthesizers.planning.solvers import (
     M_SEQUENTIAL_PLANS,
     M_FORALL_STEPS,
     M_EXISTS_STEPS,

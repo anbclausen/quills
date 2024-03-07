@@ -11,7 +11,7 @@ from util.circuits import (
 from platforms import Platform
 from qiskit import QuantumCircuit
 from util.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
-from solvers import Solver
+from synthesizers.planning.solvers import Solver
 
 
 class IterativeIncrementalPlanningSynthesizer(PlanningSynthesizer):

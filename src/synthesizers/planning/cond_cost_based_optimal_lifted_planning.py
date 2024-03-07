@@ -20,7 +20,7 @@ from util.pddl import (
     when,
     forall,
 )
-from solvers import Solver
+from synthesizers.planning.solvers import Solver
 
 
 class ConditionalCostBasedOptimalLiftedPlanningSynthesizer(PlanningSynthesizer):
