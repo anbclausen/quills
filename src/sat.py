@@ -94,19 +94,19 @@ class Formula(ABC):
                         )
         return result
 
-    def __or__(self, other):
+    def __or__(self, other: "Formula"):
         return Or(self, other)
 
-    def __and__(self, other):
+    def __and__(self, other: "Formula"):
         return And(self, other)
 
     def __invert__(self):
         return Neg(self)
 
-    def __rshift__(self, other):
+    def __rshift__(self, other: "Formula"):
         return Implies(self, other)
 
-    def __matmul__(self, other):
+    def __matmul__(self, other: "Formula"):
         return Iff(self, other)
 
 
