@@ -122,6 +122,7 @@ for t in range(0, max_depth + 1):
     solver.append_formula(f)
 
     # gate stuff
+    # FIXME: require swap-free!
     for g in gates:
         f = exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
         solver.append_formula(f)
