@@ -2,7 +2,6 @@ from pysat.card import CardEnc, EncType
 import sympy
 from abc import ABC, abstractmethod
 
-
 next_id = 1
 atoms = {}
 atoms_by_id = {}
@@ -62,16 +61,30 @@ class Formula(ABC):
                     return -atoms[name].id
 
         cnf = sympy.to_cnf(self.inner_repr)
-        clauses = cnf.args
+        match cnf:
+            case sympy.Symbol() | sympy.Not():
+                return [[clausify_atom(cnf)]]
+            case sympy.And():
+                clauses = cnf.args
+            case sympy.Or():
+                clauses = [cnf]
+            case sympy.logic.boolalg.BooleanTrue():
+                return []
+            case sympy.logic.boolalg.BooleanFalse():
+                print("warning: clausifying false formula")
+                return [[1], [-1]]
+            case _:
+                raise ValueError(
+                    f"Clausifying failed: non-conjunction in inner representation: {cnf}"
+                    f" of type {type(cnf)}"
+                )
         result = []
         for clause in clauses:
             match clause:
                 case sympy.Or():
-                    args = [arg for arg in clause.args]
-
                     clausified_args = [
                         clausify_atom(arg)
-                        for arg in args
+                        for arg in clause.args
                         if isinstance(arg, sympy.Symbol) or isinstance(arg, sympy.Not)
                     ]
 
@@ -79,7 +92,6 @@ class Formula(ABC):
                         set_of_vars = set(map(abs, clausified_args))  # O(n)
                         if len(set_of_vars) < len(clausified_args):  # O(1)
                             continue
-
                     result.append(clausified_args)
 
                 case _:
@@ -187,7 +199,6 @@ class Neg(Formula):
 
 
 def exactly_one(atoms: list[Atom]) -> list[list[int]]:
-    global next_id
     lits = [atom.id for atom in atoms]
     result = CardEnc.equals(lits, bound=1, encoding=EncType.pairwise)
     result.clausify()
@@ -197,7 +208,6 @@ def exactly_one(atoms: list[Atom]) -> list[list[int]]:
 
 
 def at_most_one(atoms: list[Atom]) -> list[list[int]]:
-    global next_id
     lits = [atom.id for atom in atoms]
     result = CardEnc.atmost(lits, bound=1, encoding=EncType.pairwise)
     result.clausify()
