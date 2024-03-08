@@ -179,7 +179,7 @@ for tmax in range(circuit_depth, max_depth + 1):
             if t > 0:
                 f = And(
                     *[
-                        free[t][l] >> Iff(mapped[t - 1][l][p], mapped[t][l][p])
+                        (~swap1[t][l]) >> Iff(mapped[t - 1][l][p], mapped[t][l][p])
                         for p in pq
                     ]
                 ).clausify(remove_redundant=True)
@@ -225,13 +225,13 @@ for tmax in range(circuit_depth, max_depth + 1):
     solver.append_formula(f)
 
     # goal
-    f = And(*[~delayed[tmax][g] for g in gates]).clausify()
+    f = And(*[~delayed[tmax - 1][g] for g in gates]).clausify()
     solver.append_formula(f)
 
-    f = And(*[~swap1[tmax][l] for l in lq]).clausify()
+    f = And(*[~swap1[tmax - 1][l] for l in lq]).clausify()
     solver.append_formula(f)
 
-    f = And(*[~swap2[tmax][l] for l in lq]).clausify()
+    f = And(*[~swap2[tmax - 1][l] for l in lq]).clausify()
     solver.append_formula(f)
 
     solver.solve()
