@@ -173,6 +173,54 @@ def gate_direct_dependency_mapping(circuit: QuantumCircuit) -> dict[int, list[in
     return mapping
 
 
+def gate_direct_successor_mapping(circuit: QuantumCircuit) -> dict[int, list[int]]:
+    """
+    Returns a mapping of gate index to the indices of the gates that directly depend on it.
+
+    The algorithm is O(n^2) and it works like this:
+    - It calculates the line dependency mapping.
+    - Do a traversal of the line dependency mapping (starting with the smallest gate index)
+        - Take a given physical qubit line in the line dependency mapping for the current gate
+            - Find the smallest gate index that depends on the current physical qubit line and note the gate index
+
+    Example
+    -------
+    Given circuit:
+         ┌───┐
+    q_0: ┤ X ├──■──
+         ├───┤┌─┴─┐
+    q_1: ┤ X ├┤ X ├
+         └───┘├───┤
+    q_2: ──■──┤ X ├
+         ┌─┴─┐└───┘
+    q_3: ┤ X ├─────
+         └───┘
+
+    The mapping would be:
+    `{0: [3], 1: [3], 2: [4], 3: [], 4: []}`
+    """
+    line_dependency_mapping = gate_line_dependency_mapping(circuit)
+
+    mapping = {}
+    for i in range(len(line_dependency_mapping)):
+        gate_lines = line_dependency_mapping[i][1]
+        mapping[i] = []
+        for j in range(i + 1, len(line_dependency_mapping)):
+            other_gate_lines = line_dependency_mapping[j][1]
+            for qubit in gate_lines:
+                if qubit in other_gate_lines:
+                    mapping[i].append(j)
+
+            for other_qubit in other_gate_lines:
+                if other_qubit in gate_lines:
+                    gate_lines.remove(other_qubit)
+
+            if len(gate_lines) == 0:
+                break
+
+    return mapping
+
+
 def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
     """
     Remove all non-CX gates from the circuit.
