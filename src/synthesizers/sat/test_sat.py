@@ -56,7 +56,7 @@ occupied = {t: {p: Atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_dep
 enabled = {
     t: {
         l: {
-            l_prime: Atom(f"lconnected^{t}_{l}_{l_prime}")
+            l_prime: Atom(f"enabled^{t}_{l}_{l_prime}")
             for l_prime in lq
             if l != l_prime
         }
