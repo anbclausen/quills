@@ -108,8 +108,8 @@ class IncrSynthesizer(SATSynthesizer):
 
                 remapped_gate = gate.replace(
                     qubits=[
-                        Qubit(register, mapping[instr.level][LogicalQubit(q)].id)
-                        for q in gate.qargs
+                        Qubit(register, mapping[instr.level][LogicalQubit(q._index)].id)
+                        for q in gate.qubits
                     ]
                 )
                 circuit.append(remapped_gate)
@@ -130,6 +130,7 @@ class IncrSynthesizer(SATSynthesizer):
         solver: Solver,
     ) -> tuple[list[Atom | Neg], float] | None:
         overall_time = 0
+
         circuit_depth = logical_circuit.depth()
         max_depth = circuit_depth * 4 + 1
         lq = [i for i in range(logical_circuit.num_qubits)]
@@ -143,12 +144,9 @@ class IncrSynthesizer(SATSynthesizer):
         }
 
         gate_line_map = gate_line_dependency_mapping(logical_circuit)
+        gates = list(gate_line_map.keys())
         gate_pre_map = gate_direct_dependency_mapping(logical_circuit)
         gate_suc_map = gate_direct_successor_mapping(logical_circuit)
-
-        gates = list(gate_pre_map.keys())
-        pre = [deps for _, deps in gate_pre_map.items()]
-        suc = [deps for _, deps in gate_suc_map.items()]
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
@@ -242,12 +240,15 @@ class IncrSynthesizer(SATSynthesizer):
                     solver.append_formula(f)
 
                     f = And(
-                        *[current[t][g] >> advanced[t][pred] for pred in pre[g]]
+                        *[
+                            current[t][g] >> advanced[t][pred]
+                            for pred in gate_pre_map[g]
+                        ]
                     ).clausify()
                     solver.append_formula(f)
 
                     f = And(
-                        *[current[t][g] >> delayed[t][succ] for succ in suc[g]]
+                        *[current[t][g] >> delayed[t][succ] for succ in gate_suc_map[g]]
                     ).clausify()
                     solver.append_formula(f)
 
@@ -263,12 +264,15 @@ class IncrSynthesizer(SATSynthesizer):
                         solver.append_formula(f)
 
                     f = And(
-                        *[advanced[t][g] >> advanced[t][pred] for pred in pre[g]]
+                        *[
+                            advanced[t][g] >> advanced[t][pred]
+                            for pred in gate_pre_map[g]
+                        ]
                     ).clausify()
                     solver.append_formula(f)
 
                     f = And(
-                        *[delayed[t][g] >> delayed[t][succ] for succ in suc[g]]
+                        *[delayed[t][g] >> delayed[t][succ] for succ in gate_suc_map[g]]
                     ).clausify()
                     solver.append_formula(f)
 
@@ -294,7 +298,6 @@ class IncrSynthesizer(SATSynthesizer):
 
                     f = at_most_one(
                         [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
-                        + [swap[t][l_prime][l] for l_prime in lq if l_prime != l]
                     )
                     solver.append_formula(f)
 
@@ -330,6 +333,12 @@ class IncrSynthesizer(SATSynthesizer):
                                 ]
                             ).clausify(remove_redundant=True)
                             solver.append_formula(f)
+
+                    # f = (
+                    #     swap1[t][l]
+                    #     >> Or(*[swap[t][l][l_prime] for l_prime in lq if l_prime != l])
+                    # ).clausify()
+                    # solver.append_formula(f)
 
                     for l_prime in lq:
                         if l == l_prime:
