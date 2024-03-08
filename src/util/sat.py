@@ -20,6 +20,15 @@ def update_id_from(formula: list[list[int]]):
             next_id = max(next_id, abs(lit) + 1)
 
 
+def reset():
+    global next_id
+    global atoms
+    global atoms_by_id
+    next_id = 1
+    atoms = {}
+    atoms_by_id = {}
+
+
 class Formula(ABC):
     """
     A boolean formula.
