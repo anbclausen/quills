@@ -32,7 +32,7 @@ g[3] = x(2)
 pre = [[], [], [0], [1]]
 succ = [[2], [3], [], []]
 
-max_depth = 8
+max_depth = 9
 circuit_depth = 2
 lq = [i for i in range(4)]
 pq = [i for i in range(4)]
@@ -55,7 +55,11 @@ mapped = {
 occupied = {t: {p: Atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_depth + 1)}
 enabled = {
     t: {
-        l: {l_prime: Atom(f"lconnected^{t}_{l}_{l_prime}") for l_prime in lq}
+        l: {
+            l_prime: Atom(f"lconnected^{t}_{l}_{l_prime}")
+            for l_prime in lq
+            if l != l_prime
+        }
         for l in lq
     }
     for t in range(max_depth + 1)
@@ -76,7 +80,10 @@ swap1 = {t: {l: Atom(f"swap1^{t}_{l}") for l in lq} for t in range(max_depth + 1
 swap2 = {t: {l: Atom(f"swap2^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
 swap3 = {t: {l: Atom(f"swap3^{t}_{l}") for l in lq} for t in range(max_depth + 1)}
 swap = {
-    t: {l: {l_prime: Atom(f"swap^{t}_{l}_{l_prime}") for l_prime in lq} for l in lq}
+    t: {
+        l: {l_prime: Atom(f"swap^{t}_{l}_{l_prime}") for l_prime in lq if l != l_prime}
+        for l in lq
+    }
     for t in range(max_depth + 1)
 }
 
@@ -84,10 +91,10 @@ for tmax in range(circuit_depth, max_depth + 1):
     for t in range(0, tmax):
         # mappings and occupancy
         for l in lq:
-            f = exactly_one([mapped[0][l][p] for p in pq])
+            f = exactly_one([mapped[t][l][p] for p in pq])
             solver.append_formula(f)
         for p in pq:
-            f = at_most_one([mapped[0][l][p] for l in lq])
+            f = at_most_one([mapped[t][l][p] for l in lq])
             solver.append_formula(f)
         for p in pq:
             f = Iff(Or(*[mapped[t][l][p] for l in lq]), occupied[t][p]).clausify()
@@ -118,12 +125,11 @@ for tmax in range(circuit_depth, max_depth + 1):
         # similar for gate 2
         # FIXME: Hardcoded, should be generated from the circuit
         f = (
-            current[t][1] >> enabled[t][2][3] & current[t][2] >> enabled[t][0][1]
+            (current[t][1] >> enabled[t][2][3]) & (current[t][2] >> enabled[t][0][1])
         ).clausify()
         solver.append_formula(f)
 
         # gate stuff
-        # FIXME: require swap-free!
         for g in gates:
             f = exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
             solver.append_formula(f)
@@ -131,9 +137,7 @@ for tmax in range(circuit_depth, max_depth + 1):
             f = And(*[current[t][g] >> advanced[t][pred] for pred in pre[g]]).clausify()
             solver.append_formula(f)
 
-            f = And(
-                *[current[t][g] >> advanced[t][succ] for succ in succ[g]]
-            ).clausify()
+            f = And(*[current[t][g] >> delayed[t][succ] for succ in succ[g]]).clausify()
             solver.append_formula(f)
 
             if t > 0:
@@ -153,14 +157,22 @@ for tmax in range(circuit_depth, max_depth + 1):
             f = And(*[delayed[t][g] >> delayed[t][succ] for succ in succ[g]]).clausify()
             solver.append_formula(f)
 
+        # FIXME: Hardcoded, should be generated from the circuit
+        f1 = current[t][0] >> free[t][0]
+        f2 = current[t][1] >> (free[t][2] & free[t][3])
+        f3 = current[t][2] >> (free[t][0] & free[t][1])
+        f4 = current[t][3] >> free[t][2]
+        f = And(f1, f2, f3, f4).clausify()
+        solver.append_formula(f)
+
         # swap stuff
         for l in lq:
             f = exactly_one([free[t][l], swap1[t][l], swap2[t][l], swap3[t][l]])
             solver.append_formula(f)
 
             f = at_most_one(
-                [swap[t][l][l_prime] for l_prime in lq]
-                + [swap[t][l_prime][l] for l_prime in lq]
+                [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
+                + [swap[t][l_prime][l] for l_prime in lq if l_prime != l]
             )
             solver.append_formula(f)
 
@@ -180,7 +192,6 @@ for tmax in range(circuit_depth, max_depth + 1):
                 solver.append_formula(f)
 
                 for l_prime in lq:
-
                     f = And(
                         *[
                             swap[t][l][l_prime]
@@ -192,22 +203,26 @@ for tmax in range(circuit_depth, max_depth + 1):
                                 )
                             )
                             for p, p_prime in connectivity_graph
+                            if l != l_prime
                         ]
                     ).clausify(remove_redundant=True)
                     solver.append_formula(f)
+
             for l_prime in lq:
+                if l == l_prime:
+                    continue
+
                 f = (swap[t][l][l_prime] >> enabled[t][l][l_prime]).clausify()
                 solver.append_formula(f)
 
                 f = (
-                    swap[t][l][l_prime]
-                    >> (
-                        (swap1[t][l] & swap1[t][l_prime])
-                        | (swap2[t][l] & swap2[t][l_prime])
-                        | (swap3[t][l] & swap3[t][l_prime])
-                    )
-                ).clausify(remove_redundant=True)
+                    swap[t][l][l_prime] >> (swap1[t][l] & swap1[t][l_prime])
+                ).clausify()
                 solver.append_formula(f)
+
+    # init
+    f = And(*[~advanced[0][g] for g in gates]).clausify()
+    solver.append_formula(f)
 
     # goal
     f = And(*[~delayed[tmax][g] for g in gates]).clausify()
