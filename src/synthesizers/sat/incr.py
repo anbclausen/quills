@@ -199,6 +199,9 @@ class IncrSynthesizer(SATSynthesizer):
             for t in range(max_depth)
         }
 
+        # init
+        problem_clauses.extend(And(*[~advanced[0][g] for g in gates]).clausify())
+
         for tmax in range(circuit_depth, max_depth + 1):
             solver = solver.__class__()  # reset solver
 
@@ -349,10 +352,6 @@ class IncrSynthesizer(SATSynthesizer):
             clausified_formula = And(*formulas).clausify()
             problem_clauses.extend(clausified_formula)
             solver.append_formula(problem_clauses)
-
-            # init
-            f = And(*[~advanced[0][g] for g in gates]).clausify()
-            solver.append_formula(f)
 
             # goal
             f = And(*[~delayed[tmax - 1][g] for g in gates]).clausify()
