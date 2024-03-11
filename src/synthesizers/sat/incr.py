@@ -151,7 +151,7 @@ class IncrSynthesizer(SATSynthesizer):
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
         for tmax in range(circuit_depth, max_depth + 1):
-            solver = Glucose42()  # FIXME what if not glucose??
+            solver = solver.__class__()
             reset()
 
             mapped = {
