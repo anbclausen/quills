@@ -320,25 +320,23 @@ class IncrSynthesizer(SATSynthesizer):
                         for l_prime in lq:
                             f = And(
                                 *[
-                                    swap[t][l][l_prime]
-                                    >> (
-                                        Iff(mapped[t - 1][l][p], mapped[t][l][p_prime])
-                                        & Iff(
-                                            mapped[t - 1][l_prime][p_prime],
-                                            mapped[t][l_prime][p],
-                                        )
+                                    (
+                                        swap[t][l][l_prime]
+                                        & mapped[t - 1][l][p]
+                                        & mapped[t - 1][l_prime][p_prime]
                                     )
+                                    >> (mapped[t][l][p_prime] & mapped[t][l_prime][p])
                                     for p, p_prime in connectivity_graph
                                     if l != l_prime
                                 ]
                             ).clausify(remove_redundant=True)
                             solver.append_formula(f)
 
-                    # f = (
-                    #     swap1[t][l]
-                    #     >> Or(*[swap[t][l][l_prime] for l_prime in lq if l_prime != l])
-                    # ).clausify()
-                    # solver.append_formula(f)
+                    f = (
+                        swap1[t][l]
+                        >> Or(*[swap[t][l][l_prime] for l_prime in lq if l_prime != l])
+                    ).clausify()
+                    solver.append_formula(f)
 
                     for l_prime in lq:
                         if l == l_prime:
