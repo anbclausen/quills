@@ -69,7 +69,7 @@ class Formula(ABC):
                     name = arg.name
                     return -atoms[name].id
 
-        cnf = sympy.to_cnf(self.inner_repr)
+        cnf = sympy.to_cnf(self.inner_repr)  # FIXME: Really expensive call
         match cnf:
             case sympy.Symbol() | sympy.Not():
                 return [[clausify_atom(cnf)]]
