@@ -1,4 +1,5 @@
 import argparse
+import cProfile
 from qiskit import QuantumCircuit
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
 from util.output_checker import OutputChecker

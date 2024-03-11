@@ -2,7 +2,7 @@ from synthesizers.sat.synthesizer import SATSynthesizer, Solver
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Qubit
 from platforms import Platform
-from util.sat import Atom, Neg, reset
+from util.sat import Atom, Neg, reset, Formula
 from util.circuits import (
     LogicalQubit,
     PhysicalQubit,
@@ -199,6 +199,8 @@ class IncrSynthesizer(SATSynthesizer):
                 for t in range(tmax)
             }
 
+            formulas: list[Formula] = []
+
             for t in range(tmax):
                 # mappings and occupancy
                 for l in lq:
@@ -208,10 +210,9 @@ class IncrSynthesizer(SATSynthesizer):
                     f = at_most_one([mapped[t][l][p] for l in lq])
                     solver.append_formula(f)
                 for p in pq:
-                    f = Iff(
-                        Or(*[mapped[t][l][p] for l in lq]), occupied[t][p]
-                    ).clausify()
-                    solver.append_formula(f)
+                    formulas.append(
+                        Iff(Or(*[mapped[t][l][p] for l in lq]), occupied[t][p])
+                    )
 
                 # cnot connections
                 inner = []
@@ -231,65 +232,52 @@ class IncrSynthesizer(SATSynthesizer):
                         ]
                     )
                     inner.append(conj1 & conj2)
-                f = And(*inner).clausify()
-                solver.append_formula(f)
+                formulas.extend(inner)
 
                 # gate stuff
                 for g in gates:
                     f = exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
                     solver.append_formula(f)
 
-                    f = And(
-                        *[
-                            current[t][g] >> advanced[t][pred]
-                            for pred in gate_pre_map[g]
-                        ]
-                    ).clausify()
-                    solver.append_formula(f)
+                    formulas.extend(
+                        [current[t][g] >> advanced[t][pred] for pred in gate_pre_map[g]]
+                    )
 
-                    f = And(
-                        *[current[t][g] >> delayed[t][succ] for succ in gate_suc_map[g]]
-                    ).clausify()
-                    solver.append_formula(f)
+                    formulas.extend(
+                        [current[t][g] >> delayed[t][succ] for succ in gate_suc_map[g]]
+                    )
 
                     if t > 0:
-                        f = (
+                        formulas.append(
                             advanced[t][g] >> (current[t - 1][g] | advanced[t - 1][g])
-                        ).clausify()
-                        solver.append_formula(f)
+                        )
 
-                        f = (
+                        formulas.append(
                             delayed[t - 1][g] >> (current[t][g] | delayed[t][g])
-                        ).clausify()
-                        solver.append_formula(f)
+                        )
 
-                    f = And(
-                        *[
+                    formulas.extend(
+                        [
                             advanced[t][g] >> advanced[t][pred]
                             for pred in gate_pre_map[g]
                         ]
-                    ).clausify()
-                    solver.append_formula(f)
+                    )
 
-                    f = And(
-                        *[delayed[t][g] >> delayed[t][succ] for succ in gate_suc_map[g]]
-                    ).clausify()
-                    solver.append_formula(f)
+                    formulas.extend(
+                        [delayed[t][g] >> delayed[t][succ] for succ in gate_suc_map[g]]
+                    )
 
                     gate_name, lq_deps = gate_line_map[g]
                     if gate_name.startswith("cx"):
-                        f = (
+                        formulas.append(
                             (current[t][g] >> enabled[t][lq_deps[0]][lq_deps[1]])
-                        ).clausify()
-                        solver.append_formula(f)
+                        )
 
-                        f = (
+                        formulas.append(
                             current[t][g] >> (free[t][lq_deps[0]] & free[t][lq_deps[1]])
-                        ).clausify()
-                        solver.append_formula(f)
+                        )
                     else:
-                        f = (current[t][g] >> free[t][lq_deps[0]]).clausify()
-                        solver.append_formula(f)
+                        formulas.append(current[t][g] >> free[t][lq_deps[0]])
 
                 # swap stuff
                 for l in lq:
@@ -303,24 +291,21 @@ class IncrSynthesizer(SATSynthesizer):
                     solver.append_formula(f)
 
                     if t > 0:
-                        f = And(
-                            *[
+                        formulas.extend(
+                            [
                                 (~swap1[t][l])
                                 >> Iff(mapped[t - 1][l][p], mapped[t][l][p])
                                 for p in pq
                             ]
-                        ).clausify()
-                        solver.append_formula(f)
+                        )
 
-                        f = Iff(swap1[t - 1][l], swap2[t][l]).clausify()
-                        solver.append_formula(f)
+                        formulas.append(Iff(swap1[t - 1][l], swap2[t][l]))
 
-                        f = Iff(swap2[t - 1][l], swap3[t][l]).clausify()
-                        solver.append_formula(f)
+                        formulas.append(Iff(swap2[t - 1][l], swap3[t][l]))
 
                         for l_prime in lq:
-                            f = And(
-                                *[
+                            formulas.extend(
+                                [
                                     (
                                         swap[t][l][l_prime]
                                         & mapped[t - 1][l][p]
@@ -330,10 +315,9 @@ class IncrSynthesizer(SATSynthesizer):
                                     for p, p_prime in connectivity_graph
                                     if l != l_prime
                                 ]
-                            ).clausify()
-                            solver.append_formula(f)
+                            )
 
-                    f = (
+                    formulas.append(
                         swap1[t][l]
                         >> Or(
                             *(
@@ -345,20 +329,19 @@ class IncrSynthesizer(SATSynthesizer):
                                 ]
                             )
                         )
-                    ).clausify()
-                    solver.append_formula(f)
+                    )
 
                     for l_prime in lq:
                         if l == l_prime:
                             continue
 
-                        f = (swap[t][l][l_prime] >> enabled[t][l][l_prime]).clausify()
-                        solver.append_formula(f)
+                        formulas.append(swap[t][l][l_prime] >> enabled[t][l][l_prime])
 
-                        f = (
+                        formulas.append(
                             swap[t][l][l_prime] >> (swap1[t][l] & swap1[t][l_prime])
-                        ).clausify()
-                        solver.append_formula(f)
+                        )
+            clausified_formula = And(*formulas).clausify()
+            solver.append_formula(clausified_formula)
 
             # init
             f = And(*[~advanced[0][g] for g in gates]).clausify()
