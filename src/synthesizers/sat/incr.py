@@ -367,8 +367,8 @@ class IncrSynthesizer(SATSynthesizer):
                                                 mapped[t - 1][l_prime][p_prime],
                                             ],
                                             and_(
-                                                mapped[t][l][p],
-                                                mapped[t][l_prime][p_prime],
+                                                mapped[t][l][p_prime],
+                                                mapped[t][l_prime][p],
                                             ),
                                         )
                                         for p, p_prime in connectivity_graph
