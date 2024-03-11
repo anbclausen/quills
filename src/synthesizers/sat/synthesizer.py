@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
 from platforms import Platform
-from util.sat import Atom, Neg
+from util.sat import Atom
 from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
 
@@ -16,7 +16,7 @@ class SATSynthesizer(ABC):
         self,
         original_circuit: QuantumCircuit,
         platform: Platform,
-        solver_solution: list[Atom | Neg],
+        solver_solution: list[str],
     ) -> tuple[QuantumCircuit, dict[LogicalQubit, PhysicalQubit]]:
         pass
 

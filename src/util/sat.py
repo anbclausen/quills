@@ -25,16 +25,18 @@ def update_id_from(formula: Formula):
 def reset():
     global next_id
     global atoms
-    global atoms_by_id
+    global atom_names
     next_id = 1
     atoms = {}
-    atoms_by_id = {}
+    atom_names = {}
 
 
 def new_atom(name: str) -> Atom:
+    global atoms
+    global atom_names
     id = get_next_id()
     atoms[name] = id
-    atoms_by_id[id] = name
+    atom_names[id] = name
     return id
 
 
@@ -48,7 +50,12 @@ def or_(*args: Atom) -> Formula:
     return [[atom for atom in args]]
 
 
-def and_(*args: Formula) -> Formula:
+def and_(*args: Atom) -> Formula:
+    """Create a conjunction of the given atoms."""
+    return [[atom] for atom in args]
+
+
+def andf(*args: Formula) -> Formula:
     """Create a conjunction of the given formulas."""
     result = []
     for arg in args:
@@ -76,7 +83,7 @@ def iff_disj(atoms: list[Atom], b: Atom) -> Formula:
     """Create an equivalence between the _disjunction_ of the given atoms and the given atom."""
 
     # I use here that (p | q) -> r is equivalent to (p -> r) & (q -> r)
-    left_to_right = and_(*[impl(atom, [[b]]) for atom in atoms])
+    left_to_right = andf(*[impl(atom, [[b]]) for atom in atoms])
     right_to_left = impl(b, or_(*atoms))
 
     return left_to_right + right_to_left
