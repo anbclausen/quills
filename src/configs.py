@@ -42,6 +42,7 @@ from synthesizers.planning.local_clock_incremental_positive_preconditions_lifted
     LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer,
 )
 from synthesizers.sat.synthesizer import SATSynthesizer
+import synthesizers.sat.synthesizer as sat
 from synthesizers.sat.incr import IncrSynthesizer
 
 from platforms import TOY, TENERIFE, MELBOURNE, Platform
@@ -118,7 +119,7 @@ platforms: dict[str, Platform] = {
     "melbourne": MELBOURNE,
 }
 
-solvers: dict[str, Solver | pysat.solvers.Glucose42] = {
+solvers: dict[str, Solver | sat.Solver] = {
     # "M_seq": M_SEQUENTIAL_PLANS(),
     # "M_all": M_FORALL_STEPS(),
     # "M_exist": M_EXISTS_STEPS(),
@@ -152,6 +153,7 @@ solvers: dict[str, Solver | pysat.solvers.Glucose42] = {
     "tflap_grounded": TFLAPGrounded(),
     "powerlifted": PowerLifted(),
     "glucose42": pysat.solvers.Glucose42(),
+    "maple_cm": pysat.solvers.MapleCM(),
 }
 
 
