@@ -2,7 +2,7 @@ from synthesizers.sat.synthesizer import SATSynthesizer, Solver
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Qubit
 from platforms import Platform
-from util.sat import Atom, Neg, reset, Formula
+from util.sat import Atom, Neg, Formula
 from util.circuits import (
     LogicalQubit,
     PhysicalQubit,
@@ -26,7 +26,6 @@ from util.sat import (
     exactly_one,
     at_most_one,
 )
-from pysat.solvers import Glucose42
 import time
 from util.time_limit import time_limit, TimeoutException
 
