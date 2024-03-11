@@ -298,6 +298,7 @@ class IncrSynthesizer(SATSynthesizer):
 
                     f = at_most_one(
                         [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
+                        + [swap[t][l_prime][l] for l_prime in lq if l_prime != l]
                     )
                     solver.append_formula(f)
 
@@ -334,7 +335,16 @@ class IncrSynthesizer(SATSynthesizer):
 
                     f = (
                         swap1[t][l]
-                        >> Or(*[swap[t][l][l_prime] for l_prime in lq if l_prime != l])
+                        >> Or(
+                            *(
+                                [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
+                                + [
+                                    swap[t][l_prime][l]
+                                    for l_prime in lq
+                                    if l_prime != l
+                                ]
+                            )
+                        )
                     ).clausify()
                     solver.append_formula(f)
 
