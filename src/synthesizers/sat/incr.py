@@ -129,6 +129,7 @@ class IncrSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
     ) -> tuple[list[Atom | Neg], float] | None:
+        print("Searching: ", end="", flush=True)
         overall_time = 0
 
         circuit_depth = logical_circuit.depth()
@@ -371,7 +372,7 @@ class IncrSynthesizer(SATSynthesizer):
             if solution:
                 return solution, overall_time
             else:
-                print(f"{tmax}: No solution")
+                print(f"depth {tmax}", flush=True, end=", ")
         return None
 
     def synthesize(
