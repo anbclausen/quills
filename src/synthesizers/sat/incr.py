@@ -231,7 +231,7 @@ class IncrSynthesizer(SATSynthesizer):
                         ]
                     )
                     inner.append(conj1 & conj2)
-                f = And(*inner).clausify(remove_redundant=True)
+                f = And(*inner).clausify()
                 solver.append_formula(f)
 
                 # gate stuff
@@ -309,7 +309,7 @@ class IncrSynthesizer(SATSynthesizer):
                                 >> Iff(mapped[t - 1][l][p], mapped[t][l][p])
                                 for p in pq
                             ]
-                        ).clausify(remove_redundant=True)
+                        ).clausify()
                         solver.append_formula(f)
 
                         f = Iff(swap1[t - 1][l], swap2[t][l]).clausify()
@@ -330,7 +330,7 @@ class IncrSynthesizer(SATSynthesizer):
                                     for p, p_prime in connectivity_graph
                                     if l != l_prime
                                 ]
-                            ).clausify(remove_redundant=True)
+                            ).clausify()
                             solver.append_formula(f)
 
                     f = (
