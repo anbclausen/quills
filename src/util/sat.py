@@ -32,6 +32,7 @@ def reset():
 
 
 def new_atom(name: str) -> Atom:
+    """Create a new atom with the given name."""
     global atoms
     global atom_names
     id = get_next_id()
@@ -90,6 +91,7 @@ def iff_disj(atoms: Clause, b: Atom) -> Formula:
 
 
 def exactly_one(atoms: list[Atom]) -> Formula:
+    """Create a formula that ensures exactly one of the given atoms is true."""
     result = CardEnc.equals(atoms, bound=1, encoding=EncType.pairwise)
     result.clausify()
     clauses = result.clauses
@@ -98,6 +100,7 @@ def exactly_one(atoms: list[Atom]) -> Formula:
 
 
 def at_most_one(atoms: list[Atom]) -> Formula:
+    """Create a formula that ensures at most one of the given atoms is true."""
     result = CardEnc.atmost(
         atoms, bound=1, encoding=EncType.pairwise
     )  # FIXME: change encoding and then skip non atoms in parse_solution
