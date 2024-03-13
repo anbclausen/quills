@@ -425,10 +425,10 @@ class IncrSynthesizer(SATSynthesizer):
             after = time.time()
             overall_time += after - before
             solution = parse_solution(solver.get_model())
+            print(f"depth {tmax}", flush=True, end=", ")
             if solution:
                 return solution, overall_time
-            else:
-                print(f"depth {tmax}", flush=True, end=", ")
+
         return None
 
     def synthesize(
