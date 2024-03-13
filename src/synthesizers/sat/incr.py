@@ -224,7 +224,6 @@ class IncrSynthesizer(SATSynthesizer):
                 # mappings and occupancy
                 for l in lq:
                     problem_clauses.extend(exactly_one([mapped[t][l][p] for p in pq]))
-
                 for p in pq:
                     problem_clauses.extend(at_most_one([mapped[t][l][p] for l in lq]))
                 for p in pq:
@@ -233,28 +232,29 @@ class IncrSynthesizer(SATSynthesizer):
                     )
 
                 # cnot connections
-                inner: Formula = []
                 for l, l_prime in lq_pairs:
-                    conj1 = andf(
-                        *[
-                            impl_conj(
-                                [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                                [[enabled[t][l][l_prime]]],
-                            )
-                            for p, p_prime in connectivity_graph
-                        ]
+                    problem_clauses.extend(
+                        andf(
+                            *[
+                                impl_conj(
+                                    [mapped[t][l][p], mapped[t][l_prime][p_prime]],
+                                    [[enabled[t][l][l_prime]]],
+                                )
+                                for p, p_prime in connectivity_graph
+                            ]
+                        )
                     )
-                    conj2 = andf(
-                        *[
-                            impl_conj(
-                                [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                                [[neg(enabled[t][l][l_prime])]],
-                            )
-                            for p, p_prime in inv_connectivity_graph
-                        ]
+                    problem_clauses.extend(
+                        andf(
+                            *[
+                                impl_conj(
+                                    [mapped[t][l][p], mapped[t][l_prime][p_prime]],
+                                    [[neg(enabled[t][l][l_prime])]],
+                                )
+                                for p, p_prime in inv_connectivity_graph
+                            ]
+                        )
                     )
-                    inner.extend(andf(conj1, conj2))
-                problem_clauses.extend(inner)
 
                 # gate stuff
                 for g in gates:
@@ -363,13 +363,15 @@ class IncrSynthesizer(SATSynthesizer):
                                     *[
                                         impl_conj(
                                             [
-                                                swap[t][l][l_prime],
-                                                mapped[t - 1][l][p],
-                                                mapped[t - 1][l_prime][p_prime],
-                                            ],
-                                            and_(
                                                 mapped[t][l][p_prime],
                                                 mapped[t][l_prime][p],
+                                                swap1[t][l],
+                                                swap1[t][l_prime],
+                                                swap[t][l][l_prime],
+                                            ],
+                                            and_(
+                                                mapped[t - 1][l][p],
+                                                mapped[t - 1][l_prime][p_prime],
                                             ),
                                         )
                                         for p, p_prime in connectivity_graph
@@ -427,6 +429,11 @@ class IncrSynthesizer(SATSynthesizer):
             solution = parse_solution(solver.get_model())
             print(f"depth {tmax}", flush=True, end=", ")
             if solution:
+                f = open("tmp/result.txt", "w")
+                for line in solution:
+                    if not line.startswith("~"):
+                        f.write(f"{line}\n")
+                f.close()
                 return solution, overall_time
 
         return None
