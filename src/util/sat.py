@@ -68,9 +68,9 @@ def impl(atom: Atom, f: Formula) -> Formula:
     return [[neg(atom), *clause] for clause in f]
 
 
-def impl_conj(clause: Clause, f: Formula) -> Formula:
-    """Create an implication from the given clause (conjunction of atoms) to the given formula."""
-    negated = [neg(atom) for atom in clause]
+def impl_conj(atoms: list[Atom], f: Formula) -> Formula:
+    """Create an implication from the _conjunction_ of atoms to the given formula."""
+    negated = [neg(atom) for atom in atoms]
     return [[*negated, *clause] for clause in f]
 
 
@@ -79,8 +79,8 @@ def iff(a: Atom, b: Atom) -> Formula:
     return [[neg(a), b], [a, neg(b)]]
 
 
-def iff_disj(atoms: list[Atom], b: Atom) -> Formula:
-    """Create an equivalence between the _disjunction_ of the given atoms and the given atom."""
+def iff_disj(atoms: Clause, b: Atom) -> Formula:
+    """Create an equivalence between the given clause (disjunction of atoms) and the given atom."""
 
     # I use here that (p | q) -> r is equivalent to (p -> r) & (q -> r)
     left_to_right = andf(*[impl(atom, [[b]]) for atom in atoms])
