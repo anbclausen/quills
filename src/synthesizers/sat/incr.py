@@ -150,7 +150,7 @@ class IncrSynthesizer(SATSynthesizer):
         }
 
         gate_line_map = gate_line_dependency_mapping(logical_circuit)
-        print(gate_line_map)
+
         gates = list(gate_line_map.keys())
         gate_pre_map = gate_direct_dependency_mapping(logical_circuit)
         gate_suc_map = gate_direct_successor_mapping(logical_circuit)
@@ -426,10 +426,6 @@ class IncrSynthesizer(SATSynthesizer):
             overall_time += after - before
             solution = parse_solution(solver.get_model())
             if solution:
-                f = open("tmp/result.txt", "w")
-                for line in solution:
-                    f.write(f"{line}\n")
-                f.close()
                 return solution, overall_time
             else:
                 print(f"depth {tmax}", flush=True, end=", ")
