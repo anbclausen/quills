@@ -100,22 +100,18 @@ def iff_disj(atoms: Clause, b: Atom) -> Formula:
     return left_to_right + right_to_left
 
 
-def exactly_one(atoms: list[Atom]) -> Formula:
+def exactly_one(atoms: list[Atom], encoding=EncType.pairwise) -> Formula:
     """Create a formula that ensures exactly one of the given atoms is true."""
-    result = CardEnc.equals(
-        atoms, bound=1, top_id=next_id - 1, encoding=EncType.pairwise
-    )
+    result = CardEnc.equals(atoms, bound=1, top_id=next_id - 1, encoding=encoding)
     result.clausify()
     clauses = result.clauses
     update_id_from(clauses)
     return clauses
 
 
-def at_most_one(atoms: list[Atom]) -> Formula:
+def at_most_one(atoms: list[Atom], encoding=EncType.pairwise) -> Formula:
     """Create a formula that ensures at most one of the given atoms is true."""
-    result = CardEnc.atmost(
-        atoms, bound=1, top_id=next_id - 1, encoding=EncType.pairwise
-    )
+    result = CardEnc.atmost(atoms, bound=1, top_id=next_id - 1, encoding=encoding)
     result.clausify()
     clauses = result.clauses
     update_id_from(clauses)
