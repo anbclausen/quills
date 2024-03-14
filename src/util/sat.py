@@ -66,13 +66,13 @@ def andf(*args: Formula) -> Formula:
 
 def impl(atom: Atom, f: Formula) -> Formula:
     """Create an implication from the given atom to the given formula."""
-    return [[neg(atom), *clause] for clause in f]
+    return [new_clause for clause in f for new_clause in or_(neg(atom), *clause)]
 
 
 def impl_conj(atoms: list[Atom], f: Formula) -> Formula:
     """Create an implication from the _conjunction_ of atoms to the given formula."""
     negated = [neg(atom) for atom in atoms]
-    return [[*negated, *clause] for clause in f]
+    return [new_clause for clause in f for new_clause in or_(*negated, *clause)]
 
 
 def impl_disj(clause: Clause, atom: Atom) -> Formula:
