@@ -293,13 +293,13 @@ class IncrSynthesizer(SATSynthesizer):
                     gate_name, lq_deps = gate_line_map[g]
                     if gate_name.startswith("cx"):
                         problem_clauses.extend(
-                            impl(current[t][g], [[enabled[t][lq_deps[0]][lq_deps[1]]]])
-                        )
-
-                        problem_clauses.extend(
                             impl(
                                 current[t][g],
-                                and_(free[t][lq_deps[0]], free[t][lq_deps[1]]),
+                                and_(
+                                    free[t][lq_deps[0]],
+                                    free[t][lq_deps[1]],
+                                    enabled[t][lq_deps[0]][lq_deps[1]],
+                                ),
                             )
                         )
                     else:
