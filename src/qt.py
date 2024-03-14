@@ -137,9 +137,12 @@ print()
 
 print(f"{BOLD_START}SOLVER{BOLD_END}")
 if isinstance(solver, planning.Solver):
-    print(
-        f"'{args.solver}' ({'optimal' if solver.solver_class == OPTIMAL else 'satisfying'}): {solver.description}"
-    )
+    if solver.solver_class == OPTIMAL:
+        print(f"'{args.solver}' (optimal): {solver.description}")
+    elif solver.solver_class == TEMPORAL:
+        print(f"'{args.solver}' (temporal): {solver.description}")
+    else:
+        print(f"'{args.solver}' (satisfying): {solver.description}")
 else:
     print(f"'{args.solver}' from the pysat library.")
 print()
