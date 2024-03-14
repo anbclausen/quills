@@ -302,9 +302,48 @@ class IncrSynthesizer(SATSynthesizer):
                                 ),
                             )
                         )
+
+                        # force early scehduling
+                        problem_clauses.extend(
+                            impl(
+                                delayed[t][g],
+                                or_(
+                                    neg(enabled[t][lq_deps[0]][lq_deps[1]]),
+                                    neg(free[t][lq_deps[0]]),
+                                    neg(free[t][lq_deps[1]]),
+                                    *[
+                                        delayed[t][g_prime]
+                                        for g_prime in gate_pre_map[g]
+                                    ],
+                                    *[
+                                        current[t][g_prime]
+                                        for g_prime in gate_pre_map[g]
+                                    ],
+                                ),
+                            )
+                        )
+
                     else:
                         problem_clauses.extend(
                             impl(current[t][g], [[free[t][lq_deps[0]]]])
+                        )
+
+                        # force early scehduling
+                        problem_clauses.extend(
+                            impl(
+                                delayed[t][g],
+                                or_(
+                                    neg(free[t][lq_deps[0]]),
+                                    *[
+                                        delayed[t][g_prime]
+                                        for g_prime in gate_pre_map[g]
+                                    ],
+                                    *[
+                                        current[t][g_prime]
+                                        for g_prime in gate_pre_map[g]
+                                    ],
+                                ),
+                            )
                         )
 
                 # swap stuff
