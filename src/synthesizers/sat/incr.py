@@ -296,9 +296,9 @@ class IncrSynthesizer(SATSynthesizer):
                             impl(
                                 current[t][g],
                                 and_(
+                                    enabled[t][lq_deps[0]][lq_deps[1]],
                                     free[t][lq_deps[0]],
                                     free[t][lq_deps[1]],
-                                    enabled[t][lq_deps[0]][lq_deps[1]],
                                 ),
                             )
                         )
