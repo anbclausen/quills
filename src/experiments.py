@@ -184,7 +184,7 @@ for synthesizer in synthesizers:
                 and not synthesizer_uses_negative_preconds_and_solver_does_not
             ):
                 configurations.append((synthesizer, solver))
-        else:
+        elif isinstance(synthesizer_instance, SATSynthesizer) and not isinstance(solver_instance, planning.Solver):
             configurations.append((synthesizer, solver))
 
 for input_file, platform_name in EXPERIMENTS:
