@@ -176,6 +176,25 @@ def gate_direct_dependency_mapping(circuit: QuantumCircuit) -> dict[int, list[in
     return mapping
 
 
+def gate_dependency_mapping(circuit: QuantumCircuit) -> dict[int, list[int]]:
+    """
+    Returns a mapping of gate index to the indices of the gates that it depends on.
+    """
+    direct_dependency_mapping = gate_direct_dependency_mapping(circuit)
+    dependency_mapping: dict[int, set[int]] = {}
+    for i in range(len(direct_dependency_mapping)):
+        if direct_dependency_mapping[i] == []:
+            dependency_mapping[i] = set()
+            continue
+
+        dependency_mapping[i] = set()
+        for dep in direct_dependency_mapping[i]:
+            dependency_mapping[i].add(dep)
+            dependency_mapping[i] = dependency_mapping[i].union(dependency_mapping[dep])
+
+    return {gate: list(deps) for gate, deps in dependency_mapping.items()}
+
+
 def gate_direct_successor_mapping(circuit: QuantumCircuit) -> dict[int, list[int]]:
     """
     Returns a mapping of gate index to the indices of the gates that directly depend on it.
