@@ -120,6 +120,9 @@ def gate_line_dependency_mapping(
         if any(idx is None for idx in input_idxs):
             raise ValueError(f"Gate at index {i} has an input with no index.")
 
+        if name == "rx" or name == "rz":
+            angle = instr.operation.params[0]
+            name = f"{name}_{angle}"
         mapping[i] = (name, input_idxs)
 
     return mapping
@@ -364,6 +367,12 @@ def reinsert_unary_gates(
                         result_circuit.y(physical_line)
                     case "z":
                         result_circuit.z(physical_line)
+                    case name if name.startswith("rx"):
+                        angle = float(name.split("_")[1])
+                        result_circuit.rx(angle, physical_line)
+                    case name if name.startswith("rz"):
+                        angle = float(name.split("_")[1])
+                        result_circuit.rz(angle, physical_line)
                     case _:
                         raise ValueError(
                             f"Unknown unary gate: '{gate_name}'... Perhaps you should add it to the match statement?"
