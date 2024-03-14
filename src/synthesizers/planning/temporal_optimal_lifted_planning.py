@@ -25,7 +25,7 @@ from synthesizers.planning.solvers import Solver
 class TemporalOptimalLiftedPlanningSynthesizer(PlanningSynthesizer):
     description = "Optimal synthesizer based on lifted temporal planning."
     is_temporal = True
-    is_optimal = False
+    is_optimal = True
     uses_conditional_effects = False
     uses_negative_preconditions = False
 
