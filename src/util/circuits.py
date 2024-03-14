@@ -243,6 +243,25 @@ def gate_direct_successor_mapping(circuit: QuantumCircuit) -> dict[int, list[int
     return mapping
 
 
+def gate_successor_mapping(circuit: QuantumCircuit) -> dict[int, list[int]]:
+    """
+    Returns a mapping of gate index to the indices of the gates that depend on it.
+    """
+    direct_successor_mapping = gate_direct_successor_mapping(circuit)
+    successor_mapping: dict[int, set[int]] = {}
+    for i in range(len(direct_successor_mapping) - 1, -1, -1):
+        if direct_successor_mapping[i] == []:
+            successor_mapping[i] = set()
+            continue
+
+        successor_mapping[i] = set()
+        for dep in direct_successor_mapping[i]:
+            successor_mapping[i].add(dep)
+            successor_mapping[i] = successor_mapping[i].union(successor_mapping[dep])
+
+    return {gate: list(deps) for gate, deps in successor_mapping.items()}
+
+
 def remove_all_non_cx_gates(circuit: QuantumCircuit) -> QuantumCircuit:
     """
     Remove all non-CX gates from the circuit.
