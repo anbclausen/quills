@@ -9,8 +9,8 @@ from util.circuits import (
     SynthesizerSolution,
     SynthesizerTimeout,
     SynthesizerNoSolution,
-    gate_direct_dependency_mapping,
-    gate_direct_successor_mapping,
+    gate_dependency_mapping,
+    gate_successor_mapping,
     gate_line_dependency_mapping,
     with_swaps_as_cnots,
     remove_all_non_cx_gates,
@@ -153,8 +153,8 @@ class IncrSynthesizer(SATSynthesizer):
         gate_line_map = gate_line_dependency_mapping(logical_circuit)
 
         gates = list(gate_line_map.keys())
-        gate_pre_map = gate_direct_dependency_mapping(logical_circuit)
-        gate_suc_map = gate_direct_successor_mapping(logical_circuit)
+        gate_pre_map = gate_dependency_mapping(logical_circuit)
+        gate_suc_map = gate_successor_mapping(logical_circuit)
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
