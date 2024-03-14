@@ -41,6 +41,11 @@ def new_atom(name: str) -> Atom:
     return id
 
 
+def new_aux() -> Atom:
+    """Create a new auxiliary atom."""
+    return get_next_id()
+
+
 def neg(atom: Atom) -> Atom:
     """Negate the given atom."""
     return -atom
