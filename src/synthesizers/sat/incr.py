@@ -28,6 +28,7 @@ from util.sat import (
     iff,
     impl,
     impl_conj,
+    impl_disj,
     and_,
     andf,
     or_,
@@ -164,9 +165,6 @@ class IncrSynthesizer(SATSynthesizer):
             t: {l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq}
             for t in range(max_depth)
         }
-        occupied = {
-            t: {p: new_atom(f"occupied^{t}_{p}") for p in pq} for t in range(max_depth)
-        }
         enabled = {
             t: {
                 l: {
@@ -226,10 +224,6 @@ class IncrSynthesizer(SATSynthesizer):
                     problem_clauses.extend(exactly_one([mapped[t][l][p] for p in pq]))
                 for p in pq:
                     problem_clauses.extend(at_most_one([mapped[t][l][p] for l in lq]))
-                for p in pq:
-                    problem_clauses.extend(
-                        iff_disj([mapped[t][l][p] for l in lq], occupied[t][p])
-                    )
 
                 # cnot connections
                 for l, l_prime in lq_pairs:
@@ -265,7 +259,9 @@ class IncrSynthesizer(SATSynthesizer):
                     problem_clauses.extend(
                         andf(
                             *[
-                                impl(current[t][g], [[advanced[t][pred]]])
+                                impl_disj(
+                                    [current[t][g], advanced[t][g]], advanced[t][pred]
+                                )
                                 for pred in gate_pre_map[g]
                             ]
                         )
@@ -274,7 +270,9 @@ class IncrSynthesizer(SATSynthesizer):
                     problem_clauses.extend(
                         andf(
                             *[
-                                impl(current[t][g], [[delayed[t][succ]]])
+                                impl_disj(
+                                    [current[t][g], delayed[t][g]], delayed[t][succ]
+                                )
                                 for succ in gate_suc_map[g]
                             ]
                         )
@@ -291,24 +289,6 @@ class IncrSynthesizer(SATSynthesizer):
                         problem_clauses.extend(
                             iff_disj([current[t][g], delayed[t][g]], delayed[t - 1][g])
                         )
-
-                    problem_clauses.extend(
-                        andf(
-                            *[
-                                impl(advanced[t][g], [[advanced[t][pred]]])
-                                for pred in gate_pre_map[g]
-                            ]
-                        )
-                    )
-
-                    problem_clauses.extend(
-                        andf(
-                            *[
-                                impl(delayed[t][g], [[delayed[t][succ]]])
-                                for succ in gate_suc_map[g]
-                            ]
-                        )
-                    )
 
                     gate_name, lq_deps = gate_line_map[g]
                     if gate_name.startswith("cx"):

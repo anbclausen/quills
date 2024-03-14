@@ -75,6 +75,11 @@ def impl_conj(atoms: list[Atom], f: Formula) -> Formula:
     return [[*negated, *clause] for clause in f]
 
 
+def impl_disj(clause: Clause, atom: Atom) -> Formula:
+    """Create an implication from the given clause to the given atom."""
+    return [[neg(lit), atom] for lit in clause]
+
+
 def iff(a: Atom, b: Atom) -> Formula:
     """Create an equivalence between the given atoms."""
     return [[neg(a), b], [a, neg(b)]]
@@ -92,7 +97,9 @@ def iff_disj(atoms: Clause, b: Atom) -> Formula:
 
 def exactly_one(atoms: list[Atom]) -> Formula:
     """Create a formula that ensures exactly one of the given atoms is true."""
-    result = CardEnc.equals(atoms, bound=1, encoding=EncType.pairwise)
+    result = CardEnc.equals(
+        atoms, bound=1, top_id=next_id - 1, encoding=EncType.pairwise
+    )
     result.clausify()
     clauses = result.clauses
     update_id_from(clauses)
@@ -102,8 +109,8 @@ def exactly_one(atoms: list[Atom]) -> Formula:
 def at_most_one(atoms: list[Atom]) -> Formula:
     """Create a formula that ensures at most one of the given atoms is true."""
     result = CardEnc.atmost(
-        atoms, bound=1, encoding=EncType.pairwise
-    )  # FIXME: change encoding and then skip non atoms in parse_solution
+        atoms, bound=1, top_id=next_id - 1, encoding=EncType.pairwise
+    )
     result.clausify()
     clauses = result.clauses
     update_id_from(clauses)
@@ -115,6 +122,8 @@ def parse_solution(solution: list[Atom] | None) -> list[str] | None:
         return None
     result = []
     for var in solution:
+        if var not in atom_names:
+            continue
         if var < 0:
             id = -var
             result.append(f"~{atom_names[id]}")
