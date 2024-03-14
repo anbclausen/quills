@@ -21,7 +21,7 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 ## Usage
 
 ```
-usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] input
+usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] input
 
 Welcome to qt! A quantum circuit synthesis tool.
 
@@ -31,19 +31,22 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -t TIME_LIMIT, --time_limit TIME_LIMIT
-                        the time limit in seconds
+                        the time limit in seconds, default is 1800s
   -m MODEL, --model MODEL
-                        the synthesizer model to use: plan_opt
+                        the synthesizer model to use: cost_opt, cost_opt_lift, cond_cost_opt, cond_cost_opt_lift, lc_incr, lc_incr_lift, iter_incr, iter_incr_lift,
+                        grounded_iter_incr, cond_iter_incr, cond_iter_incr_lift, temp_opt, temp_opt_lift, lc_incr_pos_precond_lift, sat_incr
   -p PLATFORM, --platform PLATFORM
-                        the target platform: toy
+                        the target platform: toy, tenerife, melbourne
   -s SOLVER, --solver SOLVER
-                        the underlying solver: M_seq, MpC_seq, MpC_all, MpC_exist, fd_ms, fd_lama_first,
+                        the underlying solver: MpC_all_glucose, MpC_exist_glucose, MpC_all_maple_cm, MpC_exist_maple_cm, fd_ms, fd_lama_first, fd_bjolp, tflap,
+                        tflap_grounded, powerlifted, glucose42, maple_cm
+  -cx, --cx_optimal     whether to optimize for cx-depth
 ```
 
 ## Examples
 
 ```
-./qt benchmarks/toy_example.qasm -t 120 -m plan_opt -p toy -s fd_bjolp
+./qt benchmarks/adder.qasm -p tenerife -m sat_incr -s glucose42
 ```
 
 ## Experiments
@@ -55,11 +58,3 @@ To run all combinations of the synthesizer model and solver on all experiments, 
 ```
 
 Output will be written to terminal and to `tmp/experiments.txt`.
-
-## Temporal Planning
-
-As of now, `tflap` is the only installed temporal planner. Run example with
-
-```
-tflap temporal_test/domain.pddl temporal_test/problem.pddl temporal_test/output.txt
-```
