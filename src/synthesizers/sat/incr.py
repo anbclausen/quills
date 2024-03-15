@@ -101,6 +101,14 @@ class IncrSynthesizer(SATSynthesizer):
                 mapping[instr.level] = {}
             mapping[instr.level][LogicalQubit(instr.l)] = PhysicalQubit(instr.p)
 
+        swap_instrs_on_first_level = [
+            instr for instr in instrs if isinstance(instr, Swap) and instr.level == 0
+        ]
+        for instr in swap_instrs_on_first_level:
+            tmp = mapping[0][LogicalQubit(instr.l)]
+            mapping[0][LogicalQubit(instr.l)] = mapping[0][LogicalQubit(instr.l_prime)]
+            mapping[0][LogicalQubit(instr.l_prime)] = tmp
+
         initial_mapping = mapping[0]
 
         components = [instr for instr in instrs if not isinstance(instr, Mapped)]
