@@ -159,9 +159,6 @@ class IncrSynthesizer(SATSynthesizer):
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
-        finished_levels = 0
-        problem_clauses: list[list[int]] = []
-
         mapped = {
             t: {l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq}
             for t in range(max_depth)
@@ -212,245 +209,236 @@ class IncrSynthesizer(SATSynthesizer):
             }
             for t in range(max_depth)
         }
+        assumption = {t: new_atom(f"asm^{t}") for t in range(max_depth)}
 
         # init
-        problem_clauses.extend(and_(*[neg(advanced[0][g]) for g in gates]))
+        solver.append_formula(to_cnf(and_(*[neg(advanced[0][g]) for g in gates])))
 
-        for tmax in range(circuit_depth, max_depth + 1):
-            solver = solver.__class__()  # reset solver
+        for t in range(max_depth + 1):
+            problem_clauses: Formula = []
 
-            for t in range(finished_levels, tmax):
-                # mappings and occupancy
-                for l in lq:
-                    problem_clauses.extend(exactly_one([mapped[t][l][p] for p in pq]))
-                for p in pq:
-                    problem_clauses.extend(at_most_one([mapped[t][l][p] for l in lq]))
+            # mappings and occupancy
+            for l in lq:
+                problem_clauses.extend(exactly_one([mapped[t][l][p] for p in pq]))
+            for p in pq:
+                problem_clauses.extend(at_most_one([mapped[t][l][p] for l in lq]))
 
-                # cnot connections
-                for l, l_prime in lq_pairs:
-                    problem_clauses.extend(
-                        andf(
-                            *[
-                                impl_conj(
-                                    [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                                    [[enabled[t][l][l_prime]]],
-                                )
-                                for p, p_prime in connectivity_graph
-                            ]
-                        )
-                    )
-                    problem_clauses.extend(
-                        andf(
-                            *[
-                                impl_conj(
-                                    [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                                    [[neg(enabled[t][l][l_prime])]],
-                                )
-                                for p, p_prime in inv_connectivity_graph
-                            ]
-                        )
-                    )
-
-                # gate stuff
-                for g in gates:
-                    problem_clauses.extend(
-                        exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
-                    )
-
-                    problem_clauses.extend(
-                        andf(
-                            *[
-                                impl_disj(
-                                    [current[t][g], advanced[t][g]], advanced[t][pred]
-                                )
-                                for pred in gate_pre_map[g]
-                            ]
-                        )
-                    )
-
-                    problem_clauses.extend(
-                        andf(
-                            *[
-                                impl_disj(
-                                    [current[t][g], delayed[t][g]], delayed[t][succ]
-                                )
-                                for succ in gate_suc_map[g]
-                            ]
-                        )
-                    )
-
-                    if t > 0:
-                        problem_clauses.extend(
-                            iff_disj(
-                                [current[t - 1][g], advanced[t - 1][g]],
-                                advanced[t][g],
+            # cnot connections
+            for l, l_prime in lq_pairs:
+                problem_clauses.extend(
+                    andf(
+                        *[
+                            impl_conj(
+                                [mapped[t][l][p], mapped[t][l_prime][p_prime]],
+                                [[enabled[t][l][l_prime]]],
                             )
-                        )
-
-                        problem_clauses.extend(
-                            iff_disj([current[t][g], delayed[t][g]], delayed[t - 1][g])
-                        )
-
-                    gate_name, lq_deps = gate_line_map[g]
-                    if gate_name.startswith("cx"):
-                        problem_clauses.extend(
-                            impl(
-                                current[t][g],
-                                and_(
-                                    enabled[t][lq_deps[0]][lq_deps[1]],
-                                    free[t][lq_deps[0]],
-                                    free[t][lq_deps[1]],
-                                ),
+                            for p, p_prime in connectivity_graph
+                        ]
+                    )
+                )
+                problem_clauses.extend(
+                    andf(
+                        *[
+                            impl_conj(
+                                [mapped[t][l][p], mapped[t][l_prime][p_prime]],
+                                [[neg(enabled[t][l][l_prime])]],
                             )
-                        )
+                            for p, p_prime in inv_connectivity_graph
+                        ]
+                    )
+                )
 
-                        # force early scehduling
-                        problem_clauses.extend(
-                            impl(
-                                delayed[t][g],
-                                or_(
-                                    neg(enabled[t][lq_deps[0]][lq_deps[1]]),
-                                    neg(free[t][lq_deps[0]]),
-                                    neg(free[t][lq_deps[1]]),
-                                    *[
-                                        delayed[t][g_prime]
-                                        for g_prime in gate_pre_map[g]
-                                    ],
-                                    *[
-                                        current[t][g_prime]
-                                        for g_prime in gate_pre_map[g]
-                                    ],
-                                ),
+            # gate stuff
+            for g in gates:
+                problem_clauses.extend(
+                    exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
+                )
+
+                problem_clauses.extend(
+                    andf(
+                        *[
+                            impl_disj(
+                                [current[t][g], advanced[t][g]], advanced[t][pred]
                             )
-                        )
+                            for pred in gate_pre_map[g]
+                        ]
+                    )
+                )
 
-                    else:
-                        problem_clauses.extend(
-                            impl(current[t][g], [[free[t][lq_deps[0]]]])
-                        )
+                problem_clauses.extend(
+                    andf(
+                        *[
+                            impl_disj([current[t][g], delayed[t][g]], delayed[t][succ])
+                            for succ in gate_suc_map[g]
+                        ]
+                    )
+                )
 
-                        # force early scehduling
-                        problem_clauses.extend(
-                            impl(
-                                delayed[t][g],
-                                or_(
-                                    neg(free[t][lq_deps[0]]),
-                                    *[
-                                        delayed[t][g_prime]
-                                        for g_prime in gate_pre_map[g]
-                                    ],
-                                    *[
-                                        current[t][g_prime]
-                                        for g_prime in gate_pre_map[g]
-                                    ],
-                                ),
-                            )
-                        )
-
-                # swap stuff
-                for l in lq:
+                if t > 0:
                     problem_clauses.extend(
-                        exactly_one([free[t][l], swap1[t][l], swap2[t][l], swap3[t][l]])
+                        iff_disj(
+                            [current[t - 1][g], advanced[t - 1][g]],
+                            advanced[t][g],
+                        )
                     )
 
                     problem_clauses.extend(
-                        at_most_one(
-                            [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
-                            + [swap[t][l_prime][l] for l_prime in lq if l_prime != l]
-                        )
+                        iff_disj([current[t][g], delayed[t][g]], delayed[t - 1][g])
                     )
 
-                    if t > 0:
-                        problem_clauses.extend(
-                            andf(
-                                *[
-                                    impl(
-                                        neg(swap1[t][l]),
-                                        iff(mapped[t - 1][l][p], mapped[t][l][p]),
-                                    )
-                                    for p in pq
-                                ]
-                            )
-                        )
-
-                        problem_clauses.extend(iff(swap1[t - 1][l], swap2[t][l]))
-
-                        problem_clauses.extend(iff(swap2[t - 1][l], swap3[t][l]))
-
-                        for l_prime in lq:
-                            problem_clauses.extend(
-                                andf(
-                                    *[
-                                        impl_conj(
-                                            [
-                                                mapped[t][l][p_prime],
-                                                mapped[t][l_prime][p],
-                                                swap1[t][l],
-                                                swap1[t][l_prime],
-                                                swap[t][l][l_prime],
-                                            ],
-                                            and_(
-                                                mapped[t - 1][l][p],
-                                                mapped[t - 1][l_prime][p_prime],
-                                            ),
-                                        )
-                                        for p, p_prime in connectivity_graph
-                                        if l != l_prime
-                                    ]
-                                )
-                            )
-
+                gate_name, lq_deps = gate_line_map[g]
+                if gate_name.startswith("cx"):
                     problem_clauses.extend(
                         impl(
-                            swap1[t][l],
-                            or_(
-                                *(
-                                    [
-                                        swap[t][l][l_prime]
-                                        for l_prime in lq
-                                        if l_prime != l
-                                    ]
-                                    + [
-                                        swap[t][l_prime][l]
-                                        for l_prime in lq
-                                        if l_prime != l
-                                    ]
-                                )
+                            current[t][g],
+                            and_(
+                                enabled[t][lq_deps[0]][lq_deps[1]],
+                                free[t][lq_deps[0]],
+                                free[t][lq_deps[1]],
                             ),
                         )
                     )
 
-                    for l_prime in lq:
-                        if l == l_prime:
-                            continue
-
-                        problem_clauses.extend(
-                            impl(swap[t][l][l_prime], [[enabled[t][l][l_prime]]])
+                    # force early scehduling
+                    problem_clauses.extend(
+                        impl(
+                            delayed[t][g],
+                            or_(
+                                neg(enabled[t][lq_deps[0]][lq_deps[1]]),
+                                neg(free[t][lq_deps[0]]),
+                                neg(free[t][lq_deps[1]]),
+                                *[delayed[t][g_prime] for g_prime in gate_pre_map[g]],
+                                *[current[t][g_prime] for g_prime in gate_pre_map[g]],
+                            ),
                         )
+                    )
 
+                else:
+                    problem_clauses.extend(impl(current[t][g], [[free[t][lq_deps[0]]]]))
+
+                    # force early scehduling
+                    problem_clauses.extend(
+                        impl(
+                            delayed[t][g],
+                            or_(
+                                neg(free[t][lq_deps[0]]),
+                                *[delayed[t][g_prime] for g_prime in gate_pre_map[g]],
+                                *[current[t][g_prime] for g_prime in gate_pre_map[g]],
+                            ),
+                        )
+                    )
+
+            # swap stuff
+            for l in lq:
+                problem_clauses.extend(
+                    exactly_one([free[t][l], swap1[t][l], swap2[t][l], swap3[t][l]])
+                )
+
+                problem_clauses.extend(
+                    at_most_one(
+                        [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
+                        + [swap[t][l_prime][l] for l_prime in lq if l_prime != l]
+                    )
+                )
+
+                if t > 0:
+                    problem_clauses.extend(
+                        andf(
+                            *[
+                                impl(
+                                    neg(swap1[t][l]),
+                                    iff(mapped[t - 1][l][p], mapped[t][l][p]),
+                                )
+                                for p in pq
+                            ]
+                        )
+                    )
+
+                    problem_clauses.extend(iff(swap1[t - 1][l], swap2[t][l]))
+
+                    problem_clauses.extend(iff(swap2[t - 1][l], swap3[t][l]))
+
+                    for l_prime in lq:
                         problem_clauses.extend(
-                            impl(
-                                swap[t][l][l_prime],
-                                and_(swap1[t][l], swap1[t][l_prime]),
+                            andf(
+                                *[
+                                    impl_conj(
+                                        [
+                                            mapped[t][l][p_prime],
+                                            mapped[t][l_prime][p],
+                                            swap1[t][l],
+                                            swap1[t][l_prime],
+                                            swap[t][l][l_prime],
+                                        ],
+                                        and_(
+                                            mapped[t - 1][l][p],
+                                            mapped[t - 1][l_prime][p_prime],
+                                        ),
+                                    )
+                                    for p, p_prime in connectivity_graph
+                                    if l != l_prime
+                                ]
                             )
                         )
-            finished_levels = tmax
-            problem_clauses_3cnf = to_cnf(problem_clauses, max_clause_size=3)
-            solver.append_formula(problem_clauses_3cnf)
+
+                problem_clauses.extend(
+                    impl(
+                        swap1[t][l],
+                        or_(
+                            *(
+                                [swap[t][l][l_prime] for l_prime in lq if l_prime != l]
+                                + [
+                                    swap[t][l_prime][l]
+                                    for l_prime in lq
+                                    if l_prime != l
+                                ]
+                            )
+                        ),
+                    )
+                )
+
+                for l_prime in lq:
+                    if l == l_prime:
+                        continue
+
+                    problem_clauses.extend(
+                        impl(swap[t][l][l_prime], [[enabled[t][l][l_prime]]])
+                    )
+
+                    problem_clauses.extend(
+                        impl(
+                            swap[t][l][l_prime],
+                            and_(swap1[t][l], swap1[t][l_prime]),
+                        )
+                    )
 
             # goal
-            solver.append_formula(and_(*[neg(delayed[tmax - 1][g]) for g in gates]))
-            solver.append_formula(and_(*[neg(swap1[tmax - 1][l]) for l in lq]))
-            solver.append_formula(and_(*[neg(swap2[tmax - 1][l]) for l in lq]))
+            problem_clauses.extend(
+                impl(assumption[t], and_(*[neg(delayed[t][g]) for g in gates]))
+            )
+            problem_clauses.extend(
+                impl(assumption[t], and_(*[neg(swap1[t][l]) for l in lq]))
+            )
+            problem_clauses.extend(
+                impl(assumption[t], and_(*[neg(swap2[t][l]) for l in lq]))
+            )
 
-            before = time.time()
-            solver.solve()
-            after = time.time()
-            overall_time += after - before
-            solution = parse_solution(solver.get_model())
-            print(f"depth {tmax}", flush=True, end=", ")
-            if solution:
-                return solution, overall_time
+            problem_clauses_3cnf = to_cnf(problem_clauses)
+            solver.append_formula(problem_clauses_3cnf)
+
+            # assumptions
+            asm = [neg(assumption[t_prime]) for t_prime in range(t)]
+            asm.append(assumption[t])
+
+            if t >= circuit_depth - 1:
+                before = time.time()
+                solver.solve(assumptions=asm)
+                after = time.time()
+                overall_time += after - before
+                solution = parse_solution(solver.get_model())
+                print(f"depth {t+1}", flush=True, end=", ")
+                if solution:
+                    return solution, overall_time
 
         return None
 
