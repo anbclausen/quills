@@ -45,7 +45,7 @@ from synthesizers.sat.synthesizer import SATSynthesizer
 import synthesizers.sat.synthesizer as sat
 from synthesizers.sat.incr import IncrSynthesizer
 
-from platforms import TOY, TENERIFE, MELBOURNE, SYCAMORE, RIGETTI80, Platform
+from platforms import TOY, TENERIFE, MELBOURNE, SYCAMORE, RIGETTI80, EAGLE, Platform
 
 from synthesizers.planning.solvers import (
     M_SEQUENTIAL_PLANS,
@@ -119,6 +119,7 @@ platforms: dict[str, Platform] = {
     "melbourne": MELBOURNE,
     "sycamore": SYCAMORE,
     "rigetti80": RIGETTI80,
+    "eagle": EAGLE,
 }
 
 solvers: dict[str, Solver | sat.Solver] = {
