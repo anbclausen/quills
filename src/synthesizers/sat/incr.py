@@ -32,6 +32,7 @@ from util.sat import (
     and_,
     andf,
     or_,
+    to_cnf,
 )
 import time
 from util.time_limit import time_limit, TimeoutException
@@ -434,7 +435,8 @@ class IncrSynthesizer(SATSynthesizer):
                             )
                         )
             finished_levels = tmax
-            solver.append_formula(problem_clauses)
+            problem_clauses_3cnf = to_cnf(problem_clauses, max_clause_size=3)
+            solver.append_formula(problem_clauses_3cnf)
 
             # goal
             solver.append_formula(and_(*[neg(delayed[tmax - 1][g]) for g in gates]))

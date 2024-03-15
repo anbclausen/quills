@@ -71,13 +71,19 @@ def andf(*args: Formula) -> Formula:
 
 def impl(atom: Atom, f: Formula) -> Formula:
     """Create an implication from the given atom to the given formula."""
-    return [new_clause for clause in f for new_clause in or_(neg(atom), *clause)]
+    clauses: list[Clause] = []
+    for clause in f:
+        clauses.extend(or_(neg(atom), *clause))
+    return clauses
 
 
 def impl_conj(atoms: list[Atom], f: Formula) -> Formula:
     """Create an implication from the _conjunction_ of atoms to the given formula."""
     negated = [neg(atom) for atom in atoms]
-    return [new_clause for clause in f for new_clause in or_(*negated, *clause)]
+    clauses: list[Clause] = []
+    for clause in f:
+        clauses.extend(or_(*negated, *clause))
+    return clauses
 
 
 def impl_disj(clause: Clause, atom: Atom) -> Formula:
@@ -131,4 +137,22 @@ def parse_solution(solution: list[Atom] | None) -> list[str] | None:
         else:
             id = var
             result.append(atom_names[id])
+    return result
+
+
+def to_cnf(f: Formula, max_clause_size=3) -> Formula:
+    """Convert the given CNF formula to CNF with specified maximum clause size (default 3CNF)."""
+    result = []
+    for clause in f:
+        lone_atoms = clause
+        while lone_atoms:
+            if len(lone_atoms) <= max_clause_size:
+                result.append(lone_atoms)
+                break
+            new_clause = lone_atoms[: max_clause_size - 1]
+            lone_atoms = lone_atoms[max_clause_size - 1 :]
+            aux = new_aux()
+            new_clause.append(aux)
+            lone_atoms.append(neg(aux))
+            result.append(new_clause)
     return result
