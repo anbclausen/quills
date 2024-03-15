@@ -154,6 +154,9 @@ solvers: dict[str, Solver | sat.Solver] = {
     "powerlifted": PowerLifted(),
     "glucose42": pysat.solvers.Glucose42(),
     "maple_cm": pysat.solvers.MapleCM(),
+    "cadical153": pysat.solvers.Cadical153(),
+    "maple_chrono": pysat.solvers.MapleChrono(),
+    "minisat22": pysat.solvers.Minisat22(),
 }
 
 

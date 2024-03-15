@@ -5,7 +5,7 @@ from util.sat import Atom
 from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
 
-type Solver = pysat.solvers.Glucose42 | pysat.solvers.MapleCM
+type Solver = pysat.solvers.Glucose42 | pysat.solvers.MapleCM | pysat.solvers.Cadical153 | pysat.solvers.MapleChrono | pysat.solvers.Minisat22
 
 
 class SATSynthesizer(ABC):
