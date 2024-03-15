@@ -423,8 +423,7 @@ class IncrSynthesizer(SATSynthesizer):
                 impl(assumption[t], and_(*[neg(swap2[t][l]) for l in lq]))
             )
 
-            problem_clauses_3cnf = to_cnf(problem_clauses)
-            solver.append_formula(problem_clauses_3cnf)
+            solver.append_formula(to_cnf(problem_clauses, max_clause_size=3))
 
             # assumptions
             asm = [neg(assumption[t_prime]) for t_prime in range(t)]
