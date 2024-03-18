@@ -1,5 +1,6 @@
 from synthesizers.sat.synthesizer import SATSynthesizer, Solver
 from qiskit import QuantumCircuit, QuantumRegister
+from pysat.card import EncType
 from qiskit.circuit import Qubit
 from platforms import Platform
 from util.circuits import (
@@ -319,11 +320,11 @@ class PhysSynthesizer(SATSynthesizer):
                             swap[t][p, p_prime],
                             and_(
                                 neg(usable[t][p]),
-                                neg(usable[t-1][p]),
-                                neg(usable[t-2][p]),
+                                neg(usable[t - 1][p]),
+                                neg(usable[t - 2][p]),
                                 neg(usable[t][p_prime]),
-                                neg(usable[t-1][p_prime]),
-                                neg(usable[t-2][p_prime]),
+                                neg(usable[t - 1][p_prime]),
+                                neg(usable[t - 2][p_prime]),
                             ),
                         )
                     )
