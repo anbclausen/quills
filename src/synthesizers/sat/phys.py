@@ -51,8 +51,8 @@ class PhysSynthesizer(SATSynthesizer):
 
         class Swap:
             def __init__(self, l: int, l_prime: int, level: int):
-                self.l = l
-                self.l_prime = l_prime
+                self.p = l
+                self.p_prime = l_prime
                 self.level = level
 
         class Mapped:
@@ -62,14 +62,14 @@ class PhysSynthesizer(SATSynthesizer):
                 self.level = level
 
         def parse(name: str) -> Gate | Swap | Mapped:
-            if name.startswith("current"):
+            if name.startswith("done"):
                 time, id = name.split("^")[1].split("_")
                 return Gate(int(id), int(time))
             elif name.startswith("swap"):
                 numbers = name.split("^")[1]
                 time = numbers.split("_")[0]
-                l, l_prime = numbers.split("_")[1].split(";")
-                return Swap(int(l), int(l_prime), int(time))
+                p, p_prime = numbers.split("_")[1].split(";")
+                return Swap(int(p), int(p_prime), int(time))
             elif name.startswith("mapped"):
                 numbers = name.split("^")[1]
                 time = numbers.split("_")[0]
@@ -83,7 +83,7 @@ class PhysSynthesizer(SATSynthesizer):
             for atom_name in solver_solution
             if not atom_name.startswith("~")
             and (
-                atom_name.startswith("current")
+                atom_name.startswith("done")
                 or atom_name.startswith("swap^")
                 or atom_name.startswith("mapped")
             )
@@ -92,19 +92,26 @@ class PhysSynthesizer(SATSynthesizer):
         instrs = [parse(name) for name in relevant_atoms]
 
         mapping_instrs = [instr for instr in instrs if isinstance(instr, Mapped)]
-        mapping: dict[int, dict[LogicalQubit, PhysicalQubit]] = {}
+        mapping = {}
         for instr in mapping_instrs:
             if instr.level not in mapping:
                 mapping[instr.level] = {}
-            mapping[instr.level][LogicalQubit(instr.l)] = PhysicalQubit(instr.p)
+            mapping[instr.level][PhysicalQubit(instr.p)] = LogicalQubit(instr.l)
 
         swap_instrs_on_first_level = [
             instr for instr in instrs if isinstance(instr, Swap) and instr.level == 0
         ]
         for instr in swap_instrs_on_first_level:
-            tmp = mapping[0][LogicalQubit(instr.l)]
-            mapping[0][LogicalQubit(instr.l)] = mapping[0][LogicalQubit(instr.l_prime)]
-            mapping[0][LogicalQubit(instr.l_prime)] = tmp
+            tmp = mapping[0][PhysicalQubit(instr.p)]
+            mapping[0][PhysicalQubit(instr.p)] = mapping[0][
+                PhysicalQubit(instr.p_prime)
+            ]
+            mapping[0][PhysicalQubit(instr.p_prime)] = tmp
+
+        # fix the direction of the mapping
+        mapping = {
+            level: {l: p for p, l in mapping[level].items()} for level in mapping
+        }
 
         initial_mapping = mapping[0]
 
@@ -126,10 +133,7 @@ class PhysSynthesizer(SATSynthesizer):
                 )
                 circuit.append(remapped_gate)
             elif isinstance(instr, Swap):
-                circuit.swap(
-                    mapping[instr.level][LogicalQubit(instr.l)].id,
-                    mapping[instr.level][LogicalQubit(instr.l_prime)].id,
-                )
+                circuit.swap(instr.p, instr.p_prime)
             else:
                 raise ValueError(f"Cannot parse instruction: {instr}")
 
