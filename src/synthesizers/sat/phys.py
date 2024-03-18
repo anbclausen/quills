@@ -1,6 +1,5 @@
 from synthesizers.sat.synthesizer import SATSynthesizer, Solver
 from qiskit import QuantumCircuit, QuantumRegister
-from pysat.card import EncType
 from qiskit.circuit import Qubit
 from platforms import Platform
 from util.circuits import (
@@ -18,7 +17,6 @@ from util.circuits import (
     reinsert_unary_gates,
 )
 from util.sat import (
-    Atom,
     Formula,
     parse_solution,
     exactly_one,
@@ -26,15 +24,12 @@ from util.sat import (
     at_most_two,
     new_atom,
     neg,
-    iff_disj,
     iff,
     impl,
     impl_conj,
     impl_disj,
     and_,
     andf,
-    or_,
-    to_cnf,
 )
 import time
 from util.time_limit import time_limit, TimeoutException
