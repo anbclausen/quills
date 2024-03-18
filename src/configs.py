@@ -44,6 +44,7 @@ from synthesizers.planning.local_clock_incremental_positive_preconditions_lifted
 from synthesizers.sat.synthesizer import SATSynthesizer
 import synthesizers.sat.synthesizer as sat
 from synthesizers.sat.incr import IncrSynthesizer
+from synthesizers.sat.phys import PhysSynthesizer
 
 from platforms import TOY, TENERIFE, MELBOURNE, SYCAMORE, RIGETTI80, EAGLE, Platform
 
@@ -90,6 +91,7 @@ synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
     "temp_opt_lift": TemporalOptimalLiftedPlanningSynthesizer(),
     "lc_incr_pos_precond_lift": LocalClockIncrementalPositivePreconditionsLiftedPlanningSynthesizer(),
     "sat_incr": IncrSynthesizer(),
+    "sat_phys": PhysSynthesizer(),
 }
 
 OPTIMAL_PLANNING_SYNTHESIZERS = [
