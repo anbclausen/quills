@@ -25,6 +25,7 @@ from util.sat import (
     new_atom,
     neg,
     iff,
+    iff_disj,
     impl,
     impl_conj,
     impl_disj,
@@ -212,12 +213,20 @@ class PhysSynthesizer(SATSynthesizer):
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
-        mapped = {
-            t: {l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq}
-            for t in range(max_depth)
-        }
-        enabled = {
-            t: {
+        mapped = {}
+        occupied = {}
+        enabled = {}
+        done = {}
+        usable = {}
+        swap = {}
+        assumption = {}
+
+        for t in range(max_depth + 1):
+            mapped[t] = {
+                l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq
+            }
+            occupied[t] = {p: new_atom(f"occupied^{t}_{p}") for p in pq}
+            enabled[t] = {
                 l: {
                     l_prime: new_atom(f"enabled^{t}_{l}_{l_prime}")
                     for l_prime in lq
@@ -225,29 +234,15 @@ class PhysSynthesizer(SATSynthesizer):
                 }
                 for l in lq
             }
-            for t in range(max_depth)
-        }
+            done[t] = {g: new_atom(f"done^{t}_{g}") for g in gates}
+            usable[t] = {p: new_atom(f"usable^{t}_{p}") for p in pq}
+            if t < max_depth - 1:
+                swap[t] = {
+                    (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
+                    for p, p_prime in connectivity_graph
+                }
+            assumption[t] = new_atom(f"asm^{t}")
 
-        done = {
-            t: {g: new_atom(f"done^{t}_{g}") for g in gates} for t in range(max_depth)
-        }
-        usable = {
-            t: {p: new_atom(f"usable^{t}_{p}") for p in pq} for t in range(max_depth)
-        }
-
-        swap = {
-            t: {
-                (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
-                for p, p_prime in connectivity_graph
-            }
-            for t in range(max_depth - 2)
-        }
-        assumption = {t: new_atom(f"asm^{t}") for t in range(max_depth)}
-
-        # init
-        solver.append_formula(and_(*[neg(done[0][g]) for g in gates]))
-
-        for t in range(max_depth + 1):
             problem_clauses: Formula = []
 
             # mappings and occupancy
@@ -255,6 +250,10 @@ class PhysSynthesizer(SATSynthesizer):
                 problem_clauses.extend(exactly_one([mapped[t][l][p] for p in pq]))
             for p in pq:
                 problem_clauses.extend(at_most_one([mapped[t][l][p] for l in lq]))
+            for p in pq:
+                problem_clauses.extend(
+                    iff_disj([mapped[t][l][p] for l in lq], occupied[t][p])
+                )
 
             # cnot connections
             for l, l_prime in lq_pairs:
@@ -334,7 +333,7 @@ class PhysSynthesizer(SATSynthesizer):
                         )
 
             # swap stuff
-            if t > 2:
+            if t > 0:
                 for p in pq:
                     problem_clauses.extend(
                         at_most_two(
@@ -354,19 +353,20 @@ class PhysSynthesizer(SATSynthesizer):
                         iff(swap[t][p, p_prime], swap[t][p_prime, p])
                     )
 
-                    problem_clauses.extend(
-                        impl(
-                            swap[t][p, p_prime],
-                            and_(
-                                neg(usable[t][p]),
-                                neg(usable[t - 1][p]),
-                                neg(usable[t - 2][p]),
-                                neg(usable[t][p_prime]),
-                                neg(usable[t - 1][p_prime]),
-                                neg(usable[t - 2][p_prime]),
-                            ),
+                    if t > 1:
+                        problem_clauses.extend(
+                            impl(
+                                swap[t - 2][p, p_prime],
+                                and_(
+                                    neg(usable[t][p]),
+                                    neg(usable[t - 1][p]),
+                                    neg(usable[t - 2][p]),
+                                    neg(usable[t][p_prime]),
+                                    neg(usable[t - 1][p_prime]),
+                                    neg(usable[t - 2][p_prime]),
+                                ),
+                            )
                         )
-                    )
 
                     for l, l_prime in lq_pairs:
                         problem_clauses.extend(
@@ -382,10 +382,46 @@ class PhysSynthesizer(SATSynthesizer):
                             )
                         )
 
+                    problem_clauses.extend(
+                        impl(
+                            swap[t][p, p_prime],
+                            and_(occupied[t][p], occupied[t][p_prime]),
+                        )
+                    )
+
+            # init
+            if t == 0:
+                solver.append_formula(and_(*[neg(done[0][g]) for g in gates]))
+                solver.append_formula(
+                    and_(
+                        *[neg(swap[0][p, p_prime]) for p, p_prime in connectivity_graph]
+                    )
+                )
+
             # goal
             problem_clauses.extend(
                 impl(assumption[t], and_(*[done[t][g] for g in gates]))
             )
+            problem_clauses.extend(
+                impl(
+                    assumption[t],
+                    and_(
+                        *[neg(swap[t][p, p_prime]) for p, p_prime in connectivity_graph]
+                    ),
+                )
+            )
+            if t > 0:
+                problem_clauses.extend(
+                    impl(
+                        assumption[t],
+                        and_(
+                            *[
+                                neg(swap[t - 1][p, p_prime])
+                                for p, p_prime in connectivity_graph
+                            ]
+                        ),
+                    )
+                )
 
             solver.append_formula(problem_clauses)
 
@@ -399,7 +435,7 @@ class PhysSynthesizer(SATSynthesizer):
                 after = time.time()
                 overall_time += after - before
                 solution = parse_solution(solver.get_model())
-                print(f"depth {t+1}", flush=True, end=", ")
+                print(f"depth {t}", flush=True, end=", ")
                 if solution:
                     file = open("tmp/result.txt", "w")
                     for line in solution:
@@ -420,6 +456,10 @@ class PhysSynthesizer(SATSynthesizer):
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
         )
+        # mapping = gate_line_dependency_mapping(circuit)
+        # print()
+        # for gate, line in mapping.items():
+        #     print(f"Gate {gate}: {line}")
         try:
             with time_limit(time_limit_s):
                 out = self.create_solution(circuit, platform, solver)

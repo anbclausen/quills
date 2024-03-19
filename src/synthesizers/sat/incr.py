@@ -167,12 +167,23 @@ class IncrSynthesizer(SATSynthesizer):
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
-        mapped = {
-            t: {l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq}
-            for t in range(max_depth)
-        }
-        enabled = {
-            t: {
+        mapped = {}
+        enabled = {}
+        current = {}
+        advanced = {}
+        delayed = {}
+        free = {}
+        swap1 = {}
+        swap2 = {}
+        swap3 = {}
+        swap = {}
+        assumption = {}
+
+        for t in range(max_depth + 1):
+            mapped[t] = {
+                l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq
+            }
+            enabled[t] = {
                 l: {
                     l_prime: new_atom(f"enabled^{t}_{l}_{l_prime}")
                     for l_prime in lq
@@ -180,34 +191,14 @@ class IncrSynthesizer(SATSynthesizer):
                 }
                 for l in lq
             }
-            for t in range(max_depth)
-        }
-
-        current = {
-            t: {g: new_atom(f"current^{t}_{g}") for g in gates}
-            for t in range(max_depth)
-        }
-        advanced = {
-            t: {g: new_atom(f"advanced^{t}_{g}") for g in gates}
-            for t in range(max_depth)
-        }
-        delayed = {
-            t: {g: new_atom(f"delayed^{t}_{g}") for g in gates}
-            for t in range(max_depth)
-        }
-
-        free = {t: {l: new_atom(f"free^{t}_{l}") for l in lq} for t in range(max_depth)}
-        swap1 = {
-            t: {l: new_atom(f"swap1^{t}_{l}") for l in lq} for t in range(max_depth)
-        }
-        swap2 = {
-            t: {l: new_atom(f"swap2^{t}_{l}") for l in lq} for t in range(max_depth)
-        }
-        swap3 = {
-            t: {l: new_atom(f"swap3^{t}_{l}") for l in lq} for t in range(max_depth)
-        }
-        swap = {
-            t: {
+            current[t] = {g: new_atom(f"current^{t}_{g}") for g in gates}
+            advanced[t] = {g: new_atom(f"advanced^{t}_{g}") for g in gates}
+            delayed[t] = {g: new_atom(f"delayed^{t}_{g}") for g in gates}
+            free[t] = {l: new_atom(f"free^{t}_{l}") for l in lq}
+            swap1[t] = {l: new_atom(f"swap1^{t}_{l}") for l in lq}
+            swap2[t] = {l: new_atom(f"swap2^{t}_{l}") for l in lq}
+            swap3[t] = {l: new_atom(f"swap3^{t}_{l}") for l in lq}
+            swap[t] = {
                 l: {
                     l_prime: new_atom(f"swap^{t}_{l};{l_prime}")
                     for l_prime in lq
@@ -215,14 +206,8 @@ class IncrSynthesizer(SATSynthesizer):
                 }
                 for l in lq
             }
-            for t in range(max_depth)
-        }
-        assumption = {t: new_atom(f"asm^{t}") for t in range(max_depth)}
+            assumption[t] = new_atom(f"asm^{t}")
 
-        # init
-        solver.append_formula(to_cnf(and_(*[neg(advanced[0][g]) for g in gates])))
-
-        for t in range(max_depth + 1):
             problem_clauses: Formula = []
 
             # mappings and occupancy
@@ -394,6 +379,10 @@ class IncrSynthesizer(SATSynthesizer):
                         )
                     )
 
+            # init
+            if t == 0:
+                solver.append_formula(and_(*[neg(advanced[0][g]) for g in gates]))
+
             # goal
             problem_clauses.extend(
                 impl(assumption[t], and_(*[neg(delayed[t][g]) for g in gates]))
@@ -419,6 +408,10 @@ class IncrSynthesizer(SATSynthesizer):
                 solution = parse_solution(solver.get_model())
                 print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
+                    file = open("tmp/result.txt", "w")
+                    for line in solution:
+                        if not line.startswith("~"):
+                            file.write(line + "\n")
                     return solution, overall_time
 
         return None

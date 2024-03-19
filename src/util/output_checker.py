@@ -66,7 +66,7 @@ class OutputChecker:
                     other_line = int(gate_name[4:])
                     if not (line.id, other_line) in platform.connectivity_graph:
                         print(
-                            f"Connectivity check failed: ({line, other_line}) not in platform"
+                            f"Connectivity check failed: ({line.id, other_line}) not in platform"
                         )
                         return False
 
