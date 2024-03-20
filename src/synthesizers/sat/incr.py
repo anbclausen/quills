@@ -19,7 +19,7 @@ from util.circuits import (
 from util.sat import (
     Atom,
     Formula,
-    parse_solution,
+    parse_sat_solution,
     exactly_one,
     at_most_one,
     new_atom,
@@ -405,13 +405,14 @@ class IncrSynthesizer(SATSynthesizer):
                 solver.solve(assumptions=asm)
                 after = time.time()
                 overall_time += after - before
-                solution = parse_solution(solver.get_model())
+                solution = parse_sat_solution(solver.get_model())
                 print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
                     file = open("tmp/result.txt", "w")
                     for line in solution:
                         if not line.startswith("~"):
                             file.write(line + "\n")
+                    file.close()
                     return solution, overall_time
 
         return None

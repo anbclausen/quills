@@ -18,7 +18,7 @@ from util.circuits import (
 )
 from util.sat import (
     Formula,
-    parse_solution,
+    parse_sat_solution,
     exactly_one,
     at_most_one,
     at_most_two,
@@ -335,12 +335,24 @@ class PhysSynthesizer(SATSynthesizer):
             # swap stuff
             if t > 0:
                 for p in pq:
-                    problem_clauses.extend(
-                        at_most_two(
-                            [swap[t][p, p_prime] for p_prime in conn_dict[p]]
-                            + [swap[t][p_prime, p] for p_prime in conn_dict[p]]
+                    if t == 1:
+                        problem_clauses.extend(
+                            at_most_two(
+                                [swap[t][p, p_prime] for p_prime in conn_dict[p]]
+                                + [swap[t][p_prime, p] for p_prime in conn_dict[p]]
+                            )
                         )
-                    )
+                    else:
+                        problem_clauses.extend(
+                            at_most_two(
+                                [swap[t][p, p_prime] for p_prime in conn_dict[p]]
+                                + [swap[t][p_prime, p] for p_prime in conn_dict[p]]
+                                + [swap[t - 1][p, p_prime] for p_prime in conn_dict[p]]
+                                + [swap[t - 1][p_prime, p] for p_prime in conn_dict[p]]
+                                + [swap[t - 2][p, p_prime] for p_prime in conn_dict[p]]
+                                + [swap[t - 2][p_prime, p] for p_prime in conn_dict[p]]
+                            )
+                        )
                     for l in lq:
                         problem_clauses.extend(
                             impl_conj(
@@ -434,13 +446,15 @@ class PhysSynthesizer(SATSynthesizer):
                 solver.solve(assumptions=asm)
                 after = time.time()
                 overall_time += after - before
-                solution = parse_solution(solver.get_model())
+                model = solver.get_model()
+                solution = parse_sat_solution(model)
                 print(f"depth {t}", flush=True, end=", ")
                 if solution:
                     file = open("tmp/result.txt", "w")
                     for line in solution:
                         if not line.startswith("~"):
                             file.write(line + "\n")
+                    file.close()
                     return solution, overall_time
 
         return None

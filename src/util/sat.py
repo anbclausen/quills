@@ -130,7 +130,7 @@ def at_most_two(atoms: list[Atom], encoding=EncType.seqcounter) -> Formula:
     return clauses
 
 
-def parse_solution(solution: list[Atom] | None) -> list[str] | None:
+def parse_sat_solution(solution: list[Atom] | None) -> list[str] | None:
     if solution is None:
         return None
     result = []
