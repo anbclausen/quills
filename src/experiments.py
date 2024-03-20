@@ -1,5 +1,6 @@
 import os
 import json
+import pysat.solvers
 
 from qiskit import QuantumCircuit
 from typing import Literal
@@ -23,21 +24,62 @@ from datetime import datetime
 from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
-CX_OPTIMAL = True
+CX_OPTIMAL = False
 EXPERIMENT_TIME_LIMIT_S = 180
 CACHE_FILE = f"tmp/experiments_cache{"_cx" if CX_OPTIMAL else ""}.json"
 EXPERIMENTS = [
-    ("toy_example.qasm", "toy"),
+    # up to 4 qubits
+    ("adder.qasm", "toy"),
     ("or.qasm", "toy"),
     ("toffoli.qasm", "toy"),
-    ("adder.qasm", "toy"),
-    ("toy_example.qasm", "tenerife"),
+    ("toy_example.qasm", "toy"),
+
+    # up to 5 qubits
+    ("adder.qasm", "tenerife"),
     ("or.qasm", "tenerife"),
     ("toffoli.qasm", "tenerife"),
-    ("adder.qasm", "tenerife"),
-    ("qaoa5.qasm", "tenerife"),
+    ("toy_example.qasm", "tenerife"),
+    ("4gt13_92.qasm", "tenerife"),
     ("4mod5-v1_22.qasm", "tenerife"),
+    ("mod5mils_65.qasm", "tenerife"),
+    ("qaoa5.qasm", "tenerife"),
+
+    # up to 14 qubits
+    ("adder.qasm", "melbourne"),
+    ("or.qasm", "melbourne"),
+    ("toffoli.qasm", "melbourne"),
+    ("toy_example.qasm", "melbourne"),
+    ("4gt13_92.qasm", "melbourne"),
+    ("4mod5-v1_22.qasm", "melbourne"),
+    ("mod5mils_65.qasm", "melbourne"),
+    ("qaoa5.qasm", "melbourne"),
     ("barenco_tof_4.qasm", "melbourne"),
+    ("barenco_tof_5.qasm", "melbourne"),
+    ("mod_mult_55.qasm", "melbourne"),
+    ("rc_adder_6.qasm", "melbourne"),
+    ("tof_4.qasm", "melbourne"),
+    ("tof_5.qasm", "melbourne"),
+    ("vbe_adder_3.qasm", "melbourne"),
+
+    # up to 54 qubits
+    ("adder.qasm", "sycamore"),
+    ("or.qasm", "sycamore"),
+    ("toffoli.qasm", "sycamore"),
+    ("toy_example.qasm", "sycamore"),
+    ("4gt13_92.qasm", "sycamore"),
+    ("4mod5-v1_22.qasm", "sycamore"),
+    ("mod5mils_65.qasm", "sycamore"),
+    ("qaoa5.qasm", "sycamore"),
+    ("barenco_tof_4.qasm", "sycamore"),
+    ("barenco_tof_5.qasm", "sycamore"),
+    ("mod_mult_55.qasm", "sycamore"),
+    ("rc_adder_6.qasm", "sycamore"),
+    ("tof_4.qasm", "sycamore"),
+    ("tof_5.qasm", "sycamore"),
+    ("vbe_adder_3.qasm", "sycamore"),
+    ("queko_05_0.qasm", "sycamore"),
+    ("queko_10_3.qasm", "sycamore"),
+    ("queko_15_1.qasm", "sycamore"),
 ]
 
 if not os.path.exists("tmp"):
@@ -149,26 +191,24 @@ print(
 )
 
 
-configurations = []
-for synthesizer in synthesizers:
-    for solver in solvers:
-        synthesizer_instance = synthesizers[synthesizer]
-        solver_instance = solvers[solver]
+configurations: list[tuple[str, str]] = []
+for synthesizer_name, synthesizer_instance in synthesizers.items():
+    for solver_name, solver_instance in solvers.items():
         if isinstance(solver_instance, planning.Solver) and isinstance(synthesizer_instance, PlanningSynthesizer):
             optimal_synthesizer_and_satisfying_solver = (
-                synthesizer in OPTIMAL_PLANNING_SYNTHESIZERS
+                synthesizer_name in OPTIMAL_PLANNING_SYNTHESIZERS
                 and solver_instance.solver_class == SATISFYING
             )
             conditional_synthesizer_and_non_conditional_solver = (
-                synthesizer in CONDITIONAL_PLANNING_SYNTHESIZERS
+                synthesizer_name in CONDITIONAL_PLANNING_SYNTHESIZERS
                 and not solver_instance.accepts_conditional
             )
             temporal_synthesizer_and_non_temporal_solver = (
-                synthesizer in TEMPORAL_PLANNING_SYNTHESIZERS
+                synthesizer_name in TEMPORAL_PLANNING_SYNTHESIZERS
                 and solver_instance.solver_class != TEMPORAL
             )
             non_temporal_synthesizer_and_temporal_solver = (
-                synthesizer not in TEMPORAL_PLANNING_SYNTHESIZERS
+                synthesizer_name not in TEMPORAL_PLANNING_SYNTHESIZERS
                 and solver_instance.solver_class == TEMPORAL
             )
             synthesizer_uses_negative_preconds_and_solver_does_not = (
@@ -183,13 +223,19 @@ for synthesizer in synthesizers:
                 and not non_temporal_synthesizer_and_temporal_solver
                 and not synthesizer_uses_negative_preconds_and_solver_does_not
             ):
-                configurations.append((synthesizer, solver))
+                configurations.append((synthesizer_name, solver_name))
         elif isinstance(synthesizer_instance, SATSynthesizer) and not isinstance(solver_instance, planning.Solver):
-            configurations.append((synthesizer, solver))
+            configurations.append((synthesizer_name, solver_name))
 
 for input_file, platform_name in EXPERIMENTS:
     results: dict[tuple[str, str], tuple[int, int, float] | Literal["NS", "TO"]] = {}
     for synthesizer_name, solver_name in configurations:
+        solvers["glucose42"] = pysat.solvers.Glucose42()
+        solvers["maple_cm"] = pysat.solvers.MapleCM()
+        solvers["cadical153"] = pysat.solvers.Cadical153()
+        solvers["maple_chrono"] = pysat.solvers.MapleChrono()
+        solvers["minisat22"] = pysat.solvers.Minisat22()
+
         print(
             f"Running '{synthesizer_name}' on '{solver_name}' for 'benchmarks/{input_file}' on '{platform_name}'..."
         )
@@ -225,6 +271,7 @@ for input_file, platform_name in EXPERIMENTS:
                     experiment = synthesizer.synthesize(
                         input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
                     )
+                    solver.delete()
                 case _: 
                     raise ValueError(
                         f"Invalid synthesizer-solver combination: '{synthesizer_name}' on '{solver_name}'."
@@ -252,6 +299,7 @@ for input_file, platform_name in EXPERIMENTS:
                         print(
                             "  ✗ Input and output circuits are not equivalent! Not caching result."
                         )
+                        print(experiment.circuit)
 
                 case SynthesizerNoSolution():
                     results[(synthesizer_name, solver_name)] = "NS"
