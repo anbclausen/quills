@@ -122,9 +122,9 @@ def at_most_one(atoms: list[Atom], encoding=EncType.pairwise) -> Formula:
     return clauses
 
 
-def at_most_two(atoms: list[Atom], encoding=EncType.seqcounter) -> Formula:
+def at_most_n(n: int, atoms: list[Atom], encoding=EncType.seqcounter) -> Formula:
     """Create a formula that ensures at most two of the given atoms is true."""
-    result = CardEnc.atmost(atoms, bound=2, top_id=next_id - 1, encoding=encoding)
+    result = CardEnc.atmost(atoms, bound=n, top_id=next_id - 1, encoding=encoding)
     clauses = result.clauses
     update_id_from(clauses)
     return clauses

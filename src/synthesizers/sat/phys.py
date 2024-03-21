@@ -21,6 +21,7 @@ from util.sat import (
     parse_sat_solution,
     exactly_one,
     at_most_one,
+    at_most_n,
     new_atom,
     neg,
     iff,
