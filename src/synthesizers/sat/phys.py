@@ -21,7 +21,6 @@ from util.sat import (
     parse_sat_solution,
     exactly_one,
     at_most_one,
-    at_most_two,
     new_atom,
     neg,
     iff,
@@ -217,8 +216,8 @@ class PhysSynthesizer(SATSynthesizer):
         }
 
         gate_line_map = gate_line_dependency_mapping(logical_circuit)
-
         gates = list(gate_line_map.keys())
+
         gate_pre_map = gate_dependency_mapping(logical_circuit)
         gate_suc_map = gate_successor_mapping(logical_circuit)
 
@@ -228,6 +227,7 @@ class PhysSynthesizer(SATSynthesizer):
         occupied = {}
         enabled = {}
         done = {}
+        current = {}
         usable = {}
         swap = {}
         assumption = {}
@@ -246,13 +246,13 @@ class PhysSynthesizer(SATSynthesizer):
                 for l in lq
             }
             done[t] = {g: new_atom(f"done^{t}_{g}") for g in gates}
+            current[t] = {g: new_atom(f"current^{t}_{g}") for g in gates}
             usable[t] = {p: new_atom(f"usable^{t}_{p}") for p in pq}
-            if t < max_depth - 1:
-                swap[t] = {
-                    (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
-                    for p, p_prime in connectivity_graph
-                    if p < p_prime
-                }
+            swap[t] = {
+                (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
+                for p, p_prime in connectivity_graph
+                if p < p_prime
+            }
             assumption[t] = new_atom(f"asm^{t}")
 
             problem_clauses: Formula = []
@@ -488,11 +488,6 @@ class PhysSynthesizer(SATSynthesizer):
                 solution = parse_sat_solution(model)
                 print(f"depth {t}", flush=True, end=", ")
                 if solution:
-                    file = open("tmp/result.txt", "w")
-                    for line in solution:
-                        if not line.startswith("~"):
-                            file.write(line + "\n")
-                    file.close()
                     return solution, overall_time
 
         return None

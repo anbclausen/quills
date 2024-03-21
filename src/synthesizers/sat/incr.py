@@ -408,11 +408,6 @@ class IncrSynthesizer(SATSynthesizer):
                 solution = parse_sat_solution(solver.get_model())
                 print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
-                    file = open("tmp/result.txt", "w")
-                    for line in solution:
-                        if not line.startswith("~"):
-                            file.write(line + "\n")
-                    file.close()
                     return solution, overall_time
 
         return None
