@@ -200,8 +200,19 @@ class PhysSynthesizer(SATSynthesizer):
             for p_prime in pq
             if (p, p_prime) not in connectivity_graph
         }
-        conn_dict = {
-            p: [p_prime for p_prime in pq if (p, p_prime) in connectivity_graph]
+        conn_dict: dict[int, tuple[list[int], list[int]]] = {
+            p: (
+                [
+                    p_prime
+                    for p_prime in pq
+                    if p_prime < p and (p, p_prime) in connectivity_graph
+                ],
+                [
+                    p_prime
+                    for p_prime in pq
+                    if p < p_prime and (p, p_prime) in connectivity_graph
+                ],
+            )
             for p in pq
         }
 
@@ -240,6 +251,7 @@ class PhysSynthesizer(SATSynthesizer):
                 swap[t] = {
                     (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
                     for p, p_prime in connectivity_graph
+                    if p < p_prime
                 }
             assumption[t] = new_atom(f"asm^{t}")
 
@@ -337,76 +349,97 @@ class PhysSynthesizer(SATSynthesizer):
                 for p in pq:
                     if t == 1:
                         problem_clauses.extend(
-                            at_most_two(
-                                [swap[t][p, p_prime] for p_prime in conn_dict[p]]
-                                + [swap[t][p_prime, p] for p_prime in conn_dict[p]]
+                            at_most_one(
+                                [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
+                                + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]]
                             )
                         )
                     else:
                         problem_clauses.extend(
-                            at_most_two(
-                                [swap[t][p, p_prime] for p_prime in conn_dict[p]]
-                                + [swap[t][p_prime, p] for p_prime in conn_dict[p]]
-                                + [swap[t - 1][p, p_prime] for p_prime in conn_dict[p]]
-                                + [swap[t - 1][p_prime, p] for p_prime in conn_dict[p]]
-                                + [swap[t - 2][p, p_prime] for p_prime in conn_dict[p]]
-                                + [swap[t - 2][p_prime, p] for p_prime in conn_dict[p]]
+                            at_most_one(
+                                [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
+                                + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]]
+                                + [
+                                    swap[t - 1][p_prime, p]
+                                    for p_prime in conn_dict[p][0]
+                                ]
+                                + [
+                                    swap[t - 1][p, p_prime]
+                                    for p_prime in conn_dict[p][1]
+                                ]
+                                + [
+                                    swap[t - 2][p_prime, p]
+                                    for p_prime in conn_dict[p][0]
+                                ]
+                                + [
+                                    swap[t - 2][p, p_prime]
+                                    for p_prime in conn_dict[p][1]
+                                ]
                             )
                         )
                     for l in lq:
                         problem_clauses.extend(
                             impl_conj(
-                                [neg(swap[t][p, p_prime]) for p_prime in conn_dict[p]],
+                                [
+                                    neg(swap[t][p_prime, p])
+                                    for p_prime in conn_dict[p][0]
+                                ]
+                                + [
+                                    neg(swap[t][p, p_prime])
+                                    for p_prime in conn_dict[p][1]
+                                ],
                                 iff(mapped[t - 1][l][p], mapped[t][l][p]),
                             )
                         )
                 for p, p_prime in connectivity_graph:
-                    problem_clauses.extend(
-                        iff(swap[t][p, p_prime], swap[t][p_prime, p])
-                    )
+                    if p < p_prime:
+                        if t > 1:
+                            problem_clauses.extend(
+                                impl(
+                                    swap[t - 2][p, p_prime],
+                                    and_(
+                                        neg(usable[t][p]),
+                                        neg(usable[t - 1][p]),
+                                        neg(usable[t - 2][p]),
+                                        neg(usable[t][p_prime]),
+                                        neg(usable[t - 1][p_prime]),
+                                        neg(usable[t - 2][p_prime]),
+                                    ),
+                                )
+                            )
 
-                    if t > 1:
+                        for l, l_prime in lq_pairs:
+                            problem_clauses.extend(
+                                impl_conj(
+                                    [
+                                        mapped[t][l][p_prime],
+                                        mapped[t][l_prime][p],
+                                        swap[t][p, p_prime],
+                                    ],
+                                    and_(
+                                        mapped[t - 1][l][p],
+                                        mapped[t - 1][l_prime][p_prime],
+                                    ),
+                                )
+                            )
+
                         problem_clauses.extend(
                             impl(
-                                swap[t - 2][p, p_prime],
-                                and_(
-                                    neg(usable[t][p]),
-                                    neg(usable[t - 1][p]),
-                                    neg(usable[t - 2][p]),
-                                    neg(usable[t][p_prime]),
-                                    neg(usable[t - 1][p_prime]),
-                                    neg(usable[t - 2][p_prime]),
-                                ),
+                                swap[t][p, p_prime],
+                                and_(occupied[t][p], occupied[t][p_prime]),
                             )
                         )
-
-                    for l, l_prime in lq_pairs:
-                        problem_clauses.extend(
-                            impl_conj(
-                                [
-                                    mapped[t][l][p_prime],
-                                    mapped[t][l_prime][p],
-                                    swap[t][p, p_prime],
-                                ],
-                                and_(
-                                    mapped[t - 1][l][p], mapped[t - 1][l_prime][p_prime]
-                                ),
-                            )
-                        )
-
-                    problem_clauses.extend(
-                        impl(
-                            swap[t][p, p_prime],
-                            and_(occupied[t][p], occupied[t][p_prime]),
-                        )
-                    )
 
             # init
             if t == 0:
                 solver.append_formula(and_(*[neg(done[0][g]) for g in gates]))
                 solver.append_formula(
                     and_(
-                        *[neg(swap[0][p, p_prime]) for p, p_prime in connectivity_graph]
+                        *[
+                            neg(swap[0][p, p_prime])
+                            for p, p_prime in connectivity_graph
+                            if p < p_prime
+                        ]
                     )
                 )
 
@@ -418,7 +451,11 @@ class PhysSynthesizer(SATSynthesizer):
                 impl(
                     assumption[t],
                     and_(
-                        *[neg(swap[t][p, p_prime]) for p, p_prime in connectivity_graph]
+                        *[
+                            neg(swap[t][p, p_prime])
+                            for p, p_prime in connectivity_graph
+                            if p < p_prime
+                        ]
                     ),
                 )
             )
@@ -430,6 +467,7 @@ class PhysSynthesizer(SATSynthesizer):
                             *[
                                 neg(swap[t - 1][p, p_prime])
                                 for p, p_prime in connectivity_graph
+                                if p < p_prime
                             ]
                         ),
                     )
