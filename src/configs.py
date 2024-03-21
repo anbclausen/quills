@@ -157,7 +157,7 @@ solvers: dict[str, Solver | sat.Solver] = {
     "tflap": TFLAP(),
     "tflap_grounded": TFLAPGrounded(),
     "powerlifted": PowerLifted(),
-    #"cadical153": pysat.solvers.Cadical153(incr=True),
+    # "cadical153": pysat.solvers.Cadical153(incr=True),
     "glucose42": pysat.solvers.Glucose42(),
     "maple_cm": pysat.solvers.MapleCM(),
     "maple_chrono": pysat.solvers.MapleChrono(),
