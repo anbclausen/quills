@@ -17,6 +17,7 @@ from util.circuits import (
     reinsert_unary_gates,
 )
 from util.sat import (
+    Atom,
     Formula,
     parse_sat_solution,
     exactly_one,
@@ -489,7 +490,75 @@ class PhysSynthesizer(SATSynthesizer):
                 solution = parse_sat_solution(model)
                 print(f"depth {t}", flush=True, end=", ")
                 if solution:
-                    return solution, overall_time
+                    print(
+                        f"found solution (after {overall_time:.02f}s)! Now optimizing for number of swaps."
+                    )
+                    number_of_swaps = sum(
+                        1 for atom in solution if atom.startswith("swap^")
+                    )
+                    previous_solution = solution
+                    previous_swap_asms: list[Atom] = []
+                    print("Optimizing for number of swaps:", end=" ", flush=True)
+                    best_so_far = number_of_swaps
+                    worst_so_far = -1
+                    factor = 2
+                    n_swaps = number_of_swaps // factor
+                    while True:
+                        print(f"{n_swaps} swaps (", flush=True, end="")
+                        swap_asm = new_atom(f"swap_asm_{n_swaps}")
+                        swap_asm_constraint = impl(
+                            swap_asm,
+                            at_most_n(
+                                n_swaps,
+                                [
+                                    swap[t][p, p_prime]
+                                    for t in range(t + 1)
+                                    for p, p_prime in connectivity_graph
+                                    if p < p_prime
+                                ],
+                            ),
+                        )
+                        solver.append_formula(swap_asm_constraint)
+                        before = time.time()
+                        solver.solve(
+                            assumptions=asm
+                            + [neg(asm) for asm in previous_swap_asms]
+                            + [swap_asm]
+                        )
+                        after = time.time()
+                        overall_time += after - before
+
+                        previous_swap_asms.append(swap_asm)
+
+                        model = solver.get_model()
+                        solution = parse_sat_solution(model)
+                        if solution:
+                            previous_solution = solution
+                            number_of_swaps = sum(
+                                1 for atom in solution if atom.startswith("swap^")
+                            )
+                            best_so_far = number_of_swaps
+                            note = (
+                                f" -- found {best_so_far}"
+                                if best_so_far < n_swaps
+                                else ""
+                            )
+                            print(f"✓{note}", flush=True, end="), ")
+                            if best_so_far == worst_so_far + 1:
+                                print(f"optimal: {best_so_far}.")
+                                break
+                            n_swaps = best_so_far - max(best_so_far // factor, 1)
+                        elif n_swaps < best_so_far - 1:
+                            print(f"✗", flush=True, end="), ")
+                            worst_so_far = n_swaps
+                            factor *= 2
+                            candidate = best_so_far - max(best_so_far // factor, 1)
+                            n_swaps = max(worst_so_far + 1, candidate)
+                        else:
+                            print(f"✗), optimal: {best_so_far}.")
+                            break
+
+                    return previous_solution, overall_time
 
         return None
 
