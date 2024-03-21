@@ -351,7 +351,7 @@ class PhysSynthesizer(SATSynthesizer):
                         problem_clauses.extend(
                             at_most_one(
                                 [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
-                                + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]]
+                                + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]],
                             )
                         )
                     else:
@@ -374,7 +374,7 @@ class PhysSynthesizer(SATSynthesizer):
                                 + [
                                     swap[t - 2][p, p_prime]
                                     for p_prime in conn_dict[p][1]
-                                ]
+                                ],
                             )
                         )
                     for l in lq:
