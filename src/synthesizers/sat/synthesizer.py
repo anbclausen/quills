@@ -28,6 +28,7 @@ class SATSynthesizer(ABC):
         solver: Solver,
         time_limit_s: int,
         cx_optimal: bool = False,
+        swap_optimal: bool = False,
     ) -> SynthesizerOutput:
         """
         Layout synthesis.

@@ -144,6 +144,7 @@ class IncrSynthesizer(SATSynthesizer):
         logical_circuit: QuantumCircuit,
         platform: Platform,
         solver: Solver,
+        swap_optimal: bool,
     ) -> tuple[list[str], float] | None:
         print("Searched: ", end="", flush=True)
         overall_time = 0
@@ -409,6 +410,8 @@ class IncrSynthesizer(SATSynthesizer):
                 solution = parse_sat_solution(solver.get_model())
                 print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
+                    if not swap_optimal:
+                        return solution, overall_time
                     print(
                         f"found solution (after {overall_time:.02f}s)! Now optimizing for number of swaps."
                     )
@@ -487,13 +490,14 @@ class IncrSynthesizer(SATSynthesizer):
         solver: Solver,
         time_limit_s: int,
         cx_optimal: bool = False,
+        swap_optimal: bool = False,
     ) -> SynthesizerOutput:
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
         )
         try:
             with time_limit(time_limit_s):
-                out = self.create_solution(circuit, platform, solver)
+                out = self.create_solution(circuit, platform, solver, swap_optimal)
         except TimeoutException:
             return SynthesizerTimeout()
 

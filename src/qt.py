@@ -65,6 +65,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-swap",
+    "--swap_optimal",
+    help=f"whether to optimize for swap count after finding a depth-optimal circuit",
+    action="store_true",
+)
+
+parser.add_argument(
     "input",
     type=str,
     help="the path to the input file",
@@ -149,7 +156,7 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing ({"cx-depth" if args.cx_optimal else "depth"}-optimal)... ",
+    f"Synthesizing ({"cx-depth" if args.cx_optimal else "depth"}-optimal{" and local swap-optimal" if args.swap_optimal else ""})... ",
     end="",
     flush=True,
 )
@@ -160,7 +167,7 @@ match synthesizer, solver:
         )
     case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
         output = synthesizer.synthesize(
-            input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
+            input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal, swap_optimal=args.swap_optimal
         )
     case _: 
         raise ValueError(
