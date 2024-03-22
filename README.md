@@ -21,7 +21,7 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 ## Usage
 
 ```
-usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] input
+usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] [-swap] input
 
 Welcome to qt! A quantum circuit synthesis tool.
 
@@ -39,6 +39,8 @@ options:
   -s SOLVER, --solver SOLVER
                         the underlying solver: cadical153, glucose42, maple_cm, maple_chrono, minisat22
   -cx, --cx_optimal     whether to optimize for cx-depth
+  -swap, --swap_optimal
+                        whether to optimize for swap count after finding a depth-optimal circuit
 ```
 
 ## Examples
@@ -62,7 +64,7 @@ Output will be written to terminal and to `tmp/experiments.txt`.
 Here is a sample run of the tool with its output:
 
 ```
-$ ./qt benchmarks/adder.qasm -p tenerife -m sat_phys -s cadical153
+$ ./qt benchmarks/adder.qasm -p tenerife -m sat_phys -s cadical153 -swap
 ####################################################
 #                           __                     #
 #                   _______/  |_                   #
