@@ -25,15 +25,25 @@ from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
 CX_OPTIMAL = False
+SWAP_OPTIMAL = True
 EXPERIMENT_TIME_LIMIT_S = 180
-CACHE_FILE = f"tmp/experiments_cache{"_cx" if CX_OPTIMAL else ""}.json"
+match CX_OPTIMAL, SWAP_OPTIMAL:
+    case True, True:
+        CACHE_FILE = "tmp/experiments_cache_cx_swap.json"
+    case True, False:
+        CACHE_FILE = "tmp/experiments_cache_cx.json"
+    case False, True:
+        CACHE_FILE = "tmp/experiments_cache_swap.json"
+    case False, False:
+        CACHE_FILE = "tmp/experiments_cache.json"
+
+
 EXPERIMENTS = [
     # up to 4 qubits
     ("adder.qasm", "toy"),
     ("or.qasm", "toy"),
     ("toffoli.qasm", "toy"),
     ("toy_example.qasm", "toy"),
-
     # up to 5 qubits
     ("adder.qasm", "tenerife"),
     ("or.qasm", "tenerife"),
@@ -43,7 +53,6 @@ EXPERIMENTS = [
     ("4mod5-v1_22.qasm", "tenerife"),
     ("mod5mils_65.qasm", "tenerife"),
     ("qaoa5.qasm", "tenerife"),
-
     # up to 14 qubits
     ("adder.qasm", "melbourne"),
     ("or.qasm", "melbourne"),
@@ -60,7 +69,6 @@ EXPERIMENTS = [
     ("tof_4.qasm", "melbourne"),
     ("tof_5.qasm", "melbourne"),
     ("vbe_adder_3.qasm", "melbourne"),
-
     # up to 54 qubits
     ("adder.qasm", "sycamore"),
     ("or.qasm", "sycamore"),
@@ -188,13 +196,16 @@ print(
     f"Date: {now_str}\n"
     f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s\n"
     f"CX optimal: {CX_OPTIMAL}\n"
+    f"SWAP optimal: {SWAP_OPTIMAL} (only applicable for SAT-based synthesizers)\n"
 )
 
 
 configurations: list[tuple[str, str]] = []
 for synthesizer_name, synthesizer_instance in synthesizers.items():
     for solver_name, solver_instance in solvers.items():
-        if isinstance(solver_instance, planning.Solver) and isinstance(synthesizer_instance, PlanningSynthesizer):
+        if isinstance(solver_instance, planning.Solver) and isinstance(
+            synthesizer_instance, PlanningSynthesizer
+        ):
             optimal_synthesizer_and_satisfying_solver = (
                 synthesizer_name in OPTIMAL_PLANNING_SYNTHESIZERS
                 and solver_instance.solver_class == SATISFYING
@@ -224,7 +235,9 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
                 and not synthesizer_uses_negative_preconds_and_solver_does_not
             ):
                 configurations.append((synthesizer_name, solver_name))
-        elif isinstance(synthesizer_instance, SATSynthesizer) and not isinstance(solver_instance, planning.Solver):
+        elif isinstance(synthesizer_instance, SATSynthesizer) and not isinstance(
+            solver_instance, planning.Solver
+        ):
             configurations.append((synthesizer_name, solver_name))
 
 for input_file, platform_name in EXPERIMENTS:
@@ -237,7 +250,7 @@ for input_file, platform_name in EXPERIMENTS:
         )
         synthesizer = synthesizers[synthesizer_name]
         solver = solvers[solver_name]
-        
+
         if platform_name not in platforms:
             print(f"  Platform '{platform_name}' not found. Skipping experiment...")
             continue
@@ -261,18 +274,27 @@ for input_file, platform_name in EXPERIMENTS:
             match synthesizer, solver:
                 case PlanningSynthesizer(), planning.Solver():
                     experiment = synthesizer.synthesize(
-                        input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
+                        input_circuit,
+                        platform,
+                        solver,
+                        EXPERIMENT_TIME_LIMIT_S,
+                        cx_optimal=CX_OPTIMAL,
                     )
                 case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
                     experiment = synthesizer.synthesize(
-                        input_circuit, platform, solver, EXPERIMENT_TIME_LIMIT_S, cx_optimal=CX_OPTIMAL
+                        input_circuit,
+                        platform,
+                        solver,
+                        EXPERIMENT_TIME_LIMIT_S,
+                        cx_optimal=CX_OPTIMAL,
+                        swap_optimal=SWAP_OPTIMAL,
                     )
                     solver.delete()
-                case _: 
+                case _:
                     raise ValueError(
                         f"Invalid synthesizer-solver combination: '{synthesizer_name}' on '{solver_name}'."
                         " Something must be configured incorrectly."
-                        )
+                    )
             match experiment:
                 case SynthesizerSolution():
                     correct_output = OutputChecker.check(
@@ -358,6 +380,7 @@ for input_file, platform_name in EXPERIMENTS:
     print_and_output_to_file(f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s")
     print_and_output_to_file(f"Date: {now_str} (UTC)")
     print_and_output_to_file(f"CX optimal: {CX_OPTIMAL}")
+    print_and_output_to_file(f"SWAP optimal: {SWAP_OPTIMAL}")
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
         result_str = (
