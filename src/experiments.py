@@ -25,7 +25,7 @@ from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
 CX_OPTIMAL = False
-SWAP_OPTIMAL = True
+SWAP_OPTIMAL = False
 EXPERIMENT_TIME_LIMIT_S = 180
 match CX_OPTIMAL, SWAP_OPTIMAL:
     case True, True:
@@ -380,7 +380,9 @@ for input_file, platform_name in EXPERIMENTS:
     print_and_output_to_file(f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s")
     print_and_output_to_file(f"Date: {now_str} (UTC)")
     print_and_output_to_file(f"CX optimal: {CX_OPTIMAL}")
-    print_and_output_to_file(f"SWAP optimal: {SWAP_OPTIMAL}")
+    print_and_output_to_file(
+        f"SWAP optimal: {SWAP_OPTIMAL} (only applicable for SAT-based synthesizers)"
+    )
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
         result_str = (
