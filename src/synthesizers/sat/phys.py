@@ -32,6 +32,7 @@ from util.sat import (
     impl_disj,
     and_,
     andf,
+    reset,
 )
 import time
 from util.time_limit import time_limit, TimeoutException
@@ -188,6 +189,8 @@ class PhysSynthesizer(SATSynthesizer):
         solver: Solver,
         swap_optimal: bool,
     ) -> tuple[list[str], float] | None:
+        reset()
+
         print("Searched: ", end="", flush=True)
         overall_time = 0
 

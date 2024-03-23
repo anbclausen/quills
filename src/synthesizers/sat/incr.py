@@ -33,7 +33,7 @@ from util.sat import (
     andf,
     or_,
     at_most_n,
-    to_cnf,
+    reset,
 )
 import time
 from util.time_limit import time_limit, TimeoutException
@@ -146,6 +146,7 @@ class IncrSynthesizer(SATSynthesizer):
         solver: Solver,
         swap_optimal: bool,
     ) -> tuple[list[str], float] | None:
+        reset()
         print("Searched: ", end="", flush=True)
         overall_time = 0
 
@@ -407,7 +408,8 @@ class IncrSynthesizer(SATSynthesizer):
                 solver.solve(assumptions=asm)
                 after = time.time()
                 overall_time += after - before
-                solution = parse_sat_solution(solver.get_model())
+                model = solver.get_model()
+                solution = parse_sat_solution(model)
                 print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
                     if not swap_optimal:
