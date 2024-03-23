@@ -1,6 +1,5 @@
 import os
 import json
-import pysat.solvers
 
 from qiskit import QuantumCircuit
 from typing import Literal
@@ -243,7 +242,8 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
 for input_file, platform_name in EXPERIMENTS:
     results: dict[tuple[str, str], tuple[int, int, float] | Literal["NS", "TO"]] = {}
     for synthesizer_name, solver_name in configurations:
-        solvers[solver_name] = solvers[solver_name].__class__()
+        if not isinstance(solvers[solver_name], planning.Solver):
+            solvers[solver_name] = solvers[solver_name].__class__()
 
         print(
             f"Running '{synthesizer_name}' on '{solver_name}' for 'benchmarks/{input_file}' on '{platform_name}'..."
