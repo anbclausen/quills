@@ -603,7 +603,7 @@ class PhysSynthesizer(SATSynthesizer):
 
                 # hack since p.join hangs
                 while queue.empty():
-                    time.sleep(1)
+                    time.sleep(0.2)
 
                 out = queue.get()
                 queue.close()
