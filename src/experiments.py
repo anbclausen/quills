@@ -111,6 +111,7 @@ def update_cache(
     time: float | Literal["NS", "TO"],
     depth: int,
     cx_depth: int,
+    swaps: int,
 ):
     if not cache.get(input_file):
         cache[input_file] = {}
@@ -129,6 +130,7 @@ def update_cache(
             "time": time,
             "depth": depth,
             "cx_depth": cx_depth,
+            "swaps": swaps,
             "time_limit": EXPERIMENT_TIME_LIMIT_S,
         }
     else:
@@ -145,6 +147,7 @@ def update_cache(
                 "time": time,
                 "depth": depth,
                 "cx_depth": cx_depth,
+                "swaps": swaps,
                 "time_limit": EXPERIMENT_TIME_LIMIT_S,
             }
 
@@ -154,7 +157,7 @@ def update_cache(
 
 def get_cache_key(
     input_file: str, synthesizer_name: str, solver_name: str, platform_name: str
-) -> tuple[float | Literal["NS", "TO"] | None, int, int]:
+) -> tuple[float | Literal["NS", "TO"] | None, int, int, int]:
     result = (
         cache.get(input_file, {})
         .get(platform_name, {})
@@ -166,21 +169,23 @@ def get_cache_key(
         time_limit = result.get("time_limit")
         if time in ["NS", "TO"]:
             if isinstance(time_limit, int) and time_limit <= EXPERIMENT_TIME_LIMIT_S:
-                return None, 0, 0
-            return time, 0, 0
+                return None, 0, 0, 0
+            return time, 0, 0, 0
 
         depth = result.get("depth")
         cx_depth = result.get("cx_depth")
+        swaps = result.get("swaps")
 
         # to make the type checker happy
         if (
             isinstance(time, float)
             and isinstance(depth, int)
             and isinstance(cx_depth, int)
+            and isinstance(swaps, int)
             and time <= EXPERIMENT_TIME_LIMIT_S
         ):
-            return time, depth, cx_depth
-    return None, 0, 0
+            return time, depth, cx_depth, swaps
+    return None, 0, 0, 0
 
 
 def print_and_output_to_file(line: str):
@@ -240,7 +245,9 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
             configurations.append((synthesizer_name, solver_name))
 
 for input_file, platform_name in EXPERIMENTS:
-    results: dict[tuple[str, str], tuple[int, int, float] | Literal["NS", "TO"]] = {}
+    results: dict[
+        tuple[str, str], tuple[int, int, int, float] | Literal["NS", "TO"]
+    ] = {}
     for synthesizer_name, solver_name in configurations:
         if not isinstance(solvers[solver_name], planning.Solver):
             solvers[solver_name] = solvers[solver_name].__class__()
@@ -255,7 +262,7 @@ for input_file, platform_name in EXPERIMENTS:
             print(f"  Platform '{platform_name}' not found. Skipping experiment...")
             continue
 
-        cached_result, cached_depth, cached_cx_depth = get_cache_key(
+        cached_result, cached_depth, cached_cx_depth, cached_swaps = get_cache_key(
             input_file, synthesizer_name, solver_name, platform_name
         )
         if cached_result is not None:
@@ -265,6 +272,7 @@ for input_file, platform_name in EXPERIMENTS:
                 results[(synthesizer_name, solver_name)] = (
                     cached_depth,
                     cached_cx_depth,
+                    cached_swaps,
                     cached_result,
                 )
             print(f"  Found cached result for '{synthesizer_name}' on '{solver_name}'.")
@@ -311,6 +319,7 @@ for input_file, platform_name in EXPERIMENTS:
                         results[(synthesizer_name, solver_name)] = (
                             experiment.depth,
                             experiment.cx_depth,
+                            experiment.swaps,
                             experiment.time,
                         )
                     else:
@@ -336,6 +345,7 @@ for input_file, platform_name in EXPERIMENTS:
                 "NS",
                 0,
                 0,
+                0,
             )
         elif results[(synthesizer_name, solver_name)] == "TO":
             result_string = "  Timeout."
@@ -347,15 +357,17 @@ for input_file, platform_name in EXPERIMENTS:
                 "TO",
                 0,
                 0,
+                0,
             )
         else:
-            depth, cx_depth, time = results[(synthesizer_name, solver_name)]
+            depth, cx_depth, swaps, time = results[(synthesizer_name, solver_name)]
 
             # to make the type checker happy
             if (
                 isinstance(time, float)
                 and isinstance(cx_depth, int)
                 and isinstance(depth, int)
+                and isinstance(swaps, int)
             ):
                 update_cache(
                     input_file,
@@ -365,10 +377,11 @@ for input_file, platform_name in EXPERIMENTS:
                     time,
                     depth,
                     cx_depth,
+                    swaps,
                 )
 
             result_string = (
-                f"  Done in {time:.3f}s. Found depth {depth} and CX depth {cx_depth}."
+                f"  Done in {time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs."
             )
         print(result_string)
     print_and_output_to_file(
@@ -388,7 +401,7 @@ for input_file, platform_name in EXPERIMENTS:
         result_str = (
             result
             if isinstance(result, str)
-            else f"{result[0]}, {result[1]}, {result[2]:.3f}s"
+            else f"{result[0]}, {result[1]}, {result[2]}, {result[3]:.3f}s"
         )
         print_and_output_to_file(
             f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
