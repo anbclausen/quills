@@ -2,6 +2,13 @@
 
 qt (pronounced "cutie") is a tool for performing depth-optimal layout synthesis on quantum circuits. qt consists of several synthesizers based on both classical planning and SAT solving.
 
+qt is able to find the optimal layout for several different objectives:
+
+- Depth-optimal
+- Depth-optimal with optimal number of SWAPs
+- Depth-optimal considering only CX gates
+- Depth-optimal considering only CX gates with optimal number of SWAPs
+
 qt has been developed by [Anders Benjamin Clausen](https://github.com/anbclausen) and [Anna Blume Jakobsen](https://github.com/AnnaBlume99) as part of their Master's thesis in Computer Science at Aarhus University. 
 
 Supervised by professor [Jaco van de Pol](https://www.au.dk/en/jaco@cs.au.dk) with the help of [Irfansha Shaik](https://github.com/irfansha).
