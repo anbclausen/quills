@@ -28,9 +28,9 @@ import atexit
 DEFAULT_TIME_LIMIT_S = 1800
 
 synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
-    "cost_opt": CostBasedOptimalPlanningSynthesizer(),
-    "cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
-    "lc_incr": LocalClockIncrementalPlanningSynthesizer(),
+    "plan_cost_opt": CostBasedOptimalPlanningSynthesizer(),
+    "plan_cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
+    "plan_lc_incr": LocalClockIncrementalPlanningSynthesizer(),
     "sat_incr": IncrSynthesizer(),
     "sat_phys": PhysSynthesizer(),
 }
