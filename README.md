@@ -10,15 +10,16 @@ Supervised by professor [Jaco van de Pol](https://www.au.dk/en/jaco@cs.au.dk) wi
 
 ## Installation
 
-qt depends on external tools such as planners and SAT solvers. To make the planning-based synthesizers work, one much install external dependencies. However, all SAT-based synthesizers depend only on Python packages.
+qt depends on external tools such as planners and SAT solvers. To make the planning-based synthesizers work, one must install external dependencies. However, all SAT-based synthesizers depend only on Python packages.
 
 ### Simple installation (only works for SAT-based synthesizers)
 
-qt uses [Poetry](https://python-poetry.org) for depdency management instead of `pip`. For the simple installation, follow the steps:
+qt uses [Poetry](https://python-poetry.org) for dependency management instead of `pip`. For the simple installation, follow the steps:
 
 1. Install `python` and `pip` on your system.
 2. Install `poetry` with `pip install poetry`.
-3. In the root of the folder run `poetry install` and all Python dependencies will be installed.
+3. Clone the repository with `git clone https://github.com/anbclausen/qt`.
+4. In the root of the folder run `poetry install` and all Python dependencies will be installed.
 
 ### Full installation with Docker
 
@@ -30,7 +31,7 @@ To make usage easy, we have containerized the tool with [Docker](https://www.doc
 
 The container will be built automatically and you will be able to use the tool from the terminal.
 
-4. First time opening the repo in a container, run `peotry install`.
+4. First time opening the repo in a container, run `poetry install`.
 
 ### Full installation running natively on Linux
 
