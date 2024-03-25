@@ -24,7 +24,7 @@ import synthesizers.planning.solvers as planning
 
 CX_OPTIMAL = False
 SWAP_OPTIMAL = False
-EXPERIMENT_TIME_LIMIT_S = 10
+EXPERIMENT_TIME_LIMIT_S = 180
 match CX_OPTIMAL, SWAP_OPTIMAL:
     case True, True:
         CACHE_FILE = "tmp/experiments_cache_cx_swap.json"

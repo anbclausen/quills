@@ -169,20 +169,19 @@ match output:
         print(f"{BOLD_START}TIME{BOLD_END}")
         print(output.report_time())
         print()
+
+        print(f"{BOLD_START}CHECKS{BOLD_END}")
+        correct_output = OutputChecker.check(
+            input_circuit, output.circuit, output.initial_mapping, platform
+        )
+        if correct_output:
+            print("✓ Input and output circuits are equivalent (proprietary checker)")
+        else:
+            print("✗ Input and output circuits are not equivalent (proprietary checker)")
+        correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
+        if correct_qcec:
+            print("✓ Input and output circuits are equivalent (QCEC)")
+        else:
+            print("✗ Input and output circuits are not equivalent (QCEC)")
     case _:
         pass
-
-print(f"{BOLD_START}CHECKS{BOLD_END}")
-if isinstance(output, SynthesizerSolution):
-    correct_output = OutputChecker.check(
-        input_circuit, output.circuit, output.initial_mapping, platform
-    )
-    if correct_output:
-        print("✓ Input and output circuits are equivalent (proprietary checker)")
-    else:
-        print("✗ Input and output circuits are not equivalent (proprietary checker)")
-    correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
-    if correct_qcec:
-        print("✓ Input and output circuits are equivalent (QCEC)")
-    else:
-        print("✗ Input and output circuits are not equivalent (QCEC)")
