@@ -24,7 +24,7 @@ import synthesizers.planning.solvers as planning
 
 CX_OPTIMAL = False
 SWAP_OPTIMAL = False
-EXPERIMENT_TIME_LIMIT_S = 180
+EXPERIMENT_TIME_LIMIT_S = 10
 match CX_OPTIMAL, SWAP_OPTIMAL:
     case True, True:
         CACHE_FILE = "tmp/experiments_cache_cx_swap.json"
@@ -421,6 +421,11 @@ for input_file, platform_name in EXPERIMENTS:
     )
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
+        if result in ["NS", "TO"]:
+            print_and_output_to_file(
+                f"  '{synthesizer_name}' on '{solver_name}': {result}"
+            )
+            continue
         breakdown_str = (
             "" if result[2] == None else f"{result[2][0]:.03f}s, {result[2][1]:.03f}s, "
         )
