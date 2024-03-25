@@ -61,19 +61,19 @@ class SynthesizerSolution(SynthesizerOutput):
         self,
         circuit: QuantumCircuit,
         mapping: dict[LogicalQubit, PhysicalQubit],
-        time: float,
+        time_breakdown: tuple[float, float, tuple[float, float] | None],
         depth: int,
         cx_depth: int,
         swaps: int,
-        time_breakdown: tuple[float, float] | None,
     ):
         self.circuit = circuit
         self.initial_mapping = mapping
-        self.time = time
+        self.total_time = time_breakdown[0]
+        self.solver_time = time_breakdown[1]
+        self.optional_times = time_breakdown[2]
         self.depth = depth
         self.cx_depth = cx_depth
         self.swaps = swaps
-        self.time_breakdown = time_breakdown
 
     def __str__(self):
         initial_mapping_str = ", ".join(
@@ -82,12 +82,15 @@ class SynthesizerSolution(SynthesizerOutput):
                 for logical, physical in self.initial_mapping.items()
             )
         )
+        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: {initial_mapping_str}"
+
+    def report_time(self):
         time_str = (
-            f"\nSolver time: {self.time:.3f} seconds."
-            if self.time_breakdown == None
-            else f"\nSolver time for optimal depth: {self.time_breakdown[0]:.3f} seconds.\nSolver time for optimal SWAPs: {self.time_breakdown[1]:.3f} seconds.\nTotal solver time: {self.time:.3f} seconds."
+            f"Solver time: {self.solver_time:.3f} seconds.\nTotal time (including preprocessing): {self.total_time:.3f} seconds."
+            if self.optional_times == None
+            else f"Solver time for optimal depth: {self.optional_times[0]:.3f} seconds.\nSolver time for optimal SWAPs: {self.optional_times[1]:.3f} seconds.\nTotal solver time: {self.solver_time:.3f} seconds.\nTotal time (including preprocessing): {self.total_time:.3f} seconds."
         )
-        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: {initial_mapping_str}{time_str}"
+        return time_str
 
 
 def gate_line_dependency_mapping(

@@ -504,19 +504,23 @@ class IncrSynthesizer(SATSynthesizer):
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
         )
+        before = time.time()
         try:
             with time_limit(time_limit_s):
                 out = self.create_solution(circuit, platform, solver, swap_optimal)
         except TimeoutException:
             return SynthesizerTimeout()
+        after = time.time()
+        total_time = after - before
 
         if out is None:
             return SynthesizerNoSolution()
 
-        solution, overall_time, time_breakdown = out
+        solution, solver_time, optional_times = out
         output_circuit, initial_mapping = self.parse_solution(
             circuit, platform, solution
         )
+        time_breakdown = (total_time, solver_time, optional_times)
 
         if cx_optimal:
             output_circuit = reinsert_unary_gates(
@@ -533,9 +537,8 @@ class IncrSynthesizer(SATSynthesizer):
         return SynthesizerSolution(
             output_circuit,
             initial_mapping,
-            overall_time,
+            time_breakdown,
             depth,
             cx_depth,
             swaps,
-            time_breakdown,
         )

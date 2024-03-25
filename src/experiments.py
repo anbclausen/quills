@@ -96,7 +96,15 @@ cache: dict[
     str,
     dict[
         str,
-        dict[str, dict[str, dict[str, float | Literal["NS", "TO"] | int | int]]],
+        dict[
+            str,
+            dict[
+                str,
+                dict[
+                    str, float | Literal["NS", "TO"] | int | tuple[float, float] | None
+                ],
+            ],
+        ],
     ],
 ] = (
     json.load(open(CACHE_FILE, "r")) if os.path.exists(CACHE_FILE) else {}
@@ -108,7 +116,9 @@ def update_cache(
     synthesizer_name: str,
     solver_name: str,
     platform_name: str,
-    time: float | Literal["NS", "TO"],
+    total_time: float | Literal["NS", "TO"],
+    solver_time: float,
+    optional_times: tuple[float, float] | None,
     depth: int,
     cx_depth: int,
     swaps: int,
@@ -127,7 +137,9 @@ def update_cache(
     )
     if never_seen_config:
         cache[input_file][platform_name][synthesizer_name][solver_name] = {
-            "time": time,
+            "total_time": total_time,
+            "solver_time": solver_time,
+            "optional_times": optional_times,
             "depth": depth,
             "cx_depth": cx_depth,
             "swaps": swaps,
@@ -144,7 +156,9 @@ def update_cache(
         )
         if cached_time_limit_is_smaller:
             cache[input_file][platform_name][synthesizer_name][solver_name] = {
-                "time": time,
+                "total_time": total_time,
+                "solver_time": solver_time,
+                "optional_times": optional_times,
                 "depth": depth,
                 "cx_depth": cx_depth,
                 "swaps": swaps,
@@ -157,7 +171,9 @@ def update_cache(
 
 def get_cache_key(
     input_file: str, synthesizer_name: str, solver_name: str, platform_name: str
-) -> tuple[float | Literal["NS", "TO"] | None, int, int, int]:
+) -> tuple[
+    float | Literal["NS", "TO"] | None, float, tuple[float, float] | None, int, int, int
+]:
     result = (
         cache.get(input_file, {})
         .get(platform_name, {})
@@ -165,12 +181,14 @@ def get_cache_key(
         .get(solver_name, {})
     )
     if result:
-        time = result.get("time")
+        total_time = result.get("total_time")
+        solver_time = result.get("solver_time")
+        optional_times = result.get("optional_times")
         time_limit = result.get("time_limit")
-        if time in ["NS", "TO"]:
+        if total_time in ["NS", "TO"]:
             if isinstance(time_limit, int) and time_limit <= EXPERIMENT_TIME_LIMIT_S:
-                return None, 0, 0, 0
-            return time, 0, 0, 0
+                return None, 0, None, 0, 0, 0
+            return total_time, 0, None, 0, 0, 0
 
         depth = result.get("depth")
         cx_depth = result.get("cx_depth")
@@ -178,14 +196,16 @@ def get_cache_key(
 
         # to make the type checker happy
         if (
-            isinstance(time, float)
+            isinstance(total_time, float)
+            and isinstance(solver_time, float)
+            and (isinstance(optional_times, tuple) or optional_times == None)
             and isinstance(depth, int)
             and isinstance(cx_depth, int)
             and isinstance(swaps, int)
-            and time <= EXPERIMENT_TIME_LIMIT_S
+            and solver_time <= EXPERIMENT_TIME_LIMIT_S
         ):
-            return time, depth, cx_depth, swaps
-    return None, 0, 0, 0
+            return total_time, solver_time, optional_times, depth, cx_depth, swaps
+    return None, 0, None, 0, 0, 0
 
 
 def print_and_output_to_file(line: str):
@@ -246,7 +266,9 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
 
 for input_file, platform_name in EXPERIMENTS:
     results: dict[
-        tuple[str, str], tuple[int, int, int, float] | Literal["NS", "TO"]
+        tuple[str, str],
+        tuple[float, float, tuple[float, float] | None, int, int, int]
+        | Literal["NS", "TO"],
     ] = {}
     for synthesizer_name, solver_name in configurations:
         if not isinstance(solvers[solver_name], planning.Solver):
@@ -262,18 +284,25 @@ for input_file, platform_name in EXPERIMENTS:
             print(f"  Platform '{platform_name}' not found. Skipping experiment...")
             continue
 
-        cached_result, cached_depth, cached_cx_depth, cached_swaps = get_cache_key(
-            input_file, synthesizer_name, solver_name, platform_name
-        )
-        if cached_result is not None:
-            if cached_result in ["NS", "TO"]:
-                results[(synthesizer_name, solver_name)] = cached_result
-            elif isinstance(cached_result, float):
+        (
+            cached_total,
+            cached_solver,
+            cached_optional,
+            cached_depth,
+            cached_cx_depth,
+            cached_swaps,
+        ) = get_cache_key(input_file, synthesizer_name, solver_name, platform_name)
+        if cached_total is not None:
+            if cached_total in ["NS", "TO"]:
+                results[(synthesizer_name, solver_name)] = cached_total
+            elif isinstance(cached_total, float):
                 results[(synthesizer_name, solver_name)] = (
+                    cached_total,
+                    cached_solver,
+                    cached_optional,
                     cached_depth,
                     cached_cx_depth,
                     cached_swaps,
-                    cached_result,
                 )
             print(f"  Found cached result for '{synthesizer_name}' on '{solver_name}'.")
         else:
@@ -317,10 +346,12 @@ for input_file, platform_name in EXPERIMENTS:
                     if correct_output and correct_qcec:
                         print("  ✓ Input and output circuits are equivalent.")
                         results[(synthesizer_name, solver_name)] = (
+                            experiment.total_time,
+                            experiment.solver_time,
+                            experiment.optional_times,
                             experiment.depth,
                             experiment.cx_depth,
                             experiment.swaps,
-                            experiment.time,
                         )
                     else:
                         print(
@@ -344,6 +375,8 @@ for input_file, platform_name in EXPERIMENTS:
                 platform_name,
                 "NS",
                 0,
+                None,
+                0,
                 0,
                 0,
             )
@@ -356,15 +389,21 @@ for input_file, platform_name in EXPERIMENTS:
                 platform_name,
                 "TO",
                 0,
+                None,
+                0,
                 0,
                 0,
             )
         else:
-            depth, cx_depth, swaps, time = results[(synthesizer_name, solver_name)]
+            total_time, solver_time, optional_times, depth, cx_depth, swaps = results[
+                (synthesizer_name, solver_name)
+            ]
 
             # to make the type checker happy
             if (
-                isinstance(time, float)
+                isinstance(total_time, float)
+                and isinstance(solver_time, float)
+                and (isinstance(optional_times, tuple) or optional_times == None)
                 and isinstance(cx_depth, int)
                 and isinstance(depth, int)
                 and isinstance(swaps, int)
@@ -374,15 +413,15 @@ for input_file, platform_name in EXPERIMENTS:
                     synthesizer_name,
                     solver_name,
                     platform_name,
-                    time,
+                    total_time,
+                    solver_time,
+                    optional_times,
                     depth,
                     cx_depth,
                     swaps,
                 )
 
-            result_string = (
-                f"  Done in {time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs."
-            )
+            result_string = f"  Done in {solver_time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs."
         print(result_string)
     print_and_output_to_file(
         "##############################################################"
@@ -398,10 +437,13 @@ for input_file, platform_name in EXPERIMENTS:
     )
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
+        breakdown_str = (
+            "" if result[2] == None else f"{result[2][0]:.03f}s, {result[2][1]:.03f}s, "
+        )
         result_str = (
             result
             if isinstance(result, str)
-            else f"{result[0]}, {result[1]}, {result[2]}, {result[3]:.3f}s"
+            else f"{result[0]:.03f}s, {result[1]:.03f}s, {breakdown_str}{result[3]}, {result[4]}, {result[5]}"
         )
         print_and_output_to_file(
             f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
