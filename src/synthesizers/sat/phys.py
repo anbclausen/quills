@@ -566,7 +566,6 @@ class PhysSynthesizer(SATSynthesizer):
                         elif n_swaps < best_so_far - 1:
                             print(f"✗", flush=True, end="), ")
                             worst_so_far = n_swaps
-                            print("Worst so far:", worst_so_far, flush=True, end=", ")
                             factor *= 2
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
@@ -593,7 +592,6 @@ class PhysSynthesizer(SATSynthesizer):
 
         def f(queue: Queue):
             queue.put(self.create_solution(circuit, platform, solver, swap_optimal))
-            print("done!")
 
         queue = Queue()
         p = Process(target=f, args=(queue,))
@@ -602,10 +600,16 @@ class PhysSynthesizer(SATSynthesizer):
         try:
             with time_limit(time_limit_s):
                 p.start()
-                p.join()
+
+                # hack since p.join hangs
+                while queue.empty():
+                    time.sleep(1)
+
                 out = queue.get()
+                queue.close()
         except TimeoutException:
-            p.terminate()
+            p.kill()
+            queue.close()
             return SynthesizerTimeout()
         after = time.time()
         total_time = after - before

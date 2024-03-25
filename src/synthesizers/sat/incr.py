@@ -509,7 +509,6 @@ class IncrSynthesizer(SATSynthesizer):
 
         def f(queue: Queue):
             queue.put(self.create_solution(circuit, platform, solver, swap_optimal))
-            print("done!")
 
         queue = Queue()
         p = Process(target=f, args=(queue,))
@@ -518,10 +517,16 @@ class IncrSynthesizer(SATSynthesizer):
         try:
             with time_limit(time_limit_s):
                 p.start()
-                p.join()
+
+                # hack since p.join hangs
+                while queue.empty():
+                    time.sleep(1)
+
                 out = queue.get()
+                queue.close()
         except TimeoutException:
-            p.terminate()
+            p.kill()
+            queue.close()
             return SynthesizerTimeout()
         after = time.time()
         total_time = after - before
