@@ -24,6 +24,7 @@ import synthesizers.planning.solvers as planning
 
 CX_OPTIMAL = False
 SWAP_OPTIMAL = False
+OUTPUT_CSV = False
 EXPERIMENT_TIME_LIMIT_S = 180
 cx_suffix = "_cx" if CX_OPTIMAL else ""
 swap_suffix = "_swap" if SWAP_OPTIMAL else ""
@@ -208,6 +209,50 @@ def print_and_output_to_file(line: str):
 
 
 now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+time_suffix = f"_{now_str}"
+CSV_OUTPUT_FILE = f"tmp/experiments_{str(EXPERIMENT_TIME_LIMIT_S)}s{cx_suffix}{swap_suffix}{time_suffix}.csv"
+CSV_SEPARATOR = ";"
+
+
+def output_csv(
+    input: str,
+    platform: str,
+    model: str,
+    solver: str,
+    result: (
+        tuple[float, float, tuple[float, float] | None, int, int, int]
+        | Literal["NS", "TO"]
+    ),
+):
+    line = f"{input}{CSV_SEPARATOR}{platform}{CSV_SEPARATOR}{model}{CSV_SEPARATOR}{solver}{CSV_SEPARATOR}"
+    if isinstance(result, str):
+        line += f"{result}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}"
+    else:
+        total_time = result[0]
+        solver_time = result[1]
+        optional_times = result[2]
+        depth = result[3]
+        cx_depth = result[4]
+        swaps = result[5]
+
+        line += f"{total_time:.3f}{CSV_SEPARATOR}{solver_time:.3f}{CSV_SEPARATOR}"
+        if optional_times == None:
+            line += f"{CSV_SEPARATOR}{CSV_SEPARATOR}"
+        else:
+            depth_time = optional_times[0]
+            swap_time = optional_times[1]
+            line += f"{depth_time:.3f}{CSV_SEPARATOR}{swap_time:.3f}{CSV_SEPARATOR}"
+        line += f"{depth}{CSV_SEPARATOR}{cx_depth}{CSV_SEPARATOR}{swaps}"
+    with open(CSV_OUTPUT_FILE, "a") as f:
+        f.write(line + "\n")
+
+
+if OUTPUT_CSV:
+    line = f"Input{CSV_SEPARATOR}Platform{CSV_SEPARATOR}Model{CSV_SEPARATOR}Solver{CSV_SEPARATOR}Total time (s){CSV_SEPARATOR}Total solver time (s){CSV_SEPARATOR}Depth solving time (s){CSV_SEPARATOR}SWAP solving time (s){CSV_SEPARATOR}Depth{CSV_SEPARATOR}CX depth{CSV_SEPARATOR}SWAPs"
+    with open(CSV_OUTPUT_FILE, "a") as f:
+        f.write(line + "\n")
+
+
 print(
     f"--- EXPERIMENTS ---\n"
     f"Date: {now_str}\n"
@@ -416,6 +461,8 @@ for input_file, platform_name in EXPERIMENTS:
     )
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():
+        if OUTPUT_CSV:
+            output_csv(input_file, platform_name, synthesizer_name, solver_name, result)
         if result in ["NS", "TO"]:
             print_and_output_to_file(
                 f"  '{synthesizer_name}' on '{solver_name}': {result}"
