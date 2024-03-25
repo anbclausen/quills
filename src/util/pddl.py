@@ -382,6 +382,8 @@ class PDDLInstance:
 """
         types_grouped_by_super_type: dict[str, list[Type[PDDLType]]] = {}
         for type_ in self.types:
+            if type_.__base__ is None:
+                raise ValueError("Type must have a base class.")
             super_class = (
                 type_.__base__.__name__
                 if type_.__base__.__name__ != "object_"
