@@ -25,16 +25,10 @@ import synthesizers.planning.solvers as planning
 CX_OPTIMAL = False
 SWAP_OPTIMAL = False
 EXPERIMENT_TIME_LIMIT_S = 180
-match CX_OPTIMAL, SWAP_OPTIMAL:
-    case True, True:
-        CACHE_FILE = "tmp/experiments_cache_cx_swap.json"
-    case True, False:
-        CACHE_FILE = "tmp/experiments_cache_cx.json"
-    case False, True:
-        CACHE_FILE = "tmp/experiments_cache_swap.json"
-    case False, False:
-        CACHE_FILE = "tmp/experiments_cache.json"
-
+cx_suffix = "_cx" if CX_OPTIMAL else ""
+swap_suffix = "_swap" if SWAP_OPTIMAL else ""
+CACHE_FILE = f"tmp/experiments_cache{cx_suffix}{swap_suffix}.json"
+OUTPUT_FILE = f"tmp/experiments{cx_suffix}{swap_suffix}.txt"
 
 EXPERIMENTS = [
     # up to 4 qubits
@@ -209,7 +203,7 @@ def get_cache_key(
 
 def print_and_output_to_file(line: str):
     print(line)
-    with open("tmp/experiments.txt", "a") as f:
+    with open(OUTPUT_FILE, "a") as f:
         f.write(line + "\n")
 
 
