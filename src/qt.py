@@ -175,9 +175,9 @@ match output:
             output.circuit, platform
         )
         if correct_connectivity:
-            print("✓ Output circuit obeys connectivity of platform (proprietary checker)")
+            print("✓ Output circuit obeys connectivity of platform (Proprietary Checker)")
         else:
-            print("✗ Output circuit does not obey connectivity of platform (proprietary checker)")
+            print("✗ Output circuit does not obey connectivity of platform (Proprietary Checker)")
         correct_output = OutputChecker.equality_check(
             input_circuit, output.circuit, output.initial_mapping
         )
