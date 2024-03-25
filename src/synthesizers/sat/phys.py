@@ -560,10 +560,12 @@ class PhysSynthesizer(SATSynthesizer):
                             if best_so_far == worst_so_far + 1:
                                 print(f"optimal: {best_so_far} SWAPs.")
                                 break
-                            n_swaps = best_so_far - max(best_so_far // factor, 1)
+                            candidate = best_so_far - max(best_so_far // factor, 1)
+                            n_swaps = max(worst_so_far + 1, candidate)
                         elif n_swaps < best_so_far - 1:
                             print(f"✗", flush=True, end="), ")
                             worst_so_far = n_swaps
+                            print("Worst so far:", worst_so_far, flush=True, end=", ")
                             factor *= 2
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
