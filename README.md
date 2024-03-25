@@ -66,22 +66,6 @@ options:
                         whether to optimize for swap count after finding a depth-optimal circuit
 ```
 
-## Examples
-
-```
-./qt benchmarks/adder.qasm -p tenerife -m sat_incr -s glucose42
-```
-
-## Experiments
-
-To run all combinations of the synthesizer model and solver on all experiments, run
-
-```
-./experiments
-```
-
-Output will be written to terminal and to `tmp/experiments.txt`.
-
 ## Sample run
 
 Here is a sample run of the tool with its output:
@@ -154,3 +138,13 @@ CHECKS
 ✓ Input and output circuits are equivalent (proprietary checker)
 ✓ Input and output circuits are equivalent (QCEC)
 ```
+
+## Experiments
+
+To run all combinations of the synthesizer model and solver on all experiments, run
+
+```
+./experiments
+```
+
+Output will be written to terminal and to `tmp/experiments.txt`.
