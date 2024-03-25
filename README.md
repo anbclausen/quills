@@ -56,11 +56,11 @@ options:
   -t TIME_LIMIT, --time_limit TIME_LIMIT
                         the time limit in seconds, default is 1800s
   -m MODEL, --model MODEL
-                        the synthesizer model to use: sat_incr, sat_phys
+                        the synthesizer model to use: plan_cost_opt, plan_cond_cost_opt, plan_lc_incr, sat_incr, sat_phys
   -p PLATFORM, --platform PLATFORM
                         the target platform: toy, tenerife, melbourne, sycamore, rigetti80, eagle
   -s SOLVER, --solver SOLVER
-                        the underlying solver: cadical153, glucose42, maple_cm, maple_chrono, minisat22
+                        the underlying solver: MpC_exist_glucose, fd_ms, fd_bjolp, cadical153, glucose42, maple_cm, maple_chrono, minisat22
   -cx, --cx_optimal     whether to optimize for cx-depth
   -swap, --swap_optimal
                         whether to optimize for swap count after finding a depth-optimal circuit
