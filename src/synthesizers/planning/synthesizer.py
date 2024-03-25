@@ -8,6 +8,7 @@ from synthesizers.planning.solvers import Solver, SolverTimeout, SolverNoSolutio
 from util.pddl import PDDLInstance
 from util.circuits import (
     SynthesizerOutput,
+    count_swaps,
     gate_line_dependency_mapping,
     LogicalQubit,
     PhysicalQubit,
@@ -311,8 +312,9 @@ class PlanningSynthesizer(ABC):
                     physical_circuit_with_cnots_as_swap
                 )
                 cx_depth = physical_with_only_cnots.depth()
+                swaps = count_swaps(physical_circuit)
                 return SynthesizerSolution(
-                    physical_circuit, initial_mapping, total_time, depth, cx_depth
+                    physical_circuit, initial_mapping, total_time, depth, cx_depth, swaps, None
                 )
             case _:
                 raise ValueError(f"Unexpected solution: {solution}")
@@ -385,8 +387,9 @@ class PlanningSynthesizer(ABC):
                         physical_circuit_with_cnots_as_swap
                     )
                     cx_depth = physical_with_only_cnots.depth()
+                    swaps = count_swaps(physical_circuit)
                     return SynthesizerSolution(
-                        physical_circuit, initial_mapping, total_time, depth, cx_depth
+                        physical_circuit, initial_mapping, total_time, depth, cx_depth, swaps, None
                     )
                 case _:
                     raise ValueError(f"Unexpected solution: {solution}")
@@ -433,8 +436,9 @@ class PlanningSynthesizer(ABC):
                 physical_circuit_with_cnots_as_swap
             )
             cx_depth = physical_with_only_cnots.depth()
+            swaps = count_swaps(physical_circuit)
             return SynthesizerSolution(
-                physical_circuit, initial_mapping, total_time, depth, cx_depth
+                physical_circuit, initial_mapping, total_time, depth, cx_depth, swaps, None
             )
 
         remove_intermediate_files()
