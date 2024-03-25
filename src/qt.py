@@ -159,7 +159,7 @@ match synthesizer, solver:
     case _: 
         raise ValueError(
             f"Invalid synthesizer-solver combination: '{args.model}' on '{args.solver}'."
-            " Something must be configured incorrectly."
+            " Something must be configured incorrectly. Make sure to choose a SAT-based synthesizer with a SAT solver and likewise for planning synthesizers."
             )
 print(output)
 print()
