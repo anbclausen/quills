@@ -2,15 +2,13 @@ import argparse
 from qiskit import QuantumCircuit
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
 from util.output_checker import OutputChecker
-from synthesizers.planning.solvers import OPTIMAL, TEMPORAL
+from synthesizers.planning.solvers import OPTIMAL
 from configs import (
+    CONDITIONAL_PLANNING_SYNTHESIZERS,
     synthesizers,
     platforms,
     solvers,
     OPTIMAL_PLANNING_SYNTHESIZERS,
-    CONDITIONAL_PLANNING_SYNTHESIZERS,
-    TEMPORAL_PLANNING_SYNTHESIZERS,
-    NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
 from synthesizers.planning.synthesizer import PlanningSynthesizer
@@ -109,19 +107,6 @@ if isinstance(solver, planning.Solver) and isinstance(solver, PlanningSynthesize
             f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
             f"Please choose one of the following solvers: {', '.join(s for s in CONDITIONAL_PLANNING_SYNTHESIZERS)}"
         )
-    uses_temporal = args.model in TEMPORAL_PLANNING_SYNTHESIZERS
-    if uses_temporal and solver.solver_class != TEMPORAL:
-        raise ValueError(
-            f"Model '{args.model}' requires temporal solver, but solver '{args.solver}' is not temporal.\n"
-            f"Please choose one of the following temporal solvers: {', '.join(s for s in TEMPORAL_PLANNING_SYNTHESIZERS)}"
-        )
-
-    uses_negative_preconditions = args.model in NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS
-    if uses_negative_preconditions and not solver.accepts_negative_preconditions:
-        raise ValueError(
-            f"Model '{args.model}' uses negative preconditions, but solver '{args.solver}' does not support those.\n"
-            f"Please choose one of the following solvers: {', '.join(s for s in NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS)}"
-        )
 if platform.qubits < input_circuit.num_qubits:
     raise ValueError(
             f"Circuit '{args.input}' has {input_circuit.num_qubits} logical qubits, but platform '{args.platform}' only has {platform.qubits} physical qubits.\n"
@@ -150,8 +135,6 @@ print(f"{BOLD_START}SOLVER{BOLD_END}")
 if isinstance(solver, planning.Solver):
     if solver.solver_class == OPTIMAL:
         print(f"'{args.solver}' (optimal): {solver.description}")
-    elif solver.solver_class == TEMPORAL:
-        print(f"'{args.solver}' (temporal): {solver.description}")
     else:
         print(f"'{args.solver}' (satisfying): {solver.description}")
 else:

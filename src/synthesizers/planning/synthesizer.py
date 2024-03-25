@@ -5,7 +5,12 @@ import time
 from typing import Callable
 from qiskit import QuantumCircuit, QuantumRegister
 from platforms import Platform
-from synthesizers.planning.solvers import Solver, SolverTimeout, SolverNoSolution, SolverSolution
+from synthesizers.planning.solvers import (
+    Solver,
+    SolverTimeout,
+    SolverNoSolution,
+    SolverSolution,
+)
 from util.pddl import PDDLInstance
 from util.circuits import (
     SynthesizerOutput,
@@ -33,10 +38,8 @@ JUNK_FILES = [
 
 class PlanningSynthesizer(ABC):
     description: str = "No description."
-    is_temporal: bool
     is_optimal: bool
     uses_conditional_effects: bool
-    uses_negative_preconditions: bool
 
     @abstractmethod
     def create_instance(
@@ -319,7 +322,12 @@ class PlanningSynthesizer(ABC):
                 cx_depth = physical_with_only_cnots.depth()
                 swaps = count_swaps(physical_circuit)
                 return SynthesizerSolution(
-                    physical_circuit, initial_mapping, time_breakdown, depth, cx_depth, swaps
+                    physical_circuit,
+                    initial_mapping,
+                    time_breakdown,
+                    depth,
+                    cx_depth,
+                    swaps,
                 )
             case _:
                 raise ValueError(f"Unexpected solution: {solution}")
@@ -398,7 +406,12 @@ class PlanningSynthesizer(ABC):
                     cx_depth = physical_with_only_cnots.depth()
                     swaps = count_swaps(physical_circuit)
                     return SynthesizerSolution(
-                        physical_circuit, initial_mapping, time_breakdown, depth, cx_depth, swaps
+                        physical_circuit,
+                        initial_mapping,
+                        time_breakdown,
+                        depth,
+                        cx_depth,
+                        swaps,
                     )
                 case _:
                     raise ValueError(f"Unexpected solution: {solution}")

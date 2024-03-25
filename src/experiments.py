@@ -8,7 +8,7 @@ from util.circuits import (
     SynthesizerNoSolution,
     SynthesizerTimeout,
 )
-from synthesizers.planning.solvers import SATISFYING, TEMPORAL
+from synthesizers.planning.solvers import SATISFYING
 from synthesizers.planning.synthesizer import PlanningSynthesizer
 from synthesizers.sat.synthesizer import SATSynthesizer
 from configs import (
@@ -17,7 +17,6 @@ from configs import (
     solvers,
     OPTIMAL_PLANNING_SYNTHESIZERS,
     CONDITIONAL_PLANNING_SYNTHESIZERS,
-    TEMPORAL_PLANNING_SYNTHESIZERS,
 )
 from datetime import datetime
 from util.output_checker import OutputChecker
@@ -238,25 +237,10 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
                 synthesizer_name in CONDITIONAL_PLANNING_SYNTHESIZERS
                 and not solver_instance.accepts_conditional
             )
-            temporal_synthesizer_and_non_temporal_solver = (
-                synthesizer_name in TEMPORAL_PLANNING_SYNTHESIZERS
-                and solver_instance.solver_class != TEMPORAL
-            )
-            non_temporal_synthesizer_and_temporal_solver = (
-                synthesizer_name not in TEMPORAL_PLANNING_SYNTHESIZERS
-                and solver_instance.solver_class == TEMPORAL
-            )
-            synthesizer_uses_negative_preconds_and_solver_does_not = (
-                synthesizer_instance.uses_negative_preconditions
-                and not solver_instance.accepts_negative_preconditions
-            )
 
             if (
                 not optimal_synthesizer_and_satisfying_solver
                 and not conditional_synthesizer_and_non_conditional_solver
-                and not temporal_synthesizer_and_non_temporal_solver
-                and not non_temporal_synthesizer_and_temporal_solver
-                and not synthesizer_uses_negative_preconds_and_solver_does_not
             ):
                 configurations.append((synthesizer_name, solver_name))
         elif isinstance(synthesizer_instance, SATSynthesizer) and not isinstance(
