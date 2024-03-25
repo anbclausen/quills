@@ -37,6 +37,7 @@ from util.sat import (
 )
 import time
 from util.time_limit import time_limit, TimeoutException
+from multiprocessing import Process, Queue
 
 
 class PhysSynthesizer(SATSynthesizer):
@@ -589,11 +590,22 @@ class PhysSynthesizer(SATSynthesizer):
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
         )
+
+        def f(queue: Queue):
+            queue.put(self.create_solution(circuit, platform, solver, swap_optimal))
+            print("done!")
+
+        queue = Queue()
+        p = Process(target=f, args=(queue,))
+
         before = time.time()
         try:
             with time_limit(time_limit_s):
-                out = self.create_solution(circuit, platform, solver, swap_optimal)
+                p.start()
+                p.join()
+                out = queue.get()
         except TimeoutException:
+            p.terminate()
             return SynthesizerTimeout()
         after = time.time()
         total_time = after - before
