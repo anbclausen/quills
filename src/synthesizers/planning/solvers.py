@@ -139,6 +139,12 @@ class Solver(ABC):
                 stderr=subprocess.DEVNULL,
             )
             p.wait(timeout=time_limit_s)
+            if p.returncode != 0:
+                print(
+                    f"Error running command: '{command}'. Perhaps you do not have the correct dependencies installed?\n"
+                    f"Note dependencies are only installed automatically when running the Docker image.\n"
+                )
+                exit(1)
         except subprocess.TimeoutExpired:
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             return SolverTimeout(), time_limit_s
@@ -146,13 +152,6 @@ class Solver(ABC):
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             p.wait()
             raise KeyboardInterrupt
-        except Exception as e:
-            print(
-                f"Error running command: '{command}'. Perhaps you do not have the correct dependencies installed?\n"
-                f"Note dependencies are only installed automatically when running the Docker image.\n"
-                f"Error: {e}"
-            )
-            return SolverNoSolution(), 0
         end = time.time()
 
         elapsed = end - start
