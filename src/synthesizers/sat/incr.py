@@ -416,22 +416,25 @@ class IncrSynthesizer(SATSynthesizer):
                     depth_time = overall_time
                     swap_time = 0
                     if not swap_optimal:
+                        print(
+                            f"found solution with depth {t+1} (after {overall_time:.03f}s)."
+                        )
                         return solution, overall_time, None
-                    print(
-                        f"found solution (after {overall_time:.03f}s)! Now optimizing for number of swaps."
-                    )
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
                     )
+                    print(
+                        f"found solution with depth {t+1} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
+                    )
                     previous_solution = solution
                     previous_swap_asms: list[Atom] = []
-                    print("Optimizing for number of swaps:", end=" ", flush=True)
+                    print("Optimizing for number of SWAPs:", end=" ", flush=True)
                     best_so_far = number_of_swaps
                     worst_so_far = -1
                     factor = 2
                     n_swaps = number_of_swaps // factor
                     while True:
-                        print(f"{n_swaps} swaps (", flush=True, end="")
+                        print(f"{n_swaps} SWAPs (", flush=True, end="")
                         swap_asm = new_atom(f"swap_asm_{n_swaps}")
                         swap_asm_constraint = impl(
                             swap_asm,
@@ -472,7 +475,7 @@ class IncrSynthesizer(SATSynthesizer):
                             )
                             print(f"✓{note}", flush=True, end="), ")
                             if best_so_far == worst_so_far + 1:
-                                print(f"optimal: {best_so_far}.")
+                                print(f"optimal: {best_so_far} SWAPs.")
                                 break
                             n_swaps = best_so_far - max(best_so_far // factor, 1)
                         elif n_swaps < best_so_far - 1:
@@ -482,7 +485,7 @@ class IncrSynthesizer(SATSynthesizer):
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
                         else:
-                            print(f"✗), optimal: {best_so_far}.")
+                            print(f"✗), optimal: {best_so_far} SWAPs.")
                             break
 
                     return previous_solution, overall_time, (depth_time, swap_time)

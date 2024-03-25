@@ -498,6 +498,9 @@ class PhysSynthesizer(SATSynthesizer):
                     depth_time = overall_time
                     swap_time = 0
                     if not swap_optimal:
+                        print(
+                            f"found solution with depth {t} (after {overall_time:.03f}s)."
+                        )
                         return solution, overall_time, None
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
