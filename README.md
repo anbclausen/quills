@@ -78,7 +78,7 @@ options:
 Here is a sample run of the tool with its output:
 
 ```
-$ ./qt benchmarks/adder.qasm -p tenerife -m sat_phys -s cadical153 -swap
+$ ./qt benchmarks/adder.qasm -p tenerife -m sat_phys -s cadical153
 ####################################################
 #                           __                     #
 #                   _______/  |_                   #
@@ -118,8 +118,7 @@ SOLVER
 'cadical153' from the pysat library.
 
 OUTPUT CIRCUIT
-Synthesizing (depth-optimal and local swap-optimal)... Searched: depth 11, depth 12, depth 13, depth 14, depth 15, found solution with depth 15 and 1 SWAPs (after 0.037s).
-Optimizing for number of SWAPs: 0 SWAPs (✗), optimal: 1 SWAPs.
+Synthesizing (depth-optimal)... Searched: depth 11, depth 12, depth 13, depth 14, depth 15, found solution with depth 15 (after 0.036s).
 Done!
      ┌───┐┌───┐┌─────┐┌───┐             ┌───┐ ┌───┐ ┌───┐┌───┐     ┌───┐
 p_0: ┤ H ├┤ X ├┤ Tdg ├┤ X ├──────────■──┤ X ├─┤ T ├─┤ X ├┤ S ├──■──┤ H ├
@@ -136,12 +135,11 @@ Depth: 15, CX-depth: 10, SWAPs: 1
 Initial mapping: q_0 -> p_3, q_1 -> p_2, q_2 -> p_1, q_3 -> p_0
 
 TIME
-Solver time for optimal depth: 0.037 seconds.
-Solver time for optimal SWAPs: 0.001 seconds.
-Total solver time: 0.038 seconds.
-Total time (including preprocessing): 0.055 seconds.
+Solver time: 0.036 seconds.
+Total time (including preprocessing): 0.053 seconds.
 
 VALIDATION
+✓ Output circuit obeys connectivity of platform (Proprietary Checker)
 ✓ Input and output circuits are equivalent (Proprietary Checker)
 ✓ Input and output circuits are equivalent (QCEC)
 ```
