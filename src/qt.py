@@ -170,14 +170,14 @@ match output:
         print(output.report_time())
         print()
 
-        print(f"{BOLD_START}CHECKS{BOLD_END}")
+        print(f"{BOLD_START}VALIDATION{BOLD_END}")
         correct_output = OutputChecker.check(
             input_circuit, output.circuit, output.initial_mapping, platform
         )
         if correct_output:
-            print("✓ Input and output circuits are equivalent (proprietary checker)")
+            print("✓ Input and output circuits are equivalent (Proprietary Checker)")
         else:
-            print("✗ Input and output circuits are not equivalent (proprietary checker)")
+            print("✗ Input and output circuits are not equivalent (Proprietary Checker)")
         correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
         if correct_qcec:
             print("✓ Input and output circuits are equivalent (QCEC)")
