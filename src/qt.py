@@ -35,7 +35,7 @@ parser.add_argument(
     "--model",
     type=str,
     help=f"the synthesizer model to use: {', '.join(synthesizers.keys())}",
-    default="cond_cost_opt",
+    default="sat_phys",
 )
 
 parser.add_argument(
@@ -51,7 +51,7 @@ parser.add_argument(
     "--solver",
     type=str,
     help=f"the underlying solver: {', '.join(solvers.keys())}",
-    default="fd_ms",
+    default="cadical153",
 )
 
 parser.add_argument(
