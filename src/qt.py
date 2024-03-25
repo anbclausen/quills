@@ -83,6 +83,7 @@ synthesizer = synthesizers[args.model]
 platform = platforms[args.platform]
 solver = solvers[args.solver]
 time_limit = args.time_limit
+input_circuit = QuantumCircuit.from_qasm_file(args.input)
 
 print("####################################################")
 print("#                           __                     #")
@@ -94,7 +95,8 @@ print("#                     |__|                         #")
 print("#                                                  #")
 print("#    A tool for depth-optimal layout synthesis.    #")
 print("####################################################")
-print()
+print(flush=True)
+
 if isinstance(solver, planning.Solver) and isinstance(solver, PlanningSynthesizer):
     optimal_planner = args.model in OPTIMAL_PLANNING_SYNTHESIZERS
     if optimal_planner and solver.solver_class != OPTIMAL:
@@ -121,8 +123,11 @@ if isinstance(solver, planning.Solver) and isinstance(solver, PlanningSynthesize
             f"Model '{args.model}' uses negative preconditions, but solver '{args.solver}' does not support those.\n"
             f"Please choose one of the following solvers: {', '.join(s for s in NEGATIVE_PRECONDITION_PLANNING_SYNTHESIZERS)}"
         )
-
-input_circuit = QuantumCircuit.from_qasm_file(args.input)
+if platform.qubits < input_circuit.num_qubits:
+    raise ValueError(
+            f"Circuit '{args.input}' has {input_circuit.num_qubits} logical qubits, but platform '{args.platform}' only has {platform.qubits} physical qubits.\n"
+            f"Please choose one of the following solvers: {', '.join(p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits)}"
+        )
 
 print(f"{BOLD_START}INPUT CIRCUIT{BOLD_END}")
 print(f"'{args.input}'")
