@@ -1,18 +1,40 @@
-# Quantum Transformations (qt)
+# Quantum Transformations (qt)          
 
-qt (pronounced "cutie") is a tool for performing depth-optimal layout synthesis of quantum circuits.
+qt (pronounced "cutie") is a tool for performing depth-optimal layout synthesis on quantum circuits. qt consists of several synthesizers based on both classical planning and SAT solving.
+
+qt has been developed by [Anders Benjamin Clausen](https://github.com/anbclausen) and [Anna Blume Jakobsen](https://github.com/AnnaBlume99) as part of their Master's thesis in Computer Science at Aarhus University. 
+
+Supervised by professor [Jaco van de Pol](https://www.au.dk/en/jaco@cs.au.dk) with the help of [Irfansha Shaik](https://github.com/irfansha).
+
+© 2024 Anders Benjamin Clausen & Anna Blume Jakobsen.
 
 ## Installation
 
-qt depends on external tools such as planners and SAT solvers. To make usage easy, we have containerized the tool with [Docker](https://www.docker.com/products/docker-desktop/). To install the tool, simply open the repo in [VSCode](https://code.visualstudio.com/) with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed. The container will be built automatically and you will be able to use the tool from the terminal.
+qt depends on external tools such as planners and SAT solvers. To make the planning-based synthesizers work, one much install external dependencies. However, all SAT-based synthesizers depend only on Python packages.
 
-First time opening the repo in a container, run
+### Simple installation (only works for SAT-based synthesizers)
 
-```bash
-poetry install
-```
+qt uses [Poetry](https://python-poetry.org) for depdency management instead of `pip`. For the simple installation, follow the steps:
 
-You are now good to go. :)
+1. Install `python` and `pip` on your system.
+2. Install `poetry` with `pip install poetry`.
+3. In the root of the folder run `poetry install` and all Python dependencies will be installed.
+
+### Full installation with Docker
+
+To make usage easy, we have containerized the tool with [Docker](https://www.docker.com/products/docker-desktop/). For the full installation, follow the steps:
+
+1. [Download and install Docker](https://docs.docker.com/engine/install/). Make sure the docker engine is running.
+2. Clone the repository with `git clone https://github.com/anbclausen/qt`.
+3. Open the repo in [VSCode](https://code.visualstudio.com/) with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed. 
+
+The container will be built automatically and you will be able to use the tool from the terminal.
+
+4. First time opening the repo in a container, run `peotry install`.
+
+### Full installation running natively on Linux
+
+If you wish to do the full installation without Docker, it is possible (though not recommended) to install the required packages and dependencies directly on your own system. To do this, simply open the file `.devcontainer/Dockerfile` to see what commands are performed to install all dependencies.
 
 ### Development tools
 
