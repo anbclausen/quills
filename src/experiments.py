@@ -318,16 +318,18 @@ for input_file, platform_name in EXPERIMENTS:
                     )
             match experiment:
                 case SynthesizerSolution():
-                    correct_output = OutputChecker.check(
+                    correct_connectivity = OutputChecker.connectivity_check(
+                        experiment.circuit, platform
+                    )
+                    correct_output = OutputChecker.equality_check(
                         input_circuit,
                         experiment.circuit,
                         experiment.initial_mapping,
-                        platform,
                     )
                     correct_qcec = OutputChecker.check_qcec(
                         input_circuit, experiment.circuit, experiment.initial_mapping
                     )
-                    if correct_output and correct_qcec:
+                    if correct_connectivity and correct_output and correct_qcec:
                         print("  ✓ Input and output circuits are equivalent.")
                         results[(synthesizer_name, solver_name)] = (
                             experiment.total_time,
@@ -341,7 +343,6 @@ for input_file, platform_name in EXPERIMENTS:
                         print(
                             "  ✗ Input and output circuits are not equivalent! Not caching result."
                         )
-                        print(experiment.circuit)
 
                 case SynthesizerNoSolution():
                     results[(synthesizer_name, solver_name)] = "NS"

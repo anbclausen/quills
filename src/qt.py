@@ -171,8 +171,15 @@ match output:
         print()
 
         print(f"{BOLD_START}VALIDATION{BOLD_END}")
-        correct_output = OutputChecker.check(
-            input_circuit, output.circuit, output.initial_mapping, platform
+        correct_connectivity = OutputChecker.connectivity_check(
+            output.circuit, platform
+        )
+        if correct_connectivity:
+            print("✓ Output circuit obeys connectivity of platform (proprietary checker)")
+        else:
+            print("✗ Output circuit does not obey connectivity of platform (proprietary checker)")
+        correct_output = OutputChecker.equality_check(
+            input_circuit, output.circuit, output.initial_mapping
         )
         if correct_output:
             print("✓ Input and output circuits are equivalent (Proprietary Checker)")
