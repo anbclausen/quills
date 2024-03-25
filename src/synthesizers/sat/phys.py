@@ -15,6 +15,7 @@ from util.circuits import (
     with_swaps_as_cnots,
     remove_all_non_cx_gates,
     reinsert_unary_gates,
+    count_swaps,
 )
 from util.sat import (
     Atom,
@@ -188,7 +189,7 @@ class PhysSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
         swap_optimal: bool,
-    ) -> tuple[list[str], float] | None:
+    ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
 
         print("Searched: ", end="", flush=True)
@@ -494,13 +495,15 @@ class PhysSynthesizer(SATSynthesizer):
                 solution = parse_sat_solution(model)
                 print(f"depth {t}", flush=True, end=", ")
                 if solution:
+                    depth_time = overall_time
+                    swap_time = 0
                     if not swap_optimal:
-                        return solution, overall_time
+                        return solution, overall_time, None
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
                     )
                     print(
-                        f"found solution with depth {t} and {number_of_swaps} SWAPs (after {overall_time:.02f}s)."
+                        f"found solution with depth {t} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
                     )
                     previous_solution = solution
                     previous_swap_asms: list[Atom] = []
@@ -532,6 +535,7 @@ class PhysSynthesizer(SATSynthesizer):
                             + [swap_asm]
                         )
                         after = time.time()
+                        swap_time += after - before
                         overall_time += after - before
 
                         previous_swap_asms.append(swap_asm)
@@ -564,7 +568,7 @@ class PhysSynthesizer(SATSynthesizer):
                             print(f"✗), optimal: {best_so_far} SWAPs.")
                             break
 
-                    return previous_solution, overall_time
+                    return previous_solution, overall_time, (depth_time, swap_time)
 
         return None
 
@@ -580,10 +584,6 @@ class PhysSynthesizer(SATSynthesizer):
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
         )
-        # mapping = gate_line_dependency_mapping(circuit)
-        # print()
-        # for gate, line in mapping.items():
-        #     print(f"Gate {gate}: {line}")
         try:
             with time_limit(time_limit_s):
                 out = self.create_solution(circuit, platform, solver, swap_optimal)
@@ -593,7 +593,7 @@ class PhysSynthesizer(SATSynthesizer):
         if out is None:
             return SynthesizerNoSolution()
 
-        solution, time = out
+        solution, overall_time, time_breakdown = out
         output_circuit, initial_mapping = self.parse_solution(
             circuit, platform, solution
         )
@@ -609,6 +609,13 @@ class PhysSynthesizer(SATSynthesizer):
             output_circuit_with_cnots_as_swap
         )
         cx_depth = output_with_only_cnots.depth()
+        swaps = count_swaps(output_circuit)
         return SynthesizerSolution(
-            output_circuit, initial_mapping, time, depth, cx_depth
+            output_circuit,
+            initial_mapping,
+            overall_time,
+            depth,
+            cx_depth,
+            swaps,
+            time_breakdown
         )

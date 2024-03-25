@@ -15,6 +15,7 @@ from util.circuits import (
     with_swaps_as_cnots,
     remove_all_non_cx_gates,
     reinsert_unary_gates,
+    count_swaps,
 )
 from util.sat import (
     Atom,
@@ -145,7 +146,7 @@ class IncrSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
         swap_optimal: bool,
-    ) -> tuple[list[str], float] | None:
+    ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
         print("Searched: ", end="", flush=True)
         overall_time = 0
@@ -412,10 +413,12 @@ class IncrSynthesizer(SATSynthesizer):
                 solution = parse_sat_solution(model)
                 print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
+                    depth_time = overall_time
+                    swap_time = 0
                     if not swap_optimal:
-                        return solution, overall_time
+                        return solution, overall_time, None
                     print(
-                        f"found solution (after {overall_time:.02f}s)! Now optimizing for number of swaps."
+                        f"found solution (after {overall_time:.03f}s)! Now optimizing for number of swaps."
                     )
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
@@ -450,6 +453,7 @@ class IncrSynthesizer(SATSynthesizer):
                         )
                         after = time.time()
                         overall_time += after - before
+                        swap_time += after - before
 
                         previous_swap_asms.append(swap_asm)
 
@@ -481,7 +485,7 @@ class IncrSynthesizer(SATSynthesizer):
                             print(f"✗), optimal: {best_so_far}.")
                             break
 
-                    return previous_solution, overall_time
+                    return previous_solution, overall_time, (depth_time, swap_time)
 
         return None
 
@@ -506,7 +510,7 @@ class IncrSynthesizer(SATSynthesizer):
         if out is None:
             return SynthesizerNoSolution()
 
-        solution, time = out
+        solution, overall_time, time_breakdown = out
         output_circuit, initial_mapping = self.parse_solution(
             circuit, platform, solution
         )
@@ -522,6 +526,13 @@ class IncrSynthesizer(SATSynthesizer):
             output_circuit_with_cnots_as_swap
         )
         cx_depth = output_with_only_cnots.depth()
+        swaps = count_swaps(output_circuit)
         return SynthesizerSolution(
-            output_circuit, initial_mapping, time, depth, cx_depth
+            output_circuit,
+            initial_mapping,
+            overall_time,
+            depth,
+            cx_depth,
+            swaps,
+            time_breakdown,
         )

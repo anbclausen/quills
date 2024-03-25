@@ -64,12 +64,16 @@ class SynthesizerSolution(SynthesizerOutput):
         time: float,
         depth: int,
         cx_depth: int,
+        swaps: int,
+        time_breakdown: tuple[float, float] | None,
     ):
         self.circuit = circuit
         self.initial_mapping = mapping
         self.time = time
         self.depth = depth
         self.cx_depth = cx_depth
+        self.swaps = swaps
+        self.time_breakdown = time_breakdown
 
     def __str__(self):
         initial_mapping_str = ", ".join(
@@ -78,7 +82,12 @@ class SynthesizerSolution(SynthesizerOutput):
                 for logical, physical in self.initial_mapping.items()
             )
         )
-        return f"Done! Took {self.time:.3f} seconds.\n{self.circuit}\n(depth {self.depth}, cx-depth {self.cx_depth})\nwith initial mapping: {initial_mapping_str}"
+        time_str = (
+            f"\nSolver time: {self.time:.3f} seconds."
+            if self.time_breakdown == None
+            else f"\nSolver time for optimal depth: {self.time_breakdown[0]:.3f} seconds.\nSolver time for optimal SWAPs: {self.time_breakdown[1]:.3f} seconds.\nTotal solver time: {self.time:.3f} seconds."
+        )
+        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: {initial_mapping_str}{time_str}"
 
 
 def gate_line_dependency_mapping(
@@ -493,3 +502,15 @@ def with_swaps_as_cnots(circuit: QuantumCircuit):
             new_circuit.append(instr[0], instr[1])
 
     return new_circuit
+
+
+def count_swaps(circuit: QuantumCircuit):
+    """
+    Counts SWAP gates in a circuit.
+    """
+    swaps = 0
+    for instr in circuit.data:
+        if instr[0].name.startswith("swap"):
+            swaps += 1
+
+    return swaps

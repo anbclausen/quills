@@ -1,4 +1,5 @@
 import argparse
+import time
 import cProfile
 from qiskit import QuantumCircuit
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
@@ -165,6 +166,7 @@ print(
     end="",
     flush=True,
 )
+before = time.time()
 match synthesizer, solver:
     case PlanningSynthesizer(), planning.Solver():
         output = synthesizer.synthesize(
@@ -179,7 +181,10 @@ match synthesizer, solver:
             f"Invalid synthesizer-solver combination: '{args.model}' on '{args.solver}'."
             " Something must be configured incorrectly."
             )
+after= time.time()
+total_time = after - before
 print(output)
+print(f"Total time (including preprocessing): {total_time:.03f} seconds.")
 print()
 
 print(f"{BOLD_START}CHECKS{BOLD_END}")
