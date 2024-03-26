@@ -1,2 +1,8 @@
 #! /bin/sh
-poetry run python src/experiments.py
+if [ $# -ne 0 ]
+  then
+    poetry run python src/experiments.py $@
+  else 
+    poetry run python src/experiments.py
+fi
+

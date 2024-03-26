@@ -1,3 +1,4 @@
+import argparse
 import os
 import json
 
@@ -12,6 +13,7 @@ from synthesizers.planning.solvers import SATISFYING
 from synthesizers.planning.synthesizer import PlanningSynthesizer
 from synthesizers.sat.synthesizer import SATSynthesizer
 from configs import (
+    DEFAULT_TIME_LIMIT_S,
     synthesizers,
     platforms,
     solvers,
@@ -22,10 +24,46 @@ from datetime import datetime
 from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
-CX_OPTIMAL = False
-SWAP_OPTIMAL = False
-OUTPUT_CSV = False
-EXPERIMENT_TIME_LIMIT_S = 180
+parser = argparse.ArgumentParser(
+    description="Experiments for the quantum circuit layout synthesis tool qt.", prog="./experiments"
+)
+
+parser.add_argument(
+    "-cx",
+    "--cx_optimal",
+    help=f"whether to optimize for cx-depth",
+    action="store_true",
+)
+
+parser.add_argument(
+    "-swap",
+    "--swap_optimal",
+    help=f"whether to optimize for swap count after finding a depth-optimal circuit",
+    action="store_true",
+)
+
+parser.add_argument(
+    "-csv",
+    "--output_csv",
+    help=f"whether output a .csv file with the results",
+    action="store_true",
+)
+
+parser.add_argument(
+    "-t",
+    "--time_limit",
+    type=int,
+    help=f"the time limit in seconds, default is {DEFAULT_TIME_LIMIT_S}s",
+    default=DEFAULT_TIME_LIMIT_S,
+)
+
+args = parser.parse_args()
+
+CX_OPTIMAL = args.cx_optimal
+SWAP_OPTIMAL = args.swap_optimal
+OUTPUT_CSV = args.output_csv
+EXPERIMENT_TIME_LIMIT_S = args.time_limit
+
 cx_suffix = "_cx" if CX_OPTIMAL else ""
 swap_suffix = "_swap" if SWAP_OPTIMAL else ""
 CACHE_FILE = f"tmp/experiments_cache{cx_suffix}{swap_suffix}.json"
