@@ -94,7 +94,7 @@ print("#    A tool for depth-optimal layout synthesis.    #")
 print("####################################################")
 print(flush=True)
 
-if isinstance(solver, planning.Solver) and isinstance(solver, PlanningSynthesizer):
+if isinstance(solver, planning.Solver) and isinstance(synthesizer, PlanningSynthesizer):
     optimal_planner = args.model in OPTIMAL_PLANNING_SYNTHESIZERS
     if optimal_planner and solver.solver_class != OPTIMAL:
         raise ValueError(
@@ -110,7 +110,7 @@ if isinstance(solver, planning.Solver) and isinstance(solver, PlanningSynthesize
 if platform.qubits < input_circuit.num_qubits:
     raise ValueError(
             f"Circuit '{args.input}' has {input_circuit.num_qubits} logical qubits, but platform '{args.platform}' only has {platform.qubits} physical qubits.\n"
-            f"Please choose one of the following solvers: {', '.join(p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits)}"
+            f"Please choose one of the following platforms: {', '.join(p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits)}"
         )
 
 print(f"{BOLD_START}INPUT CIRCUIT{BOLD_END}")
