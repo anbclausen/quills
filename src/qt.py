@@ -14,6 +14,7 @@ from configs import (
 from synthesizers.planning.synthesizer import PlanningSynthesizer
 from synthesizers.sat.synthesizer import SATSynthesizer
 import synthesizers.planning.solvers as planning
+import synthesizers.sat.synthesizer as sat
 
 BOLD_START = "\033[1m"
 BOLD_END = "\033[0m"
@@ -97,21 +98,34 @@ print(flush=True)
 if isinstance(solver, planning.Solver) and isinstance(synthesizer, PlanningSynthesizer):
     optimal_planner = args.model in OPTIMAL_PLANNING_SYNTHESIZERS
     if optimal_planner and solver.solver_class != OPTIMAL:
+        available_solvers = [
+            solver_str
+            for solver_str, solver in solvers.items()
+            if isinstance(solver, planning.Solver) and solver.solver_class == OPTIMAL
+        ]
         raise ValueError(
             f"Model '{args.model}' requires optimal solver, but solver '{args.solver}' is not optimal.\n"
-            f"Please choose one of the following optimal solvers: {', '.join(s for s in OPTIMAL_PLANNING_SYNTHESIZERS)}"
+            f"Please choose one of the following optimal solvers: {', '.join(available_solvers)}"
         )
     uses_conditionals = args.model in CONDITIONAL_PLANNING_SYNTHESIZERS
     if uses_conditionals and not solver.accepts_conditional:
+        available_solvers = [
+            solver_str
+            for solver_str, solver in solvers.items()
+            if isinstance(solver, planning.Solver) and solver.accepts_conditional
+        ]
         raise ValueError(
             f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
-            f"Please choose one of the following solvers: {', '.join(s for s in CONDITIONAL_PLANNING_SYNTHESIZERS)}"
+            f"Please choose one of the following conditional solvers: {', '.join(available_solvers)}"
         )
 if platform.qubits < input_circuit.num_qubits:
+    available_platforms = [
+        p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits
+    ]
     raise ValueError(
-            f"Circuit '{args.input}' has {input_circuit.num_qubits} logical qubits, but platform '{args.platform}' only has {platform.qubits} physical qubits.\n"
-            f"Please choose one of the following platforms: {', '.join(p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits)}"
-        )
+        f"Circuit '{args.input}' has {input_circuit.num_qubits} logical qubits, but platform '{args.platform}' only has {platform.qubits} physical qubits.\n"
+        f"Please choose one of the following platforms: {', '.join(available_platforms)}"
+    )
 
 print(f"{BOLD_START}INPUT CIRCUIT{BOLD_END}")
 print(f"'{args.input}'")
@@ -143,7 +157,7 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing ({"CX-depth" if args.cx_optimal else "depth"}-optimal{" and local SWAP-optimal" if args.swap_optimal else ""})... ",
+    f"Synthesizing ({'CX-depth' if args.cx_optimal else 'depth'}-optimal{' and local SWAP-optimal' if args.swap_optimal else ''})... ",
     end="",
     flush=True,
 )
@@ -154,13 +168,18 @@ match synthesizer, solver:
         )
     case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
         output = synthesizer.synthesize(
-            input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal, swap_optimal=args.swap_optimal
+            input_circuit,
+            platform,
+            solver,
+            time_limit,
+            cx_optimal=args.cx_optimal,
+            swap_optimal=args.swap_optimal,
         )
-    case _: 
+    case _:
         raise ValueError(
             f"Invalid synthesizer-solver combination: '{args.model}' on '{args.solver}'."
             " Something must be configured incorrectly. Make sure to choose a SAT-based synthesizer with a SAT solver and likewise for planning synthesizers."
-            )
+        )
 print(output)
 print()
 
@@ -175,17 +194,25 @@ match output:
             output.circuit, platform
         )
         if correct_connectivity:
-            print("✓ Output circuit obeys connectivity of platform (Proprietary Checker)")
+            print(
+                "✓ Output circuit obeys connectivity of platform (Proprietary Checker)"
+            )
         else:
-            print("✗ Output circuit does not obey connectivity of platform (Proprietary Checker)")
+            print(
+                "✗ Output circuit does not obey connectivity of platform (Proprietary Checker)"
+            )
         correct_output = OutputChecker.equality_check(
             input_circuit, output.circuit, output.initial_mapping
         )
         if correct_output:
             print("✓ Input and output circuits are equivalent (Proprietary Checker)")
         else:
-            print("✗ Input and output circuits are not equivalent (Proprietary Checker)")
-        correct_qcec = OutputChecker.check_qcec(input_circuit, output.circuit, output.initial_mapping)
+            print(
+                "✗ Input and output circuits are not equivalent (Proprietary Checker)"
+            )
+        correct_qcec = OutputChecker.check_qcec(
+            input_circuit, output.circuit, output.initial_mapping
+        )
         if correct_qcec:
             print("✓ Input and output circuits are equivalent (QCEC)")
         else:
