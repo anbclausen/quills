@@ -14,7 +14,6 @@ from configs import (
 from synthesizers.planning.synthesizer import PlanningSynthesizer
 from synthesizers.sat.synthesizer import SATSynthesizer
 import synthesizers.planning.solvers as planning
-import synthesizers.sat.synthesizer as sat
 
 BOLD_START = "\033[1m"
 BOLD_END = "\033[0m"
@@ -118,6 +117,32 @@ if isinstance(solver, planning.Solver) and isinstance(synthesizer, PlanningSynth
             f"Model '{args.model}' uses conditional effects, but solver '{args.solver}' does not support those.\n"
             f"Please choose one of the following conditional solvers: {', '.join(available_solvers)}"
         )
+if isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthesizer):
+    available_solvers = [
+        solver_str
+        for solver_str, solver in solvers.items()
+        if not isinstance(solver, planning.Solver)
+    ]
+    raise ValueError(
+        f"Model '{args.model}' is a SAT model, but solver '{args.solver}' is a planning solver.\n"
+        f"Please choose one of the following SAT solvers: {', '.join(available_solvers)}"
+    )
+if (not isinstance(solver, planning.Solver)) and isinstance(
+    synthesizer, PlanningSynthesizer
+):
+    opt_synth = args.model in OPTIMAL_PLANNING_SYNTHESIZERS
+    cond_synth = args.model in CONDITIONAL_PLANNING_SYNTHESIZERS
+    available_solvers = [
+        solver_str
+        for solver_str, solver in solvers.items()
+        if isinstance(solver, planning.Solver)
+        and ((not opt_synth) or (solver.solver_class == OPTIMAL))
+        and ((not cond_synth) or solver.accepts_conditional)
+    ]
+    raise ValueError(
+        f"Model '{args.model}' is a planning model, but solver '{args.solver}' is a SAT solver.\n"
+        f"Please choose one of the following planning solvers: {', '.join(available_solvers)}"
+    )
 if platform.qubits < input_circuit.num_qubits:
     available_platforms = [
         p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits
