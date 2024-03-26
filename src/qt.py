@@ -143,7 +143,7 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing ({"cx-depth" if args.cx_optimal else "depth"}-optimal{" and local swap-optimal" if args.swap_optimal else ""})... ",
+    f"Synthesizing ({"CX-depth" if args.cx_optimal else "depth"}-optimal{" and local SWAP-optimal" if args.swap_optimal else ""})... ",
     end="",
     flush=True,
 )
