@@ -25,7 +25,8 @@ from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
 parser = argparse.ArgumentParser(
-    description="Experiments for the quantum circuit layout synthesis tool qt.", prog="./experiments"
+    description="Experiments for the quantum circuit layout synthesis tool qt.",
+    prog="./experiments",
 )
 
 parser.add_argument(
@@ -74,51 +75,51 @@ EXPERIMENTS = [
     ("adder.qasm", "toy"),
     ("or.qasm", "toy"),
     ("toffoli.qasm", "toy"),
-    ("toy_example.qasm", "toy"),
-    # up to 5 qubits
-    ("adder.qasm", "tenerife"),
-    ("or.qasm", "tenerife"),
-    ("toffoli.qasm", "tenerife"),
-    ("toy_example.qasm", "tenerife"),
-    ("4gt13_92.qasm", "tenerife"),
-    ("4mod5-v1_22.qasm", "tenerife"),
-    ("mod5mils_65.qasm", "tenerife"),
-    ("qaoa5.qasm", "tenerife"),
-    # up to 14 qubits
-    ("adder.qasm", "melbourne"),
-    ("or.qasm", "melbourne"),
-    ("toffoli.qasm", "melbourne"),
-    ("toy_example.qasm", "melbourne"),
-    ("4gt13_92.qasm", "melbourne"),
-    ("4mod5-v1_22.qasm", "melbourne"),
-    ("mod5mils_65.qasm", "melbourne"),
-    ("qaoa5.qasm", "melbourne"),
-    ("barenco_tof_4.qasm", "melbourne"),
-    ("barenco_tof_5.qasm", "melbourne"),
-    ("mod_mult_55.qasm", "melbourne"),
-    ("rc_adder_6.qasm", "melbourne"),
-    ("tof_4.qasm", "melbourne"),
-    ("tof_5.qasm", "melbourne"),
-    ("vbe_adder_3.qasm", "melbourne"),
-    # up to 54 qubits
-    ("adder.qasm", "sycamore"),
-    ("or.qasm", "sycamore"),
-    ("toffoli.qasm", "sycamore"),
-    ("toy_example.qasm", "sycamore"),
-    ("4gt13_92.qasm", "sycamore"),
-    ("4mod5-v1_22.qasm", "sycamore"),
-    ("mod5mils_65.qasm", "sycamore"),
-    ("qaoa5.qasm", "sycamore"),
-    ("barenco_tof_4.qasm", "sycamore"),
-    ("barenco_tof_5.qasm", "sycamore"),
-    ("mod_mult_55.qasm", "sycamore"),
-    ("rc_adder_6.qasm", "sycamore"),
-    ("tof_4.qasm", "sycamore"),
-    ("tof_5.qasm", "sycamore"),
-    ("vbe_adder_3.qasm", "sycamore"),
-    ("queko_05_0.qasm", "sycamore"),
-    ("queko_10_3.qasm", "sycamore"),
-    ("queko_15_1.qasm", "sycamore"),
+    # ("toy_example.qasm", "toy"),
+    # # up to 5 qubits
+    # ("adder.qasm", "tenerife"),
+    # ("or.qasm", "tenerife"),
+    # ("toffoli.qasm", "tenerife"),
+    # ("toy_example.qasm", "tenerife"),
+    # ("4gt13_92.qasm", "tenerife"),
+    # ("4mod5-v1_22.qasm", "tenerife"),
+    # ("mod5mils_65.qasm", "tenerife"),
+    # ("qaoa5.qasm", "tenerife"),
+    # # up to 14 qubits
+    # ("adder.qasm", "melbourne"),
+    # ("or.qasm", "melbourne"),
+    # ("toffoli.qasm", "melbourne"),
+    # ("toy_example.qasm", "melbourne"),
+    # ("4gt13_92.qasm", "melbourne"),
+    # ("4mod5-v1_22.qasm", "melbourne"),
+    # ("mod5mils_65.qasm", "melbourne"),
+    # ("qaoa5.qasm", "melbourne"),
+    # ("barenco_tof_4.qasm", "melbourne"),
+    # ("barenco_tof_5.qasm", "melbourne"),
+    # ("mod_mult_55.qasm", "melbourne"),
+    # ("rc_adder_6.qasm", "melbourne"),
+    # ("tof_4.qasm", "melbourne"),
+    # ("tof_5.qasm", "melbourne"),
+    # ("vbe_adder_3.qasm", "melbourne"),
+    # # up to 54 qubits
+    # ("adder.qasm", "sycamore"),
+    # ("or.qasm", "sycamore"),
+    # ("toffoli.qasm", "sycamore"),
+    # ("toy_example.qasm", "sycamore"),
+    # ("4gt13_92.qasm", "sycamore"),
+    # ("4mod5-v1_22.qasm", "sycamore"),
+    # ("mod5mils_65.qasm", "sycamore"),
+    # ("qaoa5.qasm", "sycamore"),
+    # ("barenco_tof_4.qasm", "sycamore"),
+    # ("barenco_tof_5.qasm", "sycamore"),
+    # ("mod_mult_55.qasm", "sycamore"),
+    # ("rc_adder_6.qasm", "sycamore"),
+    # ("tof_4.qasm", "sycamore"),
+    # ("tof_5.qasm", "sycamore"),
+    # ("vbe_adder_3.qasm", "sycamore"),
+    # ("queko_05_0.qasm", "sycamore"),
+    # ("queko_10_3.qasm", "sycamore"),
+    # ("queko_15_1.qasm", "sycamore"),
 ]
 
 if not os.path.exists("tmp"):
@@ -332,8 +333,10 @@ for input_file, platform_name in EXPERIMENTS:
         | Literal["NS", "TO"],
     ] = {}
     for synthesizer_name, solver_name in configurations:
-        if not isinstance(solvers[solver_name], planning.Solver):
-            solvers[solver_name] = solvers[solver_name].__class__()
+        solver = solvers[solver_name]
+        if not isinstance(solver, planning.Solver):
+            solver.delete()
+            solvers[solver_name] = solver.__class__()
 
         print(
             f"Running '{synthesizer_name}' on '{solver_name}' for 'benchmarks/{input_file}' on '{platform_name}'..."
