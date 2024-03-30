@@ -3,5 +3,12 @@
     "build": {
         "context": "..",
         "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.black-formatter"
+            ]
+        }
     }
 }
