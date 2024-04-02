@@ -271,12 +271,19 @@ class PhysSynthesizer(SATSynthesizer):
                     problem_clauses.extend(
                         impl(neg(done[t][g]), [[neg(done[t][g_prime])]])
                     )
+
+                    problem_clauses.extend(
+                        impl(current[t][g], [[neg(current[t][g_prime])]])
+                    )
                 if t > 0:
                     problem_clauses.extend(impl(done[t - 1][g], [[done[t][g]]]))
 
                     for g_prime in gate_pre_map[g]:
                         problem_clauses.extend(
                             impl(done[t][g], [[done[t - 1][g_prime]]])
+                        )
+                        problem_clauses.extend(
+                            impl(current[t][g], [[neg(current[t][g_prime])]])
                         )
 
                     problem_clauses.extend(
