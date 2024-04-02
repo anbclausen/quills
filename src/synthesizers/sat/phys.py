@@ -295,24 +295,6 @@ class PhysSynthesizer(SATSynthesizer):
                             )
                         )
 
-                        for p, p_prime in connectivity_graph:
-                            problem_clauses.extend(
-                                impl_conj(
-                                    [
-                                        neg(done[t][g]),
-                                        mapped[t][lq_deps[0]][p],
-                                        mapped[t][lq_deps[1]][p_prime],
-                                    ],
-                                    or_(
-                                        neg(usable[t][p]),
-                                        neg(usable[t][p_prime]),
-                                        *[
-                                            neg(done[t - 1][g_prime])
-                                            for g_prime in gate_pre_map[g]
-                                        ],
-                                    ),
-                                )
-                            )
                         for p in pq:
                             problem_clauses.extend(
                                 impl(
@@ -328,19 +310,6 @@ class PhysSynthesizer(SATSynthesizer):
                             )
                     else:
                         for p in pq:
-                            problem_clauses.extend(
-                                impl_conj(
-                                    [neg(done[t][g]), mapped[t][lq_deps[0]][p]],
-                                    or_(
-                                        neg(usable[t][p]),
-                                        *[
-                                            neg(done[t - 1][g_prime])
-                                            for g_prime in gate_pre_map[g]
-                                        ],
-                                    ),
-                                )
-                            )
-
                             problem_clauses.extend(
                                 impl(
                                     current[t][g],
