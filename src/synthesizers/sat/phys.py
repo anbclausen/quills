@@ -62,7 +62,7 @@ class PhysSynthesizer(SATSynthesizer):
             def __init__(self, l: int, l_prime: int, level: int):
                 self.p = l
                 self.p_prime = l_prime
-                self.level = level - 2
+                self.level = level
 
             def __str__(self) -> str:
                 return f"swap: p={self.p}, p_prime={self.p_prime}, t={self.level}"
@@ -272,6 +272,8 @@ class PhysSynthesizer(SATSynthesizer):
                         impl(neg(done[t][g]), [[neg(done[t][g_prime])]])
                     )
                 if t > 0:
+                    problem_clauses.extend(impl(done[t - 1][g], [[done[t][g]]]))
+
                     for g_prime in gate_pre_map[g]:
                         problem_clauses.extend(
                             impl(done[t][g], [[done[t - 1][g_prime]]])
@@ -349,14 +351,7 @@ class PhysSynthesizer(SATSynthesizer):
             # swap stuff
             if t > 0:
                 for p in pq:
-                    if t == 1:
-                        problem_clauses.extend(
-                            at_most_one(
-                                [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
-                                + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]],
-                            )
-                        )
-                    else:
+                    if t > 1:
                         problem_clauses.extend(
                             at_most_one(
                                 [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
@@ -439,7 +434,27 @@ class PhysSynthesizer(SATSynthesizer):
                             neg(swap[0][p, p_prime])
                             for p, p_prime in connectivity_graph
                             if p < p_prime
-                        ]
+                        ],
+                    )
+                )
+            if t == 1:
+                solver.append_formula(
+                    and_(
+                        *[
+                            neg(swap[1][p, p_prime])
+                            for p, p_prime in connectivity_graph
+                            if p < p_prime
+                        ],
+                    )
+                )
+            if t == 2:
+                solver.append_formula(
+                    and_(
+                        *[
+                            neg(swap[2][p, p_prime])
+                            for p, p_prime in connectivity_graph
+                            if p < p_prime
+                        ],
                     )
                 )
 
