@@ -104,11 +104,6 @@ class PhysSynthesizer(SATSynthesizer):
             )
         ]
 
-        f = open("tmp/solution.txt", "w")
-        for atom in relevant_atoms:
-            f.write(atom + "\n")
-        f.close()
-
         instrs = [parse(name) for name in relevant_atoms]
 
         mapping_instrs = [instr for instr in instrs if isinstance(instr, Mapped)]
@@ -199,8 +194,9 @@ class PhysSynthesizer(SATSynthesizer):
         mapped: dict[int, dict[int, dict[int, Atom]]] = {}
         occupied: dict[int, dict[int, Atom]] = {}
         enabled: dict[int, dict[int, dict[int, Atom]]] = {}
-        done: dict[int, dict[int, Atom]] = {}
         current: dict[int, dict[int, Atom]] = {}
+        advanced: dict[int, dict[int, Atom]] = {}
+        delayed: dict[int, dict[int, Atom]] = {}
         usable: dict[int, dict[int, Atom]] = {}
         swap: dict[int, dict[tuple[int, int], Atom]] = {}
         swapping: dict[int, dict[int, Atom]] = {}
@@ -219,8 +215,9 @@ class PhysSynthesizer(SATSynthesizer):
                 }
                 for l in lq
             }
-            done[t] = {g: new_atom(f"done^{t}_{g}") for g in gates}
             current[t] = {g: new_atom(f"current^{t}_{g}") for g in gates}
+            advanced[t] = {g: new_atom(f"advanced^{t}_{g}") for g in gates}
+            delayed[t] = {g: new_atom(f"delayed^{t}_{g}") for g in gates}
             usable[t] = {p: new_atom(f"usable^{t}_{p}") for p in pq}
             swap[t] = {
                 (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
@@ -269,30 +266,33 @@ class PhysSynthesizer(SATSynthesizer):
 
             # gate stuff
             for g in gates:
+                problem_clauses.extend(
+                    exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
+                )
+
                 for g_prime in gate_suc_map[g]:
                     problem_clauses.extend(
-                        impl(neg(done[t][g]), [[neg(done[t][g_prime])]])
+                        impl_disj([current[t][g], delayed[t][g]], delayed[t][g_prime])
                     )
-
+                    problem_clauses.extend(
+                        impl(current[t][g], [[neg(current[t][g_prime])]])
+                    )
+                for g_prime in gate_pre_map[g]:
+                    problem_clauses.extend(
+                        impl_disj([current[t][g], advanced[t][g]], advanced[t][g_prime])
+                    )
                     problem_clauses.extend(
                         impl(current[t][g], [[neg(current[t][g_prime])]])
                     )
                 if t > 0:
-                    problem_clauses.extend(impl(done[t - 1][g], [[done[t][g]]]))
-
-                    for g_prime in gate_pre_map[g]:
-                        problem_clauses.extend(
-                            impl(done[t][g], [[done[t - 1][g_prime]]])
-                        )
-                        problem_clauses.extend(
-                            impl(current[t][g], [[neg(current[t][g_prime])]])
-                        )
-
                     problem_clauses.extend(
-                        impl(current[t][g], and_(done[t][g], neg(done[t - 1][g])))
+                        iff_disj(
+                            [current[t - 1][g], advanced[t - 1][g]],
+                            advanced[t][g],
+                        )
                     )
                     problem_clauses.extend(
-                        impl_conj([done[t][g], neg(done[t - 1][g])], [[current[t][g]]])
+                        iff_disj([current[t][g], delayed[t][g]], delayed[t - 1][g])
                     )
 
                     gate_name, lq_deps = gate_line_map[g]
@@ -404,8 +404,7 @@ class PhysSynthesizer(SATSynthesizer):
 
             # init
             if t == 0:
-                solver.append_formula(and_(*[neg(done[0][g]) for g in gates]))
-                solver.append_formula(and_(*[neg(current[0][g]) for g in gates]))
+                solver.append_formula(and_(*[delayed[0][g] for g in gates]))
                 solver.append_formula(
                     and_(
                         *[
@@ -438,7 +437,7 @@ class PhysSynthesizer(SATSynthesizer):
 
             # goal
             problem_clauses.extend(
-                impl(assumption[t], and_(*[done[t][g] for g in gates]))
+                impl(assumption[t], and_(*[neg(delayed[t][g]) for g in gates]))
             )
 
             solver.append_formula(problem_clauses)
