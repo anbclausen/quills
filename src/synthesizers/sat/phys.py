@@ -231,14 +231,14 @@ class PhysSynthesizer(SATSynthesizer):
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
-        mapped = {}
-        occupied = {}
-        enabled = {}
-        done = {}
-        current = {}
-        usable = {}
-        swap = {}
-        assumption = {}
+        mapped: dict[int, dict[int, dict[int, Atom]]] = {}
+        occupied: dict[int, dict[int, Atom]] = {}
+        enabled: dict[int, dict[int, dict[int, Atom]]] = {}
+        done: dict[int, dict[int, Atom]] = {}
+        current: dict[int, dict[int, Atom]] = {}
+        usable: dict[int, dict[int, Atom]] = {}
+        swap: dict[int, dict[tuple[int, int], Atom]] = {}
+        assumption: dict[int, Atom] = {}
 
         for t in range(max_depth + 1):
             mapped[t] = {
@@ -303,20 +303,14 @@ class PhysSynthesizer(SATSynthesizer):
             # gate stuff
             for g in gates:
                 if t > 0:
-                    problem_clauses.extend(
-                        impl(
-                            done[t][g],
-                            and_(
-                                *[done[t - 1][g_prime] for g_prime in gate_pre_map[g]]
-                            ),
+                    for g_prime in gate_pre_map[g]:
+                        problem_clauses.extend(
+                            impl(done[t][g], [[done[t - 1][g_prime]]])
                         )
+                for g_prime in gate_suc_map[g]:
+                    problem_clauses.extend(
+                        impl(neg(done[t][g]), [[neg(done[t][g_prime])]])
                     )
-                problem_clauses.extend(
-                    impl(
-                        neg(done[t][g]),
-                        and_(*[neg(done[t][g_prime]) for g_prime in gate_suc_map[g]]),
-                    )
-                )
 
                 if t > 0:
                     gate_name, lq_deps = gate_line_map[g]
@@ -324,33 +318,30 @@ class PhysSynthesizer(SATSynthesizer):
                         problem_clauses.extend(
                             impl_conj(
                                 [neg(done[t - 1][g]), done[t][g]],
-                                andf(
-                                    [[enabled[t][lq_deps[0]][lq_deps[1]]]],
-                                    *[
-                                        impl_disj(
-                                            [
-                                                mapped[t][lq_deps[0]][p],
-                                                mapped[t][lq_deps[1]][p],
-                                            ],
-                                            usable[t][p],
-                                        )
-                                        for p in pq
-                                    ],
-                                ),
+                                [[enabled[t][lq_deps[0]][lq_deps[1]]]],
                             )
                         )
+                        for p in pq:
+                            problem_clauses.extend(
+                                impl_conj(
+                                    [neg(done[t - 1][g]), done[t][g]],
+                                    impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
+                                )
+                            )
+                            problem_clauses.extend(
+                                impl_conj(
+                                    [neg(done[t - 1][g]), done[t][g]],
+                                    impl(mapped[t][lq_deps[1]][p], [[usable[t][p]]]),
+                                )
+                            )
                     else:
-                        problem_clauses.extend(
-                            impl_conj(
-                                [neg(done[t - 1][g]), done[t][g]],
-                                andf(
-                                    *[
-                                        impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]])
-                                        for p in pq
-                                    ]
-                                ),
+                        for p in pq:
+                            problem_clauses.extend(
+                                impl_conj(
+                                    [neg(done[t - 1][g]), done[t][g]],
+                                    impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
+                                )
                             )
-                        )
 
             # swap stuff
             if t > 0:
@@ -402,19 +393,16 @@ class PhysSynthesizer(SATSynthesizer):
                 for p, p_prime in connectivity_graph:
                     if p < p_prime:
                         if t > 1:
-                            problem_clauses.extend(
-                                impl(
-                                    swap[t - 2][p, p_prime],
-                                    and_(
-                                        neg(usable[t][p]),
-                                        neg(usable[t - 1][p]),
-                                        neg(usable[t - 2][p]),
-                                        neg(usable[t][p_prime]),
-                                        neg(usable[t - 1][p_prime]),
-                                        neg(usable[t - 2][p_prime]),
-                                    ),
+                            for t_prime in [t, t - 1, t - 2]:
+                                problem_clauses.extend(
+                                    impl(
+                                        swap[t][p, p_prime],
+                                        and_(
+                                            neg(usable[t_prime][p]),
+                                            neg(usable[t_prime][p_prime]),
+                                        ),
+                                    )
                                 )
-                            )
 
                         for l, l_prime in lq_pairs:
                             problem_clauses.extend(
