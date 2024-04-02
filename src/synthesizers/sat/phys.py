@@ -104,6 +104,11 @@ class PhysSynthesizer(SATSynthesizer):
             )
         ]
 
+        f = open("tmp/solution.txt", "w")
+        for atom in relevant_atoms:
+            f.write(atom + "\n")
+        f.close()
+
         instrs = [parse(name) for name in relevant_atoms]
 
         mapping_instrs = [instr for instr in instrs if isinstance(instr, Mapped)]
@@ -295,36 +300,36 @@ class PhysSynthesizer(SATSynthesizer):
                         iff_disj([current[t][g], delayed[t][g]], delayed[t - 1][g])
                     )
 
-                    gate_name, lq_deps = gate_line_map[g]
-                    if gate_name.startswith("cx"):
+                gate_name, lq_deps = gate_line_map[g]
+                if gate_name.startswith("cx"):
+                    problem_clauses.extend(
+                        impl(
+                            current[t][g],
+                            [[enabled[t][lq_deps[0]][lq_deps[1]]]],
+                        )
+                    )
+
+                    for p in pq:
                         problem_clauses.extend(
                             impl(
                                 current[t][g],
-                                [[enabled[t][lq_deps[0]][lq_deps[1]]]],
+                                impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
                             )
                         )
-
-                        for p in pq:
-                            problem_clauses.extend(
-                                impl(
-                                    current[t][g],
-                                    impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
-                                )
+                        problem_clauses.extend(
+                            impl(
+                                current[t][g],
+                                impl(mapped[t][lq_deps[1]][p], [[usable[t][p]]]),
                             )
-                            problem_clauses.extend(
-                                impl(
-                                    current[t][g],
-                                    impl(mapped[t][lq_deps[1]][p], [[usable[t][p]]]),
-                                )
+                        )
+                else:
+                    for p in pq:
+                        problem_clauses.extend(
+                            impl(
+                                current[t][g],
+                                impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
                             )
-                    else:
-                        for p in pq:
-                            problem_clauses.extend(
-                                impl(
-                                    current[t][g],
-                                    impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
-                                )
-                            )
+                        )
 
             # swap stuff
             if t > 0:

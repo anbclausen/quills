@@ -27,13 +27,13 @@ class OutputChecker:
             q1 = qubits[0]
             q2 = qubits[1]
             if (q1, q2) not in platform.connectivity_graph:
-                print(f"Connectivity check failed: ({q1}, {q2}) not in platform.")
+                print(f"Connectivity check failed (CX): ({q1}, {q2}) not in platform.")
                 return False
         for _, (_, qubits) in swap_gate_line.items():
             q1 = qubits[0]
             q2 = qubits[1]
             if (q1, q2) not in platform.connectivity_graph:
-                print(f"Connectivity check failed: ({q1}, {q2}) not in platform.")
+                print(f"Connectivity check failed (SWAP): ({q1}, {q2}) not in platform.")
                 return False
 
         return True
