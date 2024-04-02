@@ -77,7 +77,7 @@ class PhysSynthesizer(SATSynthesizer):
                 return f"mapped: l={self.l}, p={self.p}, t={self.level}"
 
         def parse(name: str) -> Gate | Swap | Mapped:
-            if name.startswith("done"):
+            if name.startswith("current"):
                 time, id = name.split("^")[1].split("_")
                 return Gate(int(id), int(time))
             elif name.startswith("swap"):
@@ -98,42 +98,15 @@ class PhysSynthesizer(SATSynthesizer):
             for atom_name in solver_solution
             if not atom_name.startswith("~")
             and (
-                atom_name.startswith("done")
+                atom_name.startswith("current")
                 or atom_name.startswith("swap^")
                 or atom_name.startswith("mapped")
             )
         ]
 
         instrs = [parse(name) for name in relevant_atoms]
-        relevant_instrs: list[Gate | Swap | Mapped] = [
-            instr for instr in instrs if isinstance(instr, Mapped)
-        ]
 
-        # only keep the first occurrence of each gate
-        gates = [instr for instr in instrs if isinstance(instr, Gate)]
-        gates.sort(key=lambda instr: instr.level)
-        relevant_gates: list[int] = []
-        for gate in gates:
-            if gate.id not in relevant_gates:
-                relevant_gates.append(gate.id)
-                relevant_instrs.append(gate)
-
-        # remove duplicate swaps
-        swaps = [instr for instr in instrs if isinstance(instr, Swap)]
-        relevant_pairs: list[tuple[int, int, int]] = []
-        for swap in swaps:
-            p = swap.p
-            p_prime = swap.p_prime
-
-            smallest = min(p, p_prime)
-            biggest = max(p, p_prime)
-            if (smallest, biggest, swap.level) not in relevant_pairs:
-                relevant_pairs.append((smallest, biggest, swap.level))
-                relevant_instrs.append(swap)
-
-        mapping_instrs = [
-            instr for instr in relevant_instrs if isinstance(instr, Mapped)
-        ]
+        mapping_instrs = [instr for instr in instrs if isinstance(instr, Mapped)]
         mapping = {}
         for instr in mapping_instrs:
             if instr.level not in mapping:
@@ -141,9 +114,7 @@ class PhysSynthesizer(SATSynthesizer):
             mapping[instr.level][PhysicalQubit(instr.p)] = LogicalQubit(instr.l)
 
         swap_instrs_on_first_level = [
-            instr
-            for instr in relevant_instrs
-            if isinstance(instr, Swap) and instr.level == 0
+            instr for instr in instrs if isinstance(instr, Swap) and instr.level == 0
         ]
         for instr in swap_instrs_on_first_level:
             tmp = mapping[0][PhysicalQubit(instr.p)]
@@ -159,9 +130,7 @@ class PhysSynthesizer(SATSynthesizer):
 
         initial_mapping = mapping[0]
 
-        components = [
-            instr for instr in relevant_instrs if not isinstance(instr, Mapped)
-        ]
+        components = [instr for instr in instrs if not isinstance(instr, Mapped)]
         components.sort(key=lambda instr: instr.level)
 
         register = QuantumRegister(platform.qubits, "p")
