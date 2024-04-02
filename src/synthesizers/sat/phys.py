@@ -404,7 +404,7 @@ class PhysSynthesizer(SATSynthesizer):
 
             # init
             if t == 0:
-                solver.append_formula(and_(*[delayed[0][g] for g in gates]))
+                solver.append_formula(and_(*[neg(advanced[0][g]) for g in gates]))
                 solver.append_formula(
                     and_(
                         *[
@@ -446,27 +446,27 @@ class PhysSynthesizer(SATSynthesizer):
             asm = [neg(assumption[t_prime]) for t_prime in range(t)]
             asm.append(assumption[t])
 
-            if t >= circuit_depth:
+            if t >= circuit_depth - 1:
                 before = time.time()
                 solver.solve(assumptions=asm)
                 after = time.time()
                 overall_time += after - before
                 model = solver.get_model()
                 solution = parse_sat_solution(model)
-                print(f"depth {t}", flush=True, end=", ")
+                print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
                     depth_time = overall_time
                     swap_time = 0
                     if not swap_optimal:
                         print(
-                            f"found solution with depth {t} (after {overall_time:.03f}s)."
+                            f"found solution with depth {t+1} (after {overall_time:.03f}s)."
                         )
                         return solution, overall_time, None
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
                     )
                     print(
-                        f"found solution with depth {t} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
+                        f"found solution with depth {t+1} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
                     )
                     previous_solution = solution
                     previous_swap_asms: list[Atom] = []
