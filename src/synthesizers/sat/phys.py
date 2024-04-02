@@ -462,31 +462,6 @@ class PhysSynthesizer(SATSynthesizer):
             problem_clauses.extend(
                 impl(assumption[t], and_(*[done[t][g] for g in gates]))
             )
-            problem_clauses.extend(
-                impl(
-                    assumption[t],
-                    and_(
-                        *[
-                            neg(swap[t][p, p_prime])
-                            for p, p_prime in connectivity_graph
-                            if p < p_prime
-                        ]
-                    ),
-                )
-            )
-            if t > 0:
-                problem_clauses.extend(
-                    impl(
-                        assumption[t],
-                        and_(
-                            *[
-                                neg(swap[t - 1][p, p_prime])
-                                for p, p_prime in connectivity_graph
-                                if p < p_prime
-                            ]
-                        ),
-                    )
-                )
 
             solver.append_formula(problem_clauses)
 
