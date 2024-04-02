@@ -71,6 +71,8 @@ options:
   -cx, --cx_optimal     whether to optimize for cx-depth
   -swap, --swap_optimal
                         whether to optimize for swap count after finding a depth-optimal circuit
+  -log {0,1}, --log_level {0,1}
+                        how much text to output during execution (0: silent, 1: default)
 ```
 
 ## Sample run
