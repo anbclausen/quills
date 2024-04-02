@@ -379,6 +379,7 @@ for input_file, platform_name in EXPERIMENTS:
                         platform,
                         solver,
                         EXPERIMENT_TIME_LIMIT_S,
+                        log_level=0,
                         cx_optimal=CX_OPTIMAL,
                     )
                 case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
@@ -387,6 +388,7 @@ for input_file, platform_name in EXPERIMENTS:
                         platform,
                         solver,
                         EXPERIMENT_TIME_LIMIT_S,
+                        log_level=0,
                         cx_optimal=CX_OPTIMAL,
                         swap_optimal=SWAP_OPTIMAL,
                     )

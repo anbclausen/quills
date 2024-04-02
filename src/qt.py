@@ -69,6 +69,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-log",
+    "--log_level",
+    type=int,
+    choices=range(0, 2),
+    default=1,
+    help="how much text to output during execution (0: silent, 1: default)",
+)
+
+parser.add_argument(
     "input",
     type=str,
     help="the path to the input file",
@@ -81,6 +90,7 @@ platform = platforms[args.platform]
 solver = solvers[args.solver]
 time_limit = args.time_limit
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
+log_level = args.log_level
 
 print("####################################################")
 print("#                           __                     #")
@@ -189,7 +199,12 @@ print(
 match synthesizer, solver:
     case PlanningSynthesizer(), planning.Solver():
         output = synthesizer.synthesize(
-            input_circuit, platform, solver, time_limit, cx_optimal=args.cx_optimal
+            input_circuit,
+            platform,
+            solver,
+            time_limit,
+            log_level,
+            cx_optimal=args.cx_optimal,
         )
     case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
         output = synthesizer.synthesize(
@@ -197,6 +212,7 @@ match synthesizer, solver:
             platform,
             solver,
             time_limit,
+            log_level,
             cx_optimal=args.cx_optimal,
             swap_optimal=args.swap_optimal,
         )

@@ -242,6 +242,7 @@ class PlanningSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         """
@@ -267,6 +268,7 @@ class PlanningSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         min_plan_length: int,
         max_plan_length: int,
         min_layers: int,
@@ -338,6 +340,7 @@ class PlanningSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         min_plan_length_lambda: Callable[[int], int],
         max_plan_length_lambda: Callable[[int], int],
         min_layers_lambda: Callable[[int], int],
@@ -356,9 +359,11 @@ class PlanningSynthesizer(ABC):
         circuit_depth = circuit.depth()
         solver_time = 0
         before = time.time()
-        print("Searching: ", end="")
+        if log_level > 0:
+            print("Searching: ", end="")
         for depth in range(circuit_depth, 4 * circuit_depth + 2, 1):
-            print(f"depth {depth}, ", end="", flush=True)
+            if log_level > 0:
+                print(f"depth {depth}, ", end="", flush=True)
             instance = self.create_instance(circuit, platform, maximum_depth=depth)
             domain, problem = instance.compile()
 

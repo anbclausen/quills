@@ -39,7 +39,9 @@ class NoiseSimulator:
 
         # Add errors to noise model
         noise_model = noise.NoiseModel()
-        noise_model.add_all_qubit_quantum_error(error_1, ["x", "h", "t", "tdg", "rz", "rx"])
+        noise_model.add_all_qubit_quantum_error(
+            error_1, ["x", "h", "t", "tdg", "rz", "rx"]
+        )
         noise_model.add_all_qubit_quantum_error(error_2, ["cx", "swap"])
 
         # Get basis gates from noise model
@@ -100,12 +102,24 @@ file_name = f"{input_name_stripped}"
 if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthesizer):
     print(f"Synthesizing depth optimal")
     depth_res = synthesizer.synthesize(
-        input_circuit, platform, solver, time_limit, cx_optimal=False, swap_optimal=True
+        input_circuit,
+        platform,
+        solver,
+        time_limit,
+        log_level=0,
+        cx_optimal=False,
+        swap_optimal=True,
     )
     print()
     print(f"Synthesizing CX-depth optimal")
     cx_depth_res = synthesizer.synthesize(
-        input_circuit, platform, solver, time_limit, cx_optimal=True, swap_optimal=True
+        input_circuit,
+        platform,
+        solver,
+        time_limit,
+        log_level=0,
+        cx_optimal=True,
+        swap_optimal=True,
     )
     print()
 

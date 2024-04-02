@@ -372,6 +372,7 @@ class CostBasedOptimalPlanningSynthesizer(PlanningSynthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
 
@@ -384,6 +385,7 @@ class CostBasedOptimalPlanningSynthesizer(PlanningSynthesizer):
             platform,
             solver,
             time_limit_s,
+            log_level,
             min_plan_length,
             max_plan_length,
             min_plan_length,

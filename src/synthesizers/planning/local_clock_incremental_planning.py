@@ -352,6 +352,7 @@ class LocalClockIncrementalPlanningSynthesizer(PlanningSynthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         min_plan_length_lambda = lambda depth: logical_circuit.size()
@@ -364,6 +365,7 @@ class LocalClockIncrementalPlanningSynthesizer(PlanningSynthesizer):
             platform,
             solver,
             time_limit_s,
+            log_level,
             min_plan_length_lambda,
             max_plan_length_lambda,
             min_layers_lambda,

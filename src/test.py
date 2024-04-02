@@ -20,6 +20,7 @@ import synthesizers.planning.solvers as planning
 
 TESTS = [
     # up to 4 qubits
+    ("toy_example.qasm", "toy"),
     ("adder.qasm", "toy"),
     # up to 5 qubits
     ("4mod5-v1_22.qasm", "tenerife"),
@@ -60,10 +61,16 @@ wrongs = 0
 timeouts = 0
 no_solutions = 0
 
-print("Testing...")
+print("Testing", end="", flush=True)
 for input_file, platform_name in TESTS:
     for synthesizer_name, solver_name in configurations:
         for cx_opt, swap_opt in [(False, False), (False, True), (True, False), (True, True)]:
+            print(
+                ".",
+                end="",
+                flush=True,
+            )
+
             solver = solvers[solver_name]
             if not isinstance(solver, planning.Solver):
                 solver.delete()
@@ -84,6 +91,7 @@ for input_file, platform_name in TESTS:
                             platform,
                             solver,
                             DEFAULT_TIME_LIMIT_S,
+                            log_level=0,
                             cx_optimal=False,
                         )
                 case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
@@ -92,6 +100,7 @@ for input_file, platform_name in TESTS:
                         platform,
                         solver,
                         DEFAULT_TIME_LIMIT_S,
+                        log_level=0,
                         cx_optimal=cx_opt,
                         swap_optimal=swap_opt,
                     )
@@ -115,7 +124,7 @@ for input_file, platform_name in TESTS:
                     )
                     if not(correct_connectivity and correct_output and correct_qcec):
                         print(
-                            f"Circuits not equivalent for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
+                            f"\nCircuits not equivalent for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
                         )
                         wrongs += 1
                     else:
@@ -123,15 +132,15 @@ for input_file, platform_name in TESTS:
 
                 case SynthesizerNoSolution():
                     print(
-                        f"No solution for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
+                        f"\nNo solution for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
                     )
                     no_solutions += 1
                 case SynthesizerTimeout():
                     print(
-                        f"Timeout ({DEFAULT_TIME_LIMIT_S}s) for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
+                        f"\nTimeout ({DEFAULT_TIME_LIMIT_S}s) for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
                     )
                     timeouts += 1
-print("Done testing:")
+print("\nDone testing:")
 print(f"Correct: {corrects}")
 print(f"Wrong: {wrongs}")
 print(f"Timeouts: {timeouts}")

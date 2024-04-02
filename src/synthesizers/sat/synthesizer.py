@@ -27,6 +27,7 @@ class SATSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         cx_optimal: bool = False,
         swap_optimal: bool = False,
     ) -> SynthesizerOutput:

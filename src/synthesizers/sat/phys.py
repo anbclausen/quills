@@ -155,10 +155,12 @@ class PhysSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
         swap_optimal: bool,
+        log_level: int,
     ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
 
-        print("Searched: ", end="", flush=True)
+        if log_level > 0:
+            print("Searched: ", end="", flush=True)
         overall_time = 0
 
         circuit_depth = logical_circuit.depth()
@@ -458,30 +460,35 @@ class PhysSynthesizer(SATSynthesizer):
                 overall_time += after - before
                 model = solver.get_model()
                 solution = parse_sat_solution(model)
-                print(f"depth {t+1}", flush=True, end=", ")
+                if log_level > 0:
+                    print(f"depth {t+1}", flush=True, end=", ")
                 if solution:
                     depth_time = overall_time
                     swap_time = 0
                     if not swap_optimal:
-                        print(
-                            f"found solution with depth {t+1} (after {overall_time:.03f}s)."
-                        )
+                        if log_level > 0:
+                            print(
+                                f"found solution with depth {t+1} (after {overall_time:.03f}s)."
+                            )
                         return solution, overall_time, None
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
                     )
-                    print(
-                        f"found solution with depth {t+1} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
-                    )
+                    if log_level > 0:
+                        print(
+                            f"found solution with depth {t+1} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
+                        )
                     previous_solution = solution
                     previous_swap_asms: list[Atom] = []
-                    print("Optimizing for number of SWAPs:", end=" ", flush=True)
+                    if log_level > 0:
+                        print("Optimizing for number of SWAPs:", end=" ", flush=True)
                     best_so_far = number_of_swaps
                     worst_so_far = -1
                     factor = 2
                     n_swaps = number_of_swaps // factor
                     while True:
-                        print(f"{n_swaps} SWAPs (", flush=True, end="")
+                        if log_level > 0:
+                            print(f"{n_swaps} SWAPs (", flush=True, end="")
                         swap_asm = new_atom(f"swap_asm_{n_swaps}")
                         swap_asm_constraint = impl(
                             swap_asm,
@@ -521,20 +528,24 @@ class PhysSynthesizer(SATSynthesizer):
                                 if best_so_far < n_swaps
                                 else ""
                             )
-                            print(f"✓{note}", flush=True, end="), ")
+                            if log_level > 0:
+                                print(f"✓{note}", flush=True, end="), ")
                             if best_so_far == worst_so_far + 1:
-                                print(f"optimal: {best_so_far} SWAPs.")
+                                if log_level > 0:
+                                    print(f"optimal: {best_so_far} SWAPs.")
                                 break
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
                         elif n_swaps < best_so_far - 1:
-                            print(f"✗", flush=True, end="), ")
+                            if log_level > 0:
+                                print(f"✗", flush=True, end="), ")
                             worst_so_far = n_swaps
                             factor *= 2
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
                         else:
-                            print(f"✗), optimal: {best_so_far} SWAPs.")
+                            if log_level > 0:
+                                print(f"✗), optimal: {best_so_far} SWAPs.")
                             break
 
                     return previous_solution, overall_time, (depth_time, swap_time)
@@ -547,6 +558,7 @@ class PhysSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
+        log_level: int,
         cx_optimal: bool = False,
         swap_optimal: bool = False,
     ) -> SynthesizerOutput:
@@ -555,7 +567,9 @@ class PhysSynthesizer(SATSynthesizer):
         )
 
         def f(queue: Queue):
-            queue.put(self.create_solution(circuit, platform, solver, swap_optimal))
+            queue.put(
+                self.create_solution(circuit, platform, solver, swap_optimal, log_level)
+            )
 
         queue = Queue()
         p = Process(target=f, args=(queue,))
