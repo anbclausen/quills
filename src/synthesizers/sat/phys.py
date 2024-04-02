@@ -62,7 +62,7 @@ class PhysSynthesizer(SATSynthesizer):
             def __init__(self, l: int, l_prime: int, level: int):
                 self.p = l
                 self.p_prime = l_prime
-                self.level = level
+                self.level = level - 2
 
             def __str__(self) -> str:
                 return f"swap: p={self.p}, p_prime={self.p_prime}, t={self.level}"
@@ -112,16 +112,6 @@ class PhysSynthesizer(SATSynthesizer):
             if instr.level not in mapping:
                 mapping[instr.level] = {}
             mapping[instr.level][PhysicalQubit(instr.p)] = LogicalQubit(instr.l)
-
-        swap_instrs_on_first_level = [
-            instr for instr in instrs if isinstance(instr, Swap) and instr.level == 0
-        ]
-        for instr in swap_instrs_on_first_level:
-            tmp = mapping[0][PhysicalQubit(instr.p)]
-            mapping[0][PhysicalQubit(instr.p)] = mapping[0][
-                PhysicalQubit(instr.p_prime)
-            ]
-            mapping[0][PhysicalQubit(instr.p_prime)] = tmp
 
         # fix the direction of the mapping
         mapping = {
@@ -404,7 +394,7 @@ class PhysSynthesizer(SATSynthesizer):
                             for t_prime in [t, t - 1, t - 2]:
                                 problem_clauses.extend(
                                     impl(
-                                        swap[t - 2][p, p_prime],
+                                        swap[t][p, p_prime],
                                         and_(
                                             neg(usable[t_prime][p]),
                                             neg(usable[t_prime][p_prime]),
