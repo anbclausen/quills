@@ -92,7 +92,7 @@ for input_file, platform_name in TESTS:
                             solver,
                             DEFAULT_TIME_LIMIT_S,
                             log_level=0,
-                            cx_optimal=False,
+                            cx_optimal=cx_opt,
                         )
                 case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
                     experiment = synthesizer.synthesize(
