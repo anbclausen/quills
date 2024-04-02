@@ -435,7 +435,7 @@ class PhysSynthesizer(SATSynthesizer):
                             for t_prime in [t, t - 1, t - 2]:
                                 problem_clauses.extend(
                                     impl(
-                                        swap[t][p, p_prime],
+                                        swap[t - 2][p, p_prime],
                                         and_(
                                             neg(usable[t_prime][p]),
                                             neg(usable[t_prime][p_prime]),
