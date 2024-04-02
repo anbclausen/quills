@@ -104,6 +104,11 @@ class PhysSynthesizer(SATSynthesizer):
             )
         ]
 
+        f = open("tmp/solution.txt", "w")
+        for atom in relevant_atoms:
+            f.write(atom + "\n")
+        f.close()
+
         instrs = [parse(name) for name in relevant_atoms]
 
         mapping_instrs = [instr for instr in instrs if isinstance(instr, Mapped)]
@@ -427,6 +432,7 @@ class PhysSynthesizer(SATSynthesizer):
             # init
             if t == 0:
                 solver.append_formula(and_(*[neg(done[0][g]) for g in gates]))
+                solver.append_formula(and_(*[neg(current[0][g]) for g in gates]))
                 solver.append_formula(
                     and_(
                         *[
