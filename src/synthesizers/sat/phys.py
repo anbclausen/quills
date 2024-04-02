@@ -203,6 +203,7 @@ class PhysSynthesizer(SATSynthesizer):
         current: dict[int, dict[int, Atom]] = {}
         usable: dict[int, dict[int, Atom]] = {}
         swap: dict[int, dict[tuple[int, int], Atom]] = {}
+        swapping: dict[int, dict[int, Atom]] = {}
         assumption: dict[int, Atom] = {}
 
         for t in range(max_depth + 1):
@@ -226,6 +227,7 @@ class PhysSynthesizer(SATSynthesizer):
                 for p, p_prime in connectivity_graph
                 if p < p_prime
             }
+            swapping[t] = {p: new_atom(f"swapping^{t}_{p}") for p in pq}
             assumption[t] = new_atom(f"asm^{t}")
 
             problem_clauses: Formula = []
@@ -327,6 +329,13 @@ class PhysSynthesizer(SATSynthesizer):
             # swap stuff
             if t > 0:
                 for p in pq:
+                    problem_clauses.extend(
+                        iff_disj(
+                            [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
+                            + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]],
+                            swapping[t][p],
+                        )
+                    )
                     if t > 1:
                         problem_clauses.extend(
                             at_most_one(
@@ -352,15 +361,8 @@ class PhysSynthesizer(SATSynthesizer):
                         )
                     for l in lq:
                         problem_clauses.extend(
-                            impl_conj(
-                                [
-                                    neg(swap[t][p_prime, p])
-                                    for p_prime in conn_dict[p][0]
-                                ]
-                                + [
-                                    neg(swap[t][p, p_prime])
-                                    for p_prime in conn_dict[p][1]
-                                ],
+                            impl(
+                                neg(swapping[t][p]),
                                 iff(mapped[t - 1][l][p], mapped[t][l][p]),
                             )
                         )
