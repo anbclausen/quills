@@ -146,12 +146,12 @@ class IncrSynthesizer(SATSynthesizer):
         logical_circuit: QuantumCircuit,
         platform: Platform,
         solver: Solver,
-        swap_optimal: bool,
         log_level: int,
+        swap_optimal: bool,
     ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
         if log_level > 0:
-            print("Searched: ", end="", flush=True)
+            print("\nSearched: ", end="", flush=True)
         overall_time = 0
 
         circuit_depth = logical_circuit.depth()
@@ -514,6 +514,7 @@ class IncrSynthesizer(SATSynthesizer):
         log_level: int,
         cx_optimal: bool = False,
         swap_optimal: bool = False,
+        ancillaries: bool = False,
     ) -> SynthesizerOutput:
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
@@ -521,7 +522,7 @@ class IncrSynthesizer(SATSynthesizer):
 
         def f(queue: Queue):
             queue.put(
-                self.create_solution(circuit, platform, solver, swap_optimal, log_level)
+                self.create_solution(circuit, platform, solver, log_level, swap_optimal)
             )
 
         queue = Queue()

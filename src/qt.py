@@ -69,6 +69,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-anc",
+    "--ancillaries",
+    help=f"whether to allow ancillary SWAPs or not",
+    action="store_true",
+)
+
+parser.add_argument(
     "-log",
     "--log_level",
     type=int,
@@ -192,7 +199,7 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing ({'CX-depth' if args.cx_optimal else 'depth'}-optimal{' and local SWAP-optimal' if args.swap_optimal else ''})... ",
+    f"Synthesizing ({'CX-depth' if args.cx_optimal else 'depth'}-optimal{' and local SWAP-optimal' if args.swap_optimal else ''}{', allowing ancillary SWAPs' if args.ancillaries else ''})... ",
     end="",
     flush=True,
 )
@@ -215,6 +222,7 @@ match synthesizer, solver:
             log_level,
             cx_optimal=args.cx_optimal,
             swap_optimal=args.swap_optimal,
+            ancillaries=args.ancillaries,
         )
     case _:
         raise ValueError(
@@ -243,7 +251,10 @@ match output:
                 "✗ Output circuit does not obey connectivity of platform (Proprietary Checker)"
             )
         correct_output = OutputChecker.equality_check(
-            input_circuit, output.circuit, output.initial_mapping
+            input_circuit,
+            output.circuit,
+            output.initial_mapping,
+            args.ancillaries,
         )
         if correct_output:
             print("✓ Input and output circuits are equivalent (Proprietary Checker)")
@@ -252,7 +263,10 @@ match output:
                 "✗ Input and output circuits are not equivalent (Proprietary Checker)"
             )
         correct_qcec = OutputChecker.check_qcec(
-            input_circuit, output.circuit, output.initial_mapping
+            input_circuit,
+            output.circuit,
+            output.initial_mapping,
+            args.ancillaries,
         )
         if correct_qcec:
             print("✓ Input and output circuits are equivalent (QCEC)")

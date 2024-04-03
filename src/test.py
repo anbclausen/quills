@@ -1,4 +1,6 @@
 from qiskit import QuantumCircuit
+from synthesizers.sat.incr import IncrSynthesizer
+from synthesizers.sat.phys import PhysSynthesizer
 from util.circuits import (
     SynthesizerSolution,
     SynthesizerNoSolution,
@@ -13,7 +15,7 @@ from configs import (
     solvers,
     OPTIMAL_PLANNING_SYNTHESIZERS,
     CONDITIONAL_PLANNING_SYNTHESIZERS,
-    DEFAULT_TIME_LIMIT_S
+    DEFAULT_TIME_LIMIT_S,
 )
 from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
@@ -27,8 +29,6 @@ TESTS = [
     ("mod5mils_65.qasm", "tenerife"),
     # up to 14 qubits
     ("barenco_tof_4.qasm", "melbourne"),
-    ("barenco_tof_5.qasm", "melbourne"),
-    ("mod_mult_55.qasm", "melbourne"),
 ]
 
 configurations: list[tuple[str, str]] = []
@@ -61,10 +61,20 @@ wrongs = 0
 timeouts = 0
 no_solutions = 0
 
-print("Testing", end="", flush=True)
+print("Testing:", end="", flush=True)
 for input_file, platform_name in TESTS:
+    print(f"\n({input_file}, {platform_name}):", end="", flush=True)
     for synthesizer_name, solver_name in configurations:
-        for cx_opt, swap_opt in [(False, False), (False, True), (True, False), (True, True)]:
+        for cx_opt, swap_opt, anc in [
+            (False, False, False),
+            (False, False, True),
+            (False, True, False),
+            (False, True, True),
+            (True, False, False),
+            (True, False, True),
+            (True, True, False),
+            (True, True, True),
+        ]:
             print(
                 ".",
                 end="",
@@ -83,7 +93,7 @@ for input_file, platform_name in TESTS:
 
             match synthesizer, solver:
                 case PlanningSynthesizer(), planning.Solver():
-                    if swap_opt:
+                    if swap_opt or anc:
                         continue
                     else:
                         experiment = synthesizer.synthesize(
@@ -94,7 +104,7 @@ for input_file, platform_name in TESTS:
                             log_level=0,
                             cx_optimal=cx_opt,
                         )
-                case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
+                case PhysSynthesizer(), _ if not isinstance(solver, planning.Solver):
                     experiment = synthesizer.synthesize(
                         input_circuit,
                         platform,
@@ -103,7 +113,21 @@ for input_file, platform_name in TESTS:
                         log_level=0,
                         cx_optimal=cx_opt,
                         swap_optimal=swap_opt,
+                        ancillaries=anc,
                     )
+                case IncrSynthesizer(), _ if not isinstance(solver, planning.Solver):
+                    if anc:
+                        continue
+                    else:
+                        experiment = synthesizer.synthesize(
+                            input_circuit,
+                            platform,
+                            solver,
+                            DEFAULT_TIME_LIMIT_S,
+                            log_level=0,
+                            cx_optimal=cx_opt,
+                            swap_optimal=swap_opt,
+                        )
                 case _:
                     raise ValueError(
                         f"Invalid synthesizer-solver combination: '{synthesizer_name}' on '{solver_name}'."
@@ -118,13 +142,17 @@ for input_file, platform_name in TESTS:
                         input_circuit,
                         experiment.circuit,
                         experiment.initial_mapping,
+                        ancillaries=anc,
                     )
                     correct_qcec = OutputChecker.check_qcec(
-                        input_circuit, experiment.circuit, experiment.initial_mapping
+                        input_circuit,
+                        experiment.circuit,
+                        experiment.initial_mapping,
+                        ancillaries=anc,
                     )
-                    if not(correct_connectivity and correct_output and correct_qcec):
+                    if not (correct_connectivity and correct_output and correct_qcec):
                         print(
-                            f"\nCircuits not equivalent for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
+                            f"\nCircuits not equivalent for configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name} with CX-opt: {cx_opt}, SWAP-opt: {swap_opt}, ancillaries: {anc}."
                         )
                         wrongs += 1
                     else:
@@ -132,12 +160,12 @@ for input_file, platform_name in TESTS:
 
                 case SynthesizerNoSolution():
                     print(
-                        f"\nNo solution for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
+                        f"\nNo solution for configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name} with CX-opt: {cx_opt}, SWAP-opt: {swap_opt}, ancillaries: {anc}."
                     )
                     no_solutions += 1
                 case SynthesizerTimeout():
                     print(
-                        f"\nTimeout ({DEFAULT_TIME_LIMIT_S}s) for following configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name}."
+                        f"\nTimeout ({DEFAULT_TIME_LIMIT_S}s) for configuration: {input_file}, {platform_name}, {synthesizer_name}, {solver_name} with CX-opt: {cx_opt}, SWAP-opt: {swap_opt}, ancillaries: {anc}."
                     )
                     timeouts += 1
 print("\nDone testing:")

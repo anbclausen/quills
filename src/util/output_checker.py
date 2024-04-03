@@ -33,7 +33,9 @@ class OutputChecker:
             q1 = qubits[0]
             q2 = qubits[1]
             if (q1, q2) not in platform.connectivity_graph:
-                print(f"Connectivity check failed (SWAP): ({q1}, {q2}) not in platform.")
+                print(
+                    f"Connectivity check failed (SWAP): ({q1}, {q2}) not in platform."
+                )
                 return False
 
         return True
@@ -43,6 +45,7 @@ class OutputChecker:
         input_circuit: QuantumCircuit,
         output_circuit: QuantumCircuit,
         initial_mapping: dict[LogicalQubit, PhysicalQubit],
+        ancillaries: bool,
     ) -> bool:
         output_mapping = line_gate_mapping(output_circuit)
         topo_sort_gates: list[tuple[str, list[int]]] = []
@@ -80,7 +83,9 @@ class OutputChecker:
                         waiting[binary_num] = line
 
         input_mapping = line_gate_mapping(input_circuit)
-        reverse_initial = {p.id: l.id for l, p in initial_mapping.items()}
+        reverse_initial: dict[int, int] = {
+            p.id: l.id for l, p in initial_mapping.items()
+        }
 
         for phys_gate_name, phys_lines in topo_sort_gates:
             binary = len(phys_lines) == 2
@@ -89,9 +94,20 @@ class OutputChecker:
                 phys_target = phys_lines[1]
 
                 if phys_gate_name.startswith("swap"):
-                    tmp = reverse_initial[phys_control]
-                    reverse_initial[phys_control] = reverse_initial[phys_target]
-                    reverse_initial[phys_target] = tmp
+                    if ancillaries and (
+                        phys_control not in reverse_initial.keys()
+                        or phys_target not in reverse_initial.keys()
+                    ):
+                        if phys_control not in reverse_initial.keys():
+                            reverse_initial[phys_control] = reverse_initial[phys_target]
+                            del reverse_initial[phys_target]
+                        else:
+                            reverse_initial[phys_target] = reverse_initial[phys_control]
+                            del reverse_initial[phys_control]
+                    else:
+                        tmp = reverse_initial[phys_control]
+                        reverse_initial[phys_control] = reverse_initial[phys_target]
+                        reverse_initial[phys_target] = tmp
                     continue
 
                 logi_control = reverse_initial[phys_control]
@@ -103,15 +119,13 @@ class OutputChecker:
                     _, logi_control_gate_name = logi_control_gates[0]
                     _, logi_target_gate_name = logi_target_gates[0]
 
-                    logi_names_equiv = (
-                        logi_control_gate_name.startswith("cx0")
-                        and logi_target_gate_name.startswith("cx1")
-                    )
+                    logi_names_equiv = logi_control_gate_name.startswith(
+                        "cx0"
+                    ) and logi_target_gate_name.startswith("cx1")
                     if logi_names_equiv:
-                        phys_logi_names_equiv = (
-                            phys_gate_name.startswith("cx")
-                            and logi_control_gate_name.startswith("cx")
-                        )
+                        phys_logi_names_equiv = phys_gate_name.startswith(
+                            "cx"
+                        ) and logi_control_gate_name.startswith("cx")
                         if phys_logi_names_equiv:
                             input_mapping[logi_target] = input_mapping[logi_target][1:]
                             input_mapping[logi_control] = input_mapping[logi_control][
@@ -167,6 +181,7 @@ class OutputChecker:
         input_circuit: QuantumCircuit,
         output_circuit: QuantumCircuit,
         initial_mapping: dict[LogicalQubit, PhysicalQubit],
+        ancillaries: bool,
     ) -> bool:
 
         output_mapping = line_gate_mapping(output_circuit)
@@ -235,9 +250,20 @@ class OutputChecker:
                             other_line = int(binary_name[4:])
                             output_mapping[line] = output_mapping[line][1:]
                             output_mapping[other_line] = output_mapping[other_line][1:]
-                            tmp = reverse_initial[line]
-                            reverse_initial[line] = reverse_initial[other_line]
-                            reverse_initial[other_line] = tmp
+                            if ancillaries and (
+                                line not in reverse_initial.keys()
+                                or other_line not in reverse_initial.keys()
+                            ):
+                                if line not in reverse_initial.keys():
+                                    reverse_initial[line] = reverse_initial[other_line]
+                                    del reverse_initial[other_line]
+                                else:
+                                    reverse_initial[other_line] = reverse_initial[line]
+                                    del reverse_initial[line]
+                            else:
+                                tmp = reverse_initial[line]
+                                reverse_initial[line] = reverse_initial[other_line]
+                                reverse_initial[other_line] = tmp
 
         mapped_output.measure_all()
         input_circuit.measure_all()

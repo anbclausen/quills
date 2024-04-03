@@ -44,6 +44,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-anc",
+    "--ancillaries",
+    help=f"whether to allow ancillary SWAPs or not",
+    action="store_true",
+)
+
+parser.add_argument(
     "-csv",
     "--output_csv",
     help=f"whether output a .csv file with the results",
@@ -62,13 +69,15 @@ args = parser.parse_args()
 
 CX_OPTIMAL = args.cx_optimal
 SWAP_OPTIMAL = args.swap_optimal
+ANCILLARIES = args.ancillaries
 OUTPUT_CSV = args.output_csv
 EXPERIMENT_TIME_LIMIT_S = args.time_limit
 
 cx_suffix = "_cx" if CX_OPTIMAL else ""
 swap_suffix = "_swap" if SWAP_OPTIMAL else ""
-CACHE_FILE = f"tmp/experiments_cache{cx_suffix}{swap_suffix}.json"
-OUTPUT_FILE = f"tmp/experiments{cx_suffix}{swap_suffix}.txt"
+anc_suffix = "_anc" if ANCILLARIES else ""
+CACHE_FILE = f"tmp/experiments_cache{cx_suffix}{swap_suffix}{anc_suffix}.json"
+OUTPUT_FILE = f"tmp/experiments{cx_suffix}{swap_suffix}{anc_suffix}.txt"
 
 EXPERIMENTS = [
     # up to 4 qubits
@@ -298,6 +307,7 @@ print(
     f"Time limit: {EXPERIMENT_TIME_LIMIT_S}s\n"
     f"CX optimal: {CX_OPTIMAL}\n"
     f"SWAP optimal: {SWAP_OPTIMAL} (only applicable for SAT-based synthesizers)\n"
+    f"Ancillary SWAPs: {ANCILLARIES} (only applicable for 'sat_phys' synthesizer)\n"
 )
 
 
@@ -391,6 +401,7 @@ for input_file, platform_name in EXPERIMENTS:
                         log_level=0,
                         cx_optimal=CX_OPTIMAL,
                         swap_optimal=SWAP_OPTIMAL,
+                        ancillaries=ANCILLARIES,
                     )
                     solver.delete()
                 case _:
@@ -407,9 +418,13 @@ for input_file, platform_name in EXPERIMENTS:
                         input_circuit,
                         experiment.circuit,
                         experiment.initial_mapping,
+                        ANCILLARIES,
                     )
                     correct_qcec = OutputChecker.check_qcec(
-                        input_circuit, experiment.circuit, experiment.initial_mapping
+                        input_circuit,
+                        experiment.circuit,
+                        experiment.initial_mapping,
+                        ANCILLARIES,
                     )
                     if correct_connectivity and correct_output and correct_qcec:
                         print("  ✓ Input and output circuits are equivalent.")
@@ -501,6 +516,9 @@ for input_file, platform_name in EXPERIMENTS:
     print_and_output_to_file(f"CX optimal: {CX_OPTIMAL}")
     print_and_output_to_file(
         f"SWAP optimal: {SWAP_OPTIMAL} (only applicable for SAT-based synthesizers)"
+    )
+    print_and_output_to_file(
+        f"Ancillary SWAPs: {ANCILLARIES} (only applicable for 'sat_phys' synthesizer)"
     )
     print_and_output_to_file("")
     for (synthesizer_name, solver_name), result in results.items():

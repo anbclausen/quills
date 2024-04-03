@@ -30,6 +30,7 @@ class SATSynthesizer(ABC):
         log_level: int,
         cx_optimal: bool = False,
         swap_optimal: bool = False,
+        ancillaries: bool = False,
     ) -> SynthesizerOutput:
         """
         Layout synthesis.
