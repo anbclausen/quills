@@ -349,6 +349,7 @@ def reinsert_unary_gates(
     original_circuit: QuantumCircuit,
     cx_circuit: QuantumCircuit,
     initial_mapping: dict[LogicalQubit, PhysicalQubit],
+    ancillaries: bool,
 ):
     """
     Reinserts the unary gates from the original circuit into the CX circuit.
@@ -482,11 +483,19 @@ def reinsert_unary_gates(
 
                 # fix mapping
                 reverse_mapping = {v: k for k, v in mapping.items()}
-                first_logical = reverse_mapping[first]
-                second_logical = reverse_mapping[second]
-                tmp = mapping[first_logical]
-                mapping[first_logical] = mapping[second_logical]
-                mapping[second_logical] = tmp
+                if ancillaries and (first not in reverse_mapping.keys() or second not in reverse_mapping.keys()):
+                    if first not in reverse_mapping.keys():
+                        second_logical = reverse_mapping[second]
+                        mapping[second_logical] = first
+                    else:
+                        first_logical = reverse_mapping[first]
+                        mapping[first_logical] = second
+                else:
+                    first_logical = reverse_mapping[first]
+                    second_logical = reverse_mapping[second]
+                    tmp = mapping[first_logical]
+                    mapping[first_logical] = mapping[second_logical]
+                    mapping[second_logical] = tmp
 
     return result_circuit
 

@@ -312,7 +312,10 @@ class PlanningSynthesizer(ABC):
 
                 if cnot_optimal:
                     physical_circuit = reinsert_unary_gates(
-                        logical_circuit, physical_circuit, initial_mapping
+                        logical_circuit,
+                        physical_circuit,
+                        initial_mapping,
+                        ancillaries=False,
                     )
 
                 physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(
@@ -397,7 +400,10 @@ class PlanningSynthesizer(ABC):
 
                     if cnot_optimal:
                         physical_circuit = reinsert_unary_gates(
-                            logical_circuit, physical_circuit, initial_mapping
+                            logical_circuit,
+                            physical_circuit,
+                            initial_mapping,
+                            ancillaries=False,
                         )
 
                     physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(

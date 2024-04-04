@@ -1,6 +1,6 @@
 import argparse
-from util.logger import Logger
 import os
+from util.logger import Logger
 from qiskit import QuantumCircuit
 from qiskit import qasm2
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution

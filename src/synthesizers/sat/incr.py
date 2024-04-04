@@ -552,7 +552,7 @@ class IncrSynthesizer(SATSynthesizer):
 
         if cx_optimal:
             output_circuit = reinsert_unary_gates(
-                logical_circuit, output_circuit, initial_mapping
+                logical_circuit, output_circuit, initial_mapping, ancillaries
             )
 
         output_circuit_with_cnots_as_swap = with_swaps_as_cnots(output_circuit)
