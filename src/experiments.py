@@ -103,6 +103,7 @@ EXPERIMENTS = [
     ("4mod5-v1_22.qasm", "melbourne"),
     ("mod5mils_65.qasm", "melbourne"),
     ("qaoa5.qasm", "melbourne"),
+    ("qft_8.qasm", "melbourne"),
     ("barenco_tof_4.qasm", "melbourne"),
     ("barenco_tof_5.qasm", "melbourne"),
     ("mod_mult_55.qasm", "melbourne"),
