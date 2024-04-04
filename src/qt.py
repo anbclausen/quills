@@ -1,5 +1,4 @@
 import argparse
-import os
 from util.logger import Logger
 from qiskit import QuantumCircuit
 from qiskit import qasm2
@@ -84,6 +83,7 @@ parser.add_argument(
     help=f"whether to write the synthesized circuit to a file",
     action="store_true",
 )
+
 parser.add_argument(
     "-log",
     "--log_level",
@@ -247,8 +247,7 @@ match output:
             swap_opt = f"swap_" if args.swap_optimal else ""
             anc = f"anc_" if args.ancillaries else ""
             option_string = f"{cx_opt}{swap_opt}{anc}synth"
-
-            stripped_input = args.input.split('/')[-1]    
+            stripped_input = args.input.split("/")[-1]
             file_string = f"output/{args.platform}/{option_string}/{stripped_input}"
             save_circuit(output.circuit, output.initial_mapping, file_string)
             print(f"Saved synthesized circuit at '{file_string}'")
@@ -259,9 +258,7 @@ match output:
         print()
 
         print(f"{BOLD_START}VALIDATION{BOLD_END}")
-        correct_connectivity = connectivity_check(
-            output.circuit, platform
-        )
+        correct_connectivity = connectivity_check(output.circuit, platform)
         if correct_connectivity:
             print(
                 "✓ Output circuit obeys connectivity of platform (Proprietary Checker)"

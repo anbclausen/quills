@@ -8,6 +8,7 @@ from util.circuits import (
     SynthesizerSolution,
     SynthesizerNoSolution,
     SynthesizerTimeout,
+    save_circuit,
 )
 from synthesizers.planning.solvers import SATISFYING
 from synthesizers.planning.synthesizer import PlanningSynthesizer
@@ -52,6 +53,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-out",
+    "--output_synth",
+    help=f"whether to write the synthesized circuit to a file",
+    action="store_true",
+)
+
+parser.add_argument(
     "-csv",
     "--output_csv",
     help=f"whether output a .csv file with the results",
@@ -71,6 +79,7 @@ args = parser.parse_args()
 CX_OPTIMAL = args.cx_optimal
 SWAP_OPTIMAL = args.swap_optimal
 ANCILLARIES = args.ancillaries
+OUTPUT_CIRCUITS = args.output_synth
 OUTPUT_CSV = args.output_csv
 EXPERIMENT_TIME_LIMIT_S = args.time_limit
 
@@ -417,6 +426,15 @@ for input_file, platform_name in EXPERIMENTS:
                     )
             match experiment:
                 case SynthesizerSolution():
+                    if OUTPUT_CIRCUITS:
+                        cx_opt = f"cx_" if CX_OPTIMAL else ""
+                        swap_opt = f"swap_" if SWAP_OPTIMAL else ""
+                        anc = f"anc_" if ANCILLARIES else ""
+                        option_string = f"{cx_opt}{swap_opt}{anc}synth"
+                        stripped_input = input_file.split("/")[-1]
+                        file_string = f"output/{platform_name}/{option_string}/{stripped_input}"
+                        save_circuit(experiment.circuit, experiment.initial_mapping, file_string)
+
                     correct_connectivity = connectivity_check(
                         experiment.circuit, platform
                     )
