@@ -122,6 +122,7 @@ EXPERIMENTS = [
     ("4mod5-v1_22.qasm", "sycamore"),
     ("mod5mils_65.qasm", "sycamore"),
     ("qaoa5.qasm", "sycamore"),
+    ("qft_8.qasm", "sycamore"),
     ("barenco_tof_4.qasm", "sycamore"),
     ("barenco_tof_5.qasm", "sycamore"),
     ("mod_mult_55.qasm", "sycamore"),

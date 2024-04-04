@@ -31,7 +31,7 @@ synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
     # "plan_cost_opt": CostBasedOptimalPlanningSynthesizer(),
     # "plan_cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
     # "plan_lc_incr": LocalClockIncrementalPlanningSynthesizer(),
-    "sat_incr": IncrSynthesizer(),
+    # "sat_incr": IncrSynthesizer(),
     "sat_phys": PhysSynthesizer(),
 }
 

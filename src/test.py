@@ -29,6 +29,7 @@ TESTS = [
     ("4mod5-v1_22.qasm", "tenerife"),
     ("mod5mils_65.qasm", "tenerife"),
     # up to 14 qubits
+    ("toffoli.qasm", "melbourne"),
     ("barenco_tof_4.qasm", "melbourne"),
 ]
 
