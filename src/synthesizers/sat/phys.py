@@ -104,10 +104,10 @@ class PhysSynthesizer(SATSynthesizer):
             )
         ]
 
-        f = open("tmp/solution.txt", "w")
-        for atom in relevant_atoms:
-            f.write(atom + "\n")
-        f.close()
+        # f = open("tmp/solution.txt", "w")
+        # for atom in relevant_atoms:
+        #     f.write(atom + "\n")
+        # f.close()
 
         instrs = [parse(name) for name in relevant_atoms]
 
