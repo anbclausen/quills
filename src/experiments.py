@@ -21,6 +21,7 @@ from configs import (
     CONDITIONAL_PLANNING_SYNTHESIZERS,
 )
 from datetime import datetime
+from util.logger import Logger
 from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
@@ -78,6 +79,7 @@ swap_suffix = "_swap" if SWAP_OPTIMAL else ""
 anc_suffix = "_anc" if ANCILLARIES else ""
 CACHE_FILE = f"tmp/experiments_cache{cx_suffix}{swap_suffix}{anc_suffix}.json"
 OUTPUT_FILE = f"tmp/experiments{cx_suffix}{swap_suffix}{anc_suffix}.txt"
+logger = Logger(0)
 
 EXPERIMENTS = [
     # up to 4 qubits
@@ -392,7 +394,7 @@ for input_file, platform_name in EXPERIMENTS:
                         platform,
                         solver,
                         EXPERIMENT_TIME_LIMIT_S,
-                        log_level=0,
+                        logger,
                         cx_optimal=CX_OPTIMAL,
                     )
                 case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
@@ -401,7 +403,7 @@ for input_file, platform_name in EXPERIMENTS:
                         platform,
                         solver,
                         EXPERIMENT_TIME_LIMIT_S,
-                        log_level=0,
+                        logger,
                         cx_optimal=CX_OPTIMAL,
                         swap_optimal=SWAP_OPTIMAL,
                         ancillaries=ANCILLARIES,

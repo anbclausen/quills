@@ -17,6 +17,7 @@ from configs import (
     CONDITIONAL_PLANNING_SYNTHESIZERS,
     DEFAULT_TIME_LIMIT_S,
 )
+from util.logger import Logger
 from util.output_checker import OutputChecker
 import synthesizers.planning.solvers as planning
 
@@ -30,6 +31,8 @@ TESTS = [
     # up to 14 qubits
     ("barenco_tof_4.qasm", "melbourne"),
 ]
+
+logger = Logger(0)
 
 configurations: list[tuple[str, str]] = []
 for synthesizer_name, synthesizer_instance in synthesizers.items():
@@ -101,7 +104,7 @@ for input_file, platform_name in TESTS:
                             platform,
                             solver,
                             DEFAULT_TIME_LIMIT_S,
-                            log_level=0,
+                            logger,
                             cx_optimal=cx_opt,
                         )
                 case PhysSynthesizer(), _ if not isinstance(solver, planning.Solver):
@@ -110,7 +113,7 @@ for input_file, platform_name in TESTS:
                         platform,
                         solver,
                         DEFAULT_TIME_LIMIT_S,
-                        log_level=0,
+                        logger,
                         cx_optimal=cx_opt,
                         swap_optimal=swap_opt,
                         ancillaries=anc,
@@ -124,7 +127,7 @@ for input_file, platform_name in TESTS:
                             platform,
                             solver,
                             DEFAULT_TIME_LIMIT_S,
-                            log_level=0,
+                            logger,
                             cx_optimal=cx_opt,
                             swap_optimal=swap_opt,
                         )

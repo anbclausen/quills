@@ -18,6 +18,7 @@ from util.circuits import (
     remove_all_non_cx_gates,
     with_swaps_as_cnots,
 )
+from util.logger import Logger
 
 
 class NoiseSimulator:
@@ -97,6 +98,7 @@ input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
 SIMULATIONS = 1000
 input_name_stripped = args.input.split("/")[-1].split(".")[0]
 file_name = f"{input_name_stripped}"
+logger = Logger(0)
 
 # make the type checker happy
 if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthesizer):
@@ -106,7 +108,7 @@ if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthe
         platform,
         solver,
         time_limit,
-        log_level=0,
+        logger,
         cx_optimal=False,
         swap_optimal=True,
     )
@@ -117,7 +119,7 @@ if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthe
         platform,
         solver,
         time_limit,
-        log_level=0,
+        logger,
         cx_optimal=True,
         swap_optimal=True,
     )
