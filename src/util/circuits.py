@@ -1,4 +1,6 @@
-from qiskit import QuantumCircuit, QuantumRegister
+import os
+from qiskit import QuantumCircuit, QuantumRegister, qasm2
+from qiskit.circuit import Qubit
 from itertools import takewhile
 
 
@@ -500,11 +502,11 @@ def reinsert_unary_gates(
     return result_circuit
 
 
-def with_swaps_as_cnots(circuit: QuantumCircuit):
+def with_swaps_as_cnots(circuit: QuantumCircuit, register_name: str):
     """
     Replaces all SWAP gates with CNOT gates.
     """
-    new_circuit = QuantumCircuit(QuantumRegister(circuit.num_qubits, "p"))
+    new_circuit = QuantumCircuit(QuantumRegister(circuit.num_qubits, register_name))
     for instr in circuit.data:
         if instr[0].name.startswith("swap"):
             new_circuit.cx(instr[1][0]._index, instr[1][1]._index)
@@ -526,3 +528,28 @@ def count_swaps(circuit: QuantumCircuit):
             swaps += 1
 
     return swaps
+
+def save_circuit(circuit: QuantumCircuit, initial_mapping: dict[LogicalQubit, PhysicalQubit], file_path: str):
+    path_string = "/".join(file_path.split("/")[:-1])
+    os.makedirs(path_string, exist_ok=True)
+
+    file_name = file_path.split("/")[-1]
+    init_file_string = f"{path_string}/{file_name.split('.')[0]}_init.txt"
+    init_file = open(init_file_string, "w")
+    for q, p in initial_mapping.items():
+        init_file.write(f"{q.id};{p.id}\n")
+    init_file.close()
+
+    register = QuantumRegister(circuit.num_qubits, "q")
+    output_circuit = QuantumCircuit(register)
+    for instr in circuit.data:
+        new_instr = instr.replace(
+                    qubits=[
+                        Qubit(register, q._index)
+                        for q in instr.qubits
+                    ]
+                )
+        output_circuit.append(new_instr)
+    circuit_file = open(file_path, "w")
+    qasm2.dump(output_circuit, circuit_file)
+    circuit_file.close()

@@ -319,7 +319,7 @@ class PlanningSynthesizer(ABC):
                     )
 
                 physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(
-                    physical_circuit
+                    physical_circuit, register_name="p"
                 )
                 depth = physical_circuit_with_cnots_as_swap.depth()
                 physical_with_only_cnots = remove_all_non_cx_gates(
@@ -407,7 +407,7 @@ class PlanningSynthesizer(ABC):
                         )
 
                     physical_circuit_with_cnots_as_swap = with_swaps_as_cnots(
-                        physical_circuit
+                        physical_circuit, register_name="p"
                     )
                     depth = physical_circuit_with_cnots_as_swap.depth()
                     physical_with_only_cnots = remove_all_non_cx_gates(

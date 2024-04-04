@@ -3,7 +3,7 @@ import os
 from util.logger import Logger
 from qiskit import QuantumCircuit
 from qiskit import qasm2
-from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
+from util.circuits import remove_all_non_cx_gates, SynthesizerSolution, save_circuit
 from util.output_checker import OutputChecker
 from synthesizers.planning.solvers import OPTIMAL
 from configs import (
@@ -249,12 +249,8 @@ match output:
             option_string = f"{cx_opt}{swap_opt}{anc}synth"
 
             stripped_input = args.input.split('/')[-1]    
-            path_string = f"output/{args.platform}/{option_string}"
-            file_string = f"{path_string}/{stripped_input}"
-            os.makedirs(path_string, exist_ok=True)
-            f = open(file_string, "w")
-            qasm2.dump(output.circuit, f)
-            f.close()
+            file_string = f"output/{args.platform}/{option_string}/{stripped_input}"
+            save_circuit(output.circuit, output.initial_mapping, file_string)
             print(f"Saved synthesized circuit at '{file_string}'")
             print()
 

@@ -615,7 +615,7 @@ class PhysSynthesizer(SATSynthesizer):
                 logical_circuit, output_circuit, initial_mapping, ancillaries
             )
 
-        output_circuit_with_cnots_as_swap = with_swaps_as_cnots(output_circuit)
+        output_circuit_with_cnots_as_swap = with_swaps_as_cnots(output_circuit, register_name="p")
         depth = output_circuit_with_cnots_as_swap.depth()
         output_with_only_cnots = remove_all_non_cx_gates(
             output_circuit_with_cnots_as_swap
