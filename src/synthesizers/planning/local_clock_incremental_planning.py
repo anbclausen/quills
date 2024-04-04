@@ -10,6 +10,7 @@ from util.circuits import (
 )
 from platforms import Platform
 from qiskit import QuantumCircuit
+from util.logger import Logger
 from util.pddl import PDDLInstance, PDDLAction, PDDLPredicate, object_, not_
 from synthesizers.planning.solvers import Solver
 
@@ -352,7 +353,7 @@ class LocalClockIncrementalPlanningSynthesizer(PlanningSynthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        log_level: int,
+        logger: Logger,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         min_plan_length_lambda = lambda depth: logical_circuit.size()
@@ -365,7 +366,7 @@ class LocalClockIncrementalPlanningSynthesizer(PlanningSynthesizer):
             platform,
             solver,
             time_limit_s,
-            log_level,
+            logger,
             min_plan_length_lambda,
             max_plan_length_lambda,
             min_layers_lambda,

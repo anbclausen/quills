@@ -17,6 +17,7 @@ from util.circuits import (
     reinsert_unary_gates,
     count_swaps,
 )
+from util.logger import Logger
 from util.sat import (
     Atom,
     Formula,
@@ -146,12 +147,11 @@ class IncrSynthesizer(SATSynthesizer):
         logical_circuit: QuantumCircuit,
         platform: Platform,
         solver: Solver,
-        log_level: int,
+        logger: Logger,
         swap_optimal: bool,
     ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
-        if log_level > 0:
-            print("\nSearched: ", end="", flush=True)
+        logger.log(1, "\nSearched: ", end="", flush=True)
         overall_time = 0
 
         circuit_depth = logical_circuit.depth()
@@ -414,35 +414,34 @@ class IncrSynthesizer(SATSynthesizer):
                 overall_time += after - before
                 model = solver.get_model()
                 solution = parse_sat_solution(model)
-                if log_level > 0:
-                    print(f"depth {t+1}", flush=True, end=", ")
+                logger.log(1, f"depth {t+1}", flush=True, end=", ")
                 if solution:
                     depth_time = overall_time
                     swap_time = 0
                     if not swap_optimal:
-                        if log_level > 0:
-                            print(
-                                f"found solution with depth {t+1} (after {overall_time:.03f}s)."
-                            )
+                        logger.log(
+                            1,
+                            f"found solution with depth {t+1} (after {overall_time:.03f}s).",
+                        )
                         return solution, overall_time, None
                     number_of_swaps = sum(
                         1 for atom in solution if atom.startswith("swap^")
                     )
-                    if log_level > 0:
-                        print(
-                            f"found solution with depth {t+1} and {number_of_swaps} SWAPs (after {overall_time:.03f}s)."
-                        )
+                    logger.log(
+                        1,
+                        f"found solution with depth {t+1} and {number_of_swaps} SWAPs (after {overall_time:.03f}s).",
+                    )
                     previous_solution = solution
                     previous_swap_asms: list[Atom] = []
-                    if log_level > 0:
-                        print("Optimizing for number of SWAPs:", end=" ", flush=True)
+                    logger.log(
+                        1, "Optimizing for number of SWAPs:", end=" ", flush=True
+                    )
                     best_so_far = number_of_swaps
                     worst_so_far = -1
                     factor = 2
                     n_swaps = number_of_swaps // factor
                     while True:
-                        if log_level > 0:
-                            print(f"{n_swaps} SWAPs (", flush=True, end="")
+                        logger.log(1, f"{n_swaps} SWAPs (", flush=True, end="")
                         swap_asm = new_atom(f"swap_asm_{n_swaps}")
                         swap_asm_constraint = impl(
                             swap_asm,
@@ -481,24 +480,20 @@ class IncrSynthesizer(SATSynthesizer):
                                 if best_so_far < n_swaps
                                 else ""
                             )
-                            if log_level > 0:
-                                print(f"✓{note}", flush=True, end="), ")
+                            logger.log(1, f"✓{note}", flush=True, end="), ")
                             if best_so_far == worst_so_far + 1:
-                                if log_level > 0:
-                                    print(f"optimal: {best_so_far} SWAPs.")
+                                logger.log(1, f"optimal: {best_so_far} SWAPs.")
                                 break
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
                         elif n_swaps < best_so_far - 1:
-                            if log_level > 0:
-                                print(f"✗", flush=True, end="), ")
+                            logger.log(1, f"✗", flush=True, end="), ")
                             worst_so_far = n_swaps
                             factor *= 2
                             candidate = best_so_far - max(best_so_far // factor, 1)
                             n_swaps = max(worst_so_far + 1, candidate)
                         else:
-                            if log_level > 0:
-                                print(f"✗), optimal: {best_so_far} SWAPs.")
+                            logger.log(1, f"✗), optimal: {best_so_far} SWAPs.")
                             break
 
                     return previous_solution, overall_time, (depth_time, swap_time)
@@ -511,7 +506,7 @@ class IncrSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        log_level: int,
+        logger: Logger,
         cx_optimal: bool = False,
         swap_optimal: bool = False,
         ancillaries: bool = False,
@@ -522,7 +517,7 @@ class IncrSynthesizer(SATSynthesizer):
 
         def f(queue: Queue):
             queue.put(
-                self.create_solution(circuit, platform, solver, log_level, swap_optimal)
+                self.create_solution(circuit, platform, solver, logger, swap_optimal)
             )
 
         queue = Queue()

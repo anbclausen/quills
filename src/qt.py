@@ -1,4 +1,5 @@
 import argparse
+from util.logger import Logger
 from qiskit import QuantumCircuit
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
 from util.output_checker import OutputChecker
@@ -97,7 +98,7 @@ platform = platforms[args.platform]
 solver = solvers[args.solver]
 time_limit = args.time_limit
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
-log_level = args.log_level
+logger = Logger(args.log_level)
 
 print("####################################################")
 print("#                           __                     #")
@@ -210,7 +211,7 @@ match synthesizer, solver:
             platform,
             solver,
             time_limit,
-            log_level,
+            logger,
             cx_optimal=args.cx_optimal,
         )
     case SATSynthesizer(), _ if not isinstance(solver, planning.Solver):
@@ -219,7 +220,7 @@ match synthesizer, solver:
             platform,
             solver,
             time_limit,
-            log_level,
+            logger,
             cx_optimal=args.cx_optimal,
             swap_optimal=args.swap_optimal,
             ancillaries=args.ancillaries,

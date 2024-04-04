@@ -11,6 +11,7 @@ from synthesizers.planning.solvers import (
     SolverNoSolution,
     SolverSolution,
 )
+from util.logger import Logger
 from util.pddl import PDDLInstance
 from util.circuits import (
     SynthesizerOutput,
@@ -242,7 +243,7 @@ class PlanningSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        log_level: int,
+        logger: Logger,
         cx_optimal: bool = False,
     ) -> SynthesizerOutput:
         """
@@ -268,7 +269,7 @@ class PlanningSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        log_level: int,
+        logger: Logger,
         min_plan_length: int,
         max_plan_length: int,
         min_layers: int,
@@ -340,7 +341,7 @@ class PlanningSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        log_level: int,
+        logger: Logger,
         min_plan_length_lambda: Callable[[int], int],
         max_plan_length_lambda: Callable[[int], int],
         min_layers_lambda: Callable[[int], int],
@@ -359,11 +360,9 @@ class PlanningSynthesizer(ABC):
         circuit_depth = circuit.depth()
         solver_time = 0
         before = time.time()
-        if log_level > 0:
-            print("Searching: ", end="")
+        logger.log(1, "Searching: ", end="")
         for depth in range(circuit_depth, 4 * circuit_depth + 2, 1):
-            if log_level > 0:
-                print(f"depth {depth}, ", end="", flush=True)
+            logger.log(1, f"depth {depth}, ", end="", flush=True)
             instance = self.create_instance(circuit, platform, maximum_depth=depth)
             domain, problem = instance.compile()
 

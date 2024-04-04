@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
 from platforms import Platform
+from util.logger import Logger
 from util.sat import Atom
 from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
@@ -27,7 +28,7 @@ class SATSynthesizer(ABC):
         platform: Platform,
         solver: Solver,
         time_limit_s: int,
-        log_level: int,
+        logger: Logger,
         cx_optimal: bool = False,
         swap_optimal: bool = False,
         ancillaries: bool = False,
