@@ -10,6 +10,8 @@ from util.circuits import (
     SynthesizerTimeout,
     SynthesizerNoSolution,
     gate_dependency_mapping,
+    gate_direct_dependency_mapping,
+    gate_direct_successor_mapping,
     gate_successor_mapping,
     gate_line_dependency_mapping,
     with_swaps_as_cnots,
@@ -194,8 +196,10 @@ class PhysSynthesizer(SATSynthesizer):
         gate_line_map = gate_line_dependency_mapping(logical_circuit)
         gates = list(gate_line_map.keys())
 
-        gate_pre_map = gate_dependency_mapping(logical_circuit)
-        gate_suc_map = gate_successor_mapping(logical_circuit)
+        gate_full_pre_map = gate_dependency_mapping(logical_circuit)
+        gate_direct_pre_map = gate_direct_dependency_mapping(logical_circuit)
+        gate_full_suc_map = gate_successor_mapping(logical_circuit)
+        gate_direct_suc_map = gate_direct_successor_mapping(logical_circuit)
 
         lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
 
@@ -278,17 +282,19 @@ class PhysSynthesizer(SATSynthesizer):
                     exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
                 )
 
-                for g_prime in gate_suc_map[g]:
+                for g_prime in gate_direct_suc_map[g]:
                     problem_clauses.extend(
                         impl_disj([current[t][g], delayed[t][g]], delayed[t][g_prime])
                     )
+                for g_prime in gate_full_suc_map[g]:
                     problem_clauses.extend(
                         impl(current[t][g], [[neg(current[t][g_prime])]])
                     )
-                for g_prime in gate_pre_map[g]:
+                for g_prime in gate_direct_pre_map[g]:
                     problem_clauses.extend(
                         impl_disj([current[t][g], advanced[t][g]], advanced[t][g_prime])
                     )
+                for g_prime in gate_full_pre_map[g]:
                     problem_clauses.extend(
                         impl(current[t][g], [[neg(current[t][g_prime])]])
                     )
