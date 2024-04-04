@@ -18,7 +18,7 @@ from configs import (
     DEFAULT_TIME_LIMIT_S,
 )
 from util.logger import Logger
-from util.output_checker import OutputChecker
+from util.output_checker import check_qcec, connectivity_check, equality_check
 import synthesizers.planning.solvers as planning
 
 TESTS = [
@@ -139,16 +139,16 @@ for input_file, platform_name in TESTS:
                     )
             match experiment:
                 case SynthesizerSolution():
-                    correct_connectivity = OutputChecker.connectivity_check(
+                    correct_connectivity = connectivity_check(
                         experiment.circuit, platform
                     )
-                    correct_output = OutputChecker.equality_check(
+                    correct_output = equality_check(
                         input_circuit,
                         experiment.circuit,
                         experiment.initial_mapping,
                         ancillaries=anc,
                     )
-                    correct_qcec = OutputChecker.check_qcec(
+                    correct_qcec = check_qcec(
                         input_circuit,
                         experiment.circuit,
                         experiment.initial_mapping,

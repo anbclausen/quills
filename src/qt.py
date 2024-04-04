@@ -4,7 +4,7 @@ from util.logger import Logger
 from qiskit import QuantumCircuit
 from qiskit import qasm2
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution, save_circuit
-from util.output_checker import OutputChecker
+from util.output_checker import check_qcec, connectivity_check, equality_check
 from synthesizers.planning.solvers import OPTIMAL
 from configs import (
     CONDITIONAL_PLANNING_SYNTHESIZERS,
@@ -259,7 +259,7 @@ match output:
         print()
 
         print(f"{BOLD_START}VALIDATION{BOLD_END}")
-        correct_connectivity = OutputChecker.connectivity_check(
+        correct_connectivity = connectivity_check(
             output.circuit, platform
         )
         if correct_connectivity:
@@ -270,7 +270,7 @@ match output:
             print(
                 "✗ Output circuit does not obey connectivity of platform (Proprietary Checker)"
             )
-        correct_output = OutputChecker.equality_check(
+        correct_output = equality_check(
             input_circuit,
             output.circuit,
             output.initial_mapping,
@@ -282,7 +282,7 @@ match output:
             print(
                 "✗ Input and output circuits are not equivalent (Proprietary Checker)"
             )
-        correct_qcec = OutputChecker.check_qcec(
+        correct_qcec = check_qcec(
             input_circuit,
             output.circuit,
             output.initial_mapping,
