@@ -143,7 +143,7 @@ cache: dict[
             dict[
                 str,
                 dict[
-                    str, float | Literal["NS", "TO"] | int | tuple[float, float] | None
+                    str, float | Literal["ERROR", "TO"] | int | tuple[float, float] | None
                 ],
             ],
         ],
@@ -158,7 +158,7 @@ def update_cache(
     synthesizer_name: str,
     solver_name: str,
     platform_name: str,
-    total_time: float | Literal["NS", "TO"],
+    total_time: float | Literal["ERROR", "TO"],
     solver_time: float,
     optional_times: tuple[float, float] | None,
     depth: int,
@@ -214,7 +214,7 @@ def update_cache(
 def get_cache_key(
     input_file: str, synthesizer_name: str, solver_name: str, platform_name: str
 ) -> tuple[
-    float | Literal["NS", "TO"] | None, float, tuple[float, float] | None, int, int, int
+    float | Literal["ERROR", "TO"] | None, float, tuple[float, float] | None, int, int, int
 ]:
     result = (
         cache.get(input_file, {})
@@ -227,7 +227,9 @@ def get_cache_key(
         solver_time = result.get("solver_time")
         optional_times = result.get("optional_times")
         time_limit = result.get("time_limit")
-        if total_time in ["NS", "TO"]:
+        if total_time in ["ERROR"]:
+            return None, 0, None, 0, 0, 0
+        if total_time in ["TO"]:
             if isinstance(time_limit, int) and time_limit <= EXPERIMENT_TIME_LIMIT_S:
                 return None, 0, None, 0, 0, 0
             return total_time, 0, None, 0, 0, 0
@@ -269,7 +271,7 @@ def output_csv(
     solver: str,
     result: (
         tuple[float, float, tuple[float, float] | None, int, int, int]
-        | Literal["NS", "TO"]
+        | Literal["ERROR", "TO"]
     ),
 ):
     line = f"{input}{CSV_SEPARATOR}{platform}{CSV_SEPARATOR}{model}{CSV_SEPARATOR}{solver}{CSV_SEPARATOR}"
@@ -340,7 +342,7 @@ for input_file, platform_name in EXPERIMENTS:
     results: dict[
         tuple[str, str],
         tuple[float, float, tuple[float, float] | None, int, int, int]
-        | Literal["NS", "TO"],
+        | Literal["ERROR", "TO"],
     ] = {}
     for synthesizer_name, solver_name in configurations:
         solver = solvers[solver_name]
@@ -367,7 +369,7 @@ for input_file, platform_name in EXPERIMENTS:
             cached_swaps,
         ) = get_cache_key(input_file, synthesizer_name, solver_name, platform_name)
         if cached_total is not None:
-            if cached_total in ["NS", "TO"]:
+            if cached_total in ["ERROR", "TO"]:
                 results[(synthesizer_name, solver_name)] = cached_total
             elif isinstance(cached_total, float):
                 results[(synthesizer_name, solver_name)] = (
@@ -438,24 +440,26 @@ for input_file, platform_name in EXPERIMENTS:
                         )
                     else:
                         print(
-                            "  ✗ Input and output circuits are not equivalent! Not caching result."
+                            "  ✗ Input and output circuits are not equivalent! ERROR"
                         )
+                        results[(synthesizer_name, solver_name)] = "ERROR"
 
                 case SynthesizerNoSolution():
-                    results[(synthesizer_name, solver_name)] = "NS"
+                    print(
+                        "  No solution found! ERROR"
+                    )
+                    results[(synthesizer_name, solver_name)] = "ERROR"
                 case SynthesizerTimeout():
                     results[(synthesizer_name, solver_name)] = "TO"
         result_string = ""
-        if (synthesizer_name, solver_name) not in results:
-            result_string = "  No result found."
-        elif results[(synthesizer_name, solver_name)] == "NS":
-            result_string = "  No solution found."
+        if results[(synthesizer_name, solver_name)] == "ERROR":
+            result_string = "  ERROR."
             update_cache(
                 input_file,
                 synthesizer_name,
                 solver_name,
                 platform_name,
-                "NS",
+                "ERROR",
                 0,
                 None,
                 0,
@@ -524,7 +528,7 @@ for input_file, platform_name in EXPERIMENTS:
     for (synthesizer_name, solver_name), result in results.items():
         if OUTPUT_CSV:
             output_csv(input_file, platform_name, synthesizer_name, solver_name, result)
-        if result in ["NS", "TO"]:
+        if result in ["ERROR", "TO"]:
             print_and_output_to_file(
                 f"  '{synthesizer_name}' on '{solver_name}': {result}"
             )

@@ -377,7 +377,7 @@ class CostBasedOptimalPlanningSynthesizer(PlanningSynthesizer):
     ) -> SynthesizerOutput:
 
         min_plan_length = logical_circuit.size()
-        maximum_depth = 4 * logical_circuit.size() + 1
+        maximum_depth = logical_circuit.size() * (1 + platform.qubits) + 1
         max_plan_length = logical_circuit.num_qubits * maximum_depth
 
         return super().synthesize_optimal(

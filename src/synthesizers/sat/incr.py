@@ -155,7 +155,7 @@ class IncrSynthesizer(SATSynthesizer):
         overall_time = 0
 
         circuit_depth = logical_circuit.depth()
-        max_depth = circuit_depth * 4 + 1
+        max_depth = logical_circuit.size() * (1 + platform.qubits) + 1
         lq = [i for i in range(logical_circuit.num_qubits)]
         pq = [i for i in range(platform.qubits)]
         connectivity_graph = platform.connectivity_graph
