@@ -1,6 +1,8 @@
 import argparse
 from util.logger import Logger
+import os
 from qiskit import QuantumCircuit
+from qiskit import qasm2
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution
 from util.output_checker import OutputChecker
 from synthesizers.planning.solvers import OPTIMAL
@@ -76,6 +78,12 @@ parser.add_argument(
     action="store_true",
 )
 
+parser.add_argument(
+    "-out",
+    "--output_synth",
+    help=f"whether to write the synthesized circuit to a file",
+    action="store_true",
+)
 parser.add_argument(
     "-log",
     "--log_level",
@@ -231,10 +239,25 @@ match synthesizer, solver:
             " Something must be configured incorrectly. Make sure to choose a SAT-based synthesizer with a SAT solver and likewise for planning synthesizers."
         )
 print(output)
-print()
 
 match output:
     case SynthesizerSolution():
+        if args.output_synth:
+            cx_opt = f"cx_" if args.cx_optimal else ""
+            swap_opt = f"swap_" if args.swap_optimal else ""
+            anc = f"anc_" if args.ancillaries else ""
+            option_string = f"{cx_opt}{swap_opt}{anc}synth"
+
+            stripped_input = args.input.split('/')[-1]    
+            path_string = f"output/{args.platform}/{option_string}"
+            file_string = f"{path_string}/{stripped_input}"
+            os.makedirs(path_string, exist_ok=True)
+            f = open(file_string, "w")
+            qasm2.dump(output.circuit, f)
+            f.close()
+            print(f"Saved synthesized circuit at '{file_string}'")
+            print()
+
         print(f"{BOLD_START}TIME{BOLD_END}")
         print(output.report_time())
         print()
@@ -274,4 +297,4 @@ match output:
         else:
             print("✗ Input and output circuits are not equivalent (QCEC)")
     case _:
-        pass
+        print()

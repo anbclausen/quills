@@ -51,7 +51,7 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 ## Usage
 
 ```
-usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] [-swap] [-anc] [-log LOG_LEVEL] input
+usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] [-swap] [-anc] [-out] [-log LOG_LEVEL] input
 
 Welcome to qt! A quantum circuit synthesis tool.
 
@@ -71,7 +71,8 @@ options:
   -cx, --cx_optimal     whether to optimize for cx-depth
   -swap, --swap_optimal
                         whether to optimize for swap count after finding a depth-optimal circuit
-  -anc, --ancillaries   whether to allow ancillary SWAPs or not 
+  -anc, --ancillaries   whether to allow ancillary SWAPs or not
+  -out, --output_synth  whether to write the synthesized circuit to a file
   -log {0,1}, --log_level {0,1}
                         how much text to output during execution (0: silent, 1: default)
 ```
