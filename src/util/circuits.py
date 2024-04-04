@@ -76,13 +76,13 @@ class SynthesizerSolution(SynthesizerOutput):
         self.swaps = swaps
 
     def __str__(self):
-        initial_mapping_str = ", ".join(
+        initial_mapping_str = "\n  ".join(
             sorted(
                 f"{logical} -> {physical}"
                 for logical, physical in self.initial_mapping.items()
             )
         )
-        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: {initial_mapping_str}"
+        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: \n  {initial_mapping_str}"
 
     def report_time(self):
         time_str = (
