@@ -1,11 +1,10 @@
 import argparse
 import os
-from qiskit import ClassicalRegister, QuantumCircuit, transpile
-from qiskit import qasm2
+from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit_aer import AerSimulator
 from qiskit.visualization import plot_histogram
-import qiskit_aer.noise as noise
-from qiskit.transpiler import CouplingMap
+from qiskit_aer.noise import NoiseModel
+from qiskit_ibm_runtime.fake_provider import FakeMelbourne, FakeTenerife, FakeTokyo
 
 from platforms import Platform
 import synthesizers.planning.solvers as planning
@@ -23,7 +22,6 @@ from util.circuits import (
     create_mapping_from_file,
     remove_all_non_cx_gates,
     save_circuit,
-    with_swaps_as_cnots,
 )
 from util.logger import Logger
 
@@ -36,24 +34,18 @@ def simulate(
     withNoise: bool = True,
     final_mapping: dict[LogicalQubit, PhysicalQubit] | None = None,
 ):
-    # Error probabilities
-    prob_1 = 0.001  # 1-qubit gate
-    prob_2 = 0.01  # 2-qubit gate
 
-    # Depolarizing quantum errors
-    error_1 = noise.depolarizing_error(prob_1, 1)
-    error_2 = noise.depolarizing_error(prob_2, 2)
+    if platform.name == "melbourne":
+        ibm_platform = FakeMelbourne()
+    elif platform.name == "tenerife":
+        ibm_platform = FakeTenerife()
+    elif platform.name == "tokyo":
+        ibm_platform = FakeTokyo()
 
-    # Add errors to noise model
-    noise_model = noise.NoiseModel()
-    noise_model.add_all_qubit_quantum_error(error_1, ["x", "h", "t", "tdg", "rz", "rx"])
-    noise_model.add_all_qubit_quantum_error(error_2, ["cx", "swap"])
-
-    # Get basis gates from noise model
-    basis_gates = noise_model.basis_gates
-
-    # Create the coupling map
-    coupling_map = CouplingMap(couplinglist=list(platform.connectivity_graph))
+    if withNoise:
+        noise_model = NoiseModel.from_backend(ibm_platform)
+    else:
+        noise_model = None
 
     if final_mapping == None:
         circuit.measure_active()
@@ -65,20 +57,15 @@ def simulate(
         for q, p in final_mapping.items():
             circuit.measure(p.id, q.id)
 
-    if not withNoise:
-        noise_model = None
-
     # Perform a noise simulation
-    backend = AerSimulator(
-        noise_model=noise_model, coupling_map=coupling_map, basis_gates=basis_gates
-    )
-    transpiled_circuit = transpile(circuit, backend)
-    result = backend.run(transpiled_circuit, shots=shots).result()
+    backend = AerSimulator(noise_model=noise_model)
+    result = backend.run(circuit, shots=shots).result()
 
     counts = result.get_counts(0)
     plot_histogram(counts, filename=filename)
 
     return counts
+
 
 def process_counts(
     control_counts,
@@ -127,10 +114,11 @@ solver = solvers[DEFAULT_SOLVER]
 time_limit = 1800
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
-SIMULATIONS = 1000
+SIMULATIONS = 100000
 input_name_stripped = args.input.split("/")[-1]
 file_name = f"{input_name_stripped.split('.')[0]}"
 logger = Logger(0)
+ibm_platforms = ["tokyo", "melbourne", "tenerife"]
 
 standard_path = f"output/{args.platform}/swap_{anc_string}synth"
 standard_file = f"{standard_path}/{input_name_stripped}"
@@ -140,6 +128,12 @@ cx_path = f"output/{args.platform}/cx_swap_{anc_string}synth"
 cx_file = f"{cx_path}/{input_name_stripped}"
 cx_final_file = f"{cx_path}/{input_name_stripped.split('.')[0]}_final.txt"
 synthesize_cx = not os.path.isfile(cx_file)
+
+if platform.name not in ibm_platforms:
+    print(
+        f"Simulation can only be done with the following platforms: {', '.join(ibm_platforms)}"
+    )
+    exit()
 
 # make the type checker happy
 if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthesizer):
@@ -162,12 +156,16 @@ if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthe
                     ANCILLARIES,
                     standard_file,
                 )
-                print(f"Saved synthesized circuit at '{standard_file}'")
+                print(f"Saved synthesized circuit at '{standard_file}'.")
             case _:
                 print(f"ERROR during standard synthesis: {depth_res}.")
                 exit()
+    else:
+        print(
+            f"Found synthesized depth-optimal circuit{anc_output} at '{standard_file}'."
+        )
     if synthesize_cx:
-        print(f"Synthesizing CX-depth optimal{anc_output}.")
+        print(f"Synthesizing CX-depth-optimal{anc_output}.")
         cx_res = synthesizer.synthesize(
             input_circuit,
             platform,
@@ -182,10 +180,12 @@ if not isinstance(solver, planning.Solver) and isinstance(synthesizer, SATSynthe
                 save_circuit(
                     cx_res.circuit, cx_res.initial_mapping, ANCILLARIES, cx_file
                 )
-                print(f"Saved synthesized circuit at '{cx_file}'")
+                print(f"Saved synthesized circuit at '{cx_file}'.")
             case _:
                 print(f"ERROR during CX synthesis: {cx_res}.")
                 exit()
+    else:
+        print(f"Found synthesized CX-depth-optimal circuit{anc_output} at '{cx_file}'.")
 else:
     print(
         f"Bad choice of solver and synthesizer: ({DEFAULT_SOLVER}, {DEFAULT_SYNTHESIZER})."
@@ -207,13 +207,12 @@ counts_input = simulate(
 
 depth_circuit = QuantumCircuit.from_qasm_file(standard_file)
 depth_circuit_only_cx = remove_all_non_cx_gates(depth_circuit)
-depth_circuit_cx_for_swap = with_swaps_as_cnots(depth_circuit, register_name="q")
 depth_final_mapping = create_mapping_from_file(standard_final_file)
 print(
     f"Simulating depth optimal layout with noise (depth {depth_circuit.depth()}, CX-depth {depth_circuit_only_cx.depth()}, {count_swaps(depth_circuit)} SWAPs)."
 )
 counts_depth = simulate(
-    depth_circuit_cx_for_swap,
+    depth_circuit,
     platform,
     SIMULATIONS,
     f"simulations/{file_name}_depth.png",
@@ -223,13 +222,12 @@ counts_depth = simulate(
 
 cx_circuit = QuantumCircuit.from_qasm_file(cx_file)
 cx_circuit_only_cx = remove_all_non_cx_gates(cx_circuit)
-cx_circuit_cx_for_swap = with_swaps_as_cnots(cx_circuit, register_name="q")
 cx_final_mapping = create_mapping_from_file(cx_final_file)
 print(
     f"Simulating CX-depth optimal layout with noise (depth {cx_circuit.depth()}, CX-depth {cx_circuit_only_cx.depth()}, {count_swaps(cx_circuit)} SWAPs)."
 )
 counts_cx = simulate(
-    cx_circuit_cx_for_swap,
+    cx_circuit,
     platform,
     SIMULATIONS,
     f"simulations/{file_name}_cx.png",
@@ -240,6 +238,11 @@ counts_cx = simulate(
 print()
 depth_processed = process_counts(counts_input, counts_depth)
 depth_percent: float = depth_processed[0] / SIMULATIONS * 100
+
+# print(f"Input: {counts_input}")
+# print(f"Depth: {counts_depth}")
+# print(f"CX: {counts_cx}")
+
 print(f"Depth percentage correct: {depth_percent}%")
 cx_processed = process_counts(counts_input, counts_cx)
 cx_percent: float = cx_processed[0] / SIMULATIONS * 100
