@@ -84,7 +84,7 @@ class SynthesizerSolution(SynthesizerOutput):
                 for logical, physical in self.initial_mapping.items()
             )
         )
-        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: \n  {initial_mapping_str}"
+        return f"Done!\n{self.circuit}\nDepth: {self.depth}, CX-depth: {self.cx_depth}, SWAPs: {self.swaps}\nInitial mapping: \n  {initial_mapping_str}\n"
 
     def report_time(self):
         time_str = (
