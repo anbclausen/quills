@@ -37,7 +37,7 @@ parser.add_argument(
     "--model",
     type=str,
     help=f"the synthesizer model to use: {', '.join(synthesizers.keys())}",
-    default="sat_phys",
+    default="sat",
 )
 
 parser.add_argument(
@@ -249,7 +249,9 @@ match output:
             option_string = f"{cx_opt}{swap_opt}{anc}synth"
             stripped_input = args.input.split("/")[-1]
             file_string = f"output/{args.platform}/{option_string}/{stripped_input}"
-            save_circuit(output.circuit, output.initial_mapping, args.ancillaries, file_string)
+            save_circuit(
+                output.circuit, output.initial_mapping, args.ancillaries, file_string
+            )
             print(f"Saved synthesized circuit at '{file_string}'")
             print()
 

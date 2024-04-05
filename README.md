@@ -51,9 +51,9 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 ## Usage
 
 ```
-usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] [-swap] [-anc] [-out] [-log LOG_LEVEL] input
+usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] [-swap] [-anc] [-out] [-log {0,1}] input
 
-Welcome to qt! A quantum circuit synthesis tool.
+Welcome to qt! A quantum circuit layout synthesis tool.
 
 positional arguments:
   input                 the path to the input file
@@ -61,11 +61,11 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -t TIME_LIMIT, --time_limit TIME_LIMIT
-                        the time limit in seconds, default is 1800s
+                        the time limit in seconds, default is 180s
   -m MODEL, --model MODEL
-                        the synthesizer model to use: plan_cost_opt, plan_cond_cost_opt, plan_lc_incr, sat_incr, sat_phys
+                        the synthesizer model to use: sat
   -p PLATFORM, --platform PLATFORM
-                        the target platform: toy, tenerife, melbourne, sycamore, rigetti80, eagle
+                        the target platform: toy, toy3, tenerife, melbourne, sycamore, rigetti80, eagle
   -s SOLVER, --solver SOLVER
                         the underlying solver: MpC_exist_glucose, fd_ms, fd_bjolp, cadical153, glucose42, maple_cm, maple_chrono, minisat22
   -cx, --cx_optimal     whether to optimize for cx-depth
@@ -82,7 +82,7 @@ options:
 Here is a sample run of the tool with its output:
 
 ```
-$ ./qt benchmarks/adder.qasm -p tenerife -m sat_phys -s cadical153
+$ ./qt benchmarks/adder.qasm -p tenerife -m sat -s cadical153
 ####################################################
 #                           __                     #
 #                   _______/  |_                   #
@@ -116,31 +116,36 @@ PLATFORM
 3       1
 
 SYNTHESIZER
-'sat_phys': Incremental SAT-based synthesizer.
+'sat': Incremental SAT-based synthesizer.
 
 SOLVER
 'cadical153' from the pysat library.
 
 OUTPUT CIRCUIT
-Synthesizing (depth-optimal)... Searched: depth 11, depth 12, depth 13, depth 14, depth 15, found solution with depth 15 (after 0.036s).
+Synthesizing (depth-optimal)... 
+Searched: depth 11, depth 12, depth 13, depth 14, depth 15, found solution with depth 15 (after 0.037s).
 Done!
-     ┌───┐┌───┐┌─────┐┌───┐             ┌───┐ ┌───┐ ┌───┐┌───┐     ┌───┐
-p_0: ┤ H ├┤ X ├┤ Tdg ├┤ X ├──────────■──┤ X ├─┤ T ├─┤ X ├┤ S ├──■──┤ H ├
-     └───┘└─┬─┘└┬───┬┘└─┬─┘┌───┐     │  └─┬─┘┌┴───┴┐└─┬─┘└───┘  │  └───┘
-p_1: ───────■───┤ T ├───■──┤ X ├─────┼────■──┤ Tdg ├──■─────────┼───────
-     ┌───┐┌───┐ ├───┤      └─┬─┘   ┌─┴─┐     ├─────┤          ┌─┴─┐     
-p_2: ┤ X ├┤ T ├─┤ X ├────────■───X─┤ X ├──■──┤ Tdg ├──■───────┤ X ├─────
-     ├───┤├───┤ └─┬─┘            │ └───┘┌─┴─┐├─────┤┌─┴─┐     └───┘     
-p_3: ┤ X ├┤ T ├───■──────────────X──────┤ X ├┤ Tdg ├┤ X ├───────────────
-     └───┘└───┘                         └───┘└─────┘└───┘               
+     ┌───┐┌───┐ ┌───┐                   ┌───┐┌─────┐┌───┐               
+p_0: ┤ X ├┤ T ├─┤ X ├────────■──────────┤ X ├┤ Tdg ├┤ X ├───────────────
+     ├───┤├───┤ └─┬─┘        │     ┌───┐└─┬─┘├─────┤└─┬─┘     ┌───┐     
+p_1: ┤ X ├┤ T ├───■──────────┼─────┤ X ├──■──┤ Tdg ├──■───────┤ X ├─────
+     └───┘└───┘ ┌───┐      ┌─┴─┐   └─┬─┘┌───┐└┬───┬┘┌───┐┌───┐└─┬─┘┌───┐
+p_2: ───────■───┤ T ├───■──┤ X ├─X───■──┤ X ├─┤ T ├─┤ X ├┤ S ├──■──┤ H ├
+     ┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐└───┘ │      └─┬─┘┌┴───┴┐└─┬─┘└───┘     └───┘
+p_3: ┤ H ├┤ X ├┤ Tdg ├┤ X ├──────X────────■──┤ Tdg ├──■─────────────────
+     └───┘└───┘└─────┘└───┘                  └─────┘                    
 p_4: ───────────────────────────────────────────────────────────────────
                                                                         
 Depth: 15, CX-depth: 10, SWAPs: 1
-Initial mapping: q_0 -> p_3, q_1 -> p_2, q_2 -> p_1, q_3 -> p_0
+Initial mapping: 
+  q_0 -> p_1
+  q_1 -> p_0
+  q_2 -> p_2
+  q_3 -> p_3
 
 TIME
-Solver time: 0.036 seconds.
-Total time (including preprocessing): 0.053 seconds.
+Solver time: 0.037 seconds.
+Total time (including preprocessing): 0.203 seconds.
 
 VALIDATION
 ✓ Output circuit obeys connectivity of platform (Proprietary Checker)

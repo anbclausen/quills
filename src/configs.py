@@ -10,7 +10,6 @@ from synthesizers.planning.local_clock_incremental_planning import (
 )
 from synthesizers.sat.synthesizer import SATSynthesizer
 import synthesizers.sat.synthesizer as sat
-from synthesizers.sat.incr import IncrSynthesizer
 from synthesizers.sat.phys import PhysSynthesizer
 
 from platforms import (
@@ -40,8 +39,7 @@ synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
     # "plan_cost_opt": CostBasedOptimalPlanningSynthesizer(),
     # "plan_cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
     # "plan_lc_incr": LocalClockIncrementalPlanningSynthesizer(),
-    # "sat_incr": IncrSynthesizer(),
-    "sat_phys": PhysSynthesizer(),
+    "sat": PhysSynthesizer(),
 }
 
 OPTIMAL_PLANNING_SYNTHESIZERS = [
