@@ -249,7 +249,7 @@ match output:
             option_string = f"{cx_opt}{swap_opt}{anc}synth"
             stripped_input = args.input.split("/")[-1]
             file_string = f"output/{args.platform}/{option_string}/{stripped_input}"
-            save_circuit(output.circuit, output.initial_mapping, file_string)
+            save_circuit(output.circuit, output.initial_mapping, args.ancillaries, file_string)
             print(f"Saved synthesized circuit at '{file_string}'")
             print()
 

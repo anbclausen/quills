@@ -485,7 +485,10 @@ def reinsert_unary_gates(
 
                 # fix mapping
                 reverse_mapping = {v: k for k, v in mapping.items()}
-                if ancillaries and (first not in reverse_mapping.keys() or second not in reverse_mapping.keys()):
+                if ancillaries and (
+                    first not in reverse_mapping.keys()
+                    or second not in reverse_mapping.keys()
+                ):
                     if first not in reverse_mapping.keys():
                         second_logical = reverse_mapping[second]
                         mapping[second_logical] = first
@@ -529,26 +532,74 @@ def count_swaps(circuit: QuantumCircuit):
 
     return swaps
 
-def save_circuit(circuit: QuantumCircuit, initial_mapping: dict[LogicalQubit, PhysicalQubit], file_path: str):
+
+def make_final_mapping(
+    circuit: QuantumCircuit,
+    initial_mapping: dict[LogicalQubit, PhysicalQubit],
+    ancillaries: bool,
+) -> dict[LogicalQubit, PhysicalQubit]:
+    reverse_mapping: dict[PhysicalQubit, LogicalQubit] = {
+        p: q for q, p in initial_mapping.items()
+    }
+    only_swaps_circuit = remove_all_non_swap_gates(circuit)
+    for instr in only_swaps_circuit.data:
+        physical1 = PhysicalQubit(instr[1][0]._index)
+        physical2 = PhysicalQubit(instr[1][1]._index)
+        if ancillaries and (
+            physical1 not in reverse_mapping.keys()
+            or physical2 not in reverse_mapping.keys()
+        ):
+            if physical1 not in reverse_mapping.keys():
+                reverse_mapping[physical1] = reverse_mapping[physical2]
+                del reverse_mapping[physical2]
+            else:
+                reverse_mapping[physical2] = reverse_mapping[physical1]
+                del reverse_mapping[physical1]
+        else:
+            tmp = reverse_mapping[physical1]
+            reverse_mapping[physical1] = reverse_mapping[physical2]
+            reverse_mapping[physical2] = tmp
+
+    final_mapping = {q: p for p, q in reverse_mapping.items()}
+    return final_mapping
+
+
+def create_mapping_from_file(file_string: str) -> dict[LogicalQubit, PhysicalQubit]:
+    result: dict[LogicalQubit, PhysicalQubit] = {}
+    f = open(file_string, "r")
+    for line in f.readlines():
+        logical = LogicalQubit(int(line.split(";")[0]))
+        physical = PhysicalQubit(int(line.split(";")[1]))
+        result[logical] = physical
+    return result
+
+
+def save_circuit(
+    circuit: QuantumCircuit,
+    initial_mapping: dict[LogicalQubit, PhysicalQubit],
+    ancillaries: bool,
+    file_path: str,
+):
     path_string = "/".join(file_path.split("/")[:-1])
     os.makedirs(path_string, exist_ok=True)
 
+    final_mapping: dict[LogicalQubit, PhysicalQubit] = make_final_mapping(
+        circuit, initial_mapping, ancillaries
+    )
+
     file_name = file_path.split("/")[-1]
-    init_file_string = f"{path_string}/{file_name.split('.')[0]}_init.txt"
-    init_file = open(init_file_string, "w")
-    for q, p in initial_mapping.items():
-        init_file.write(f"{q.id};{p.id}\n")
-    init_file.close()
+    final_file_string = f"{path_string}/{file_name.split('.')[0]}_final.txt"
+    final_file = open(final_file_string, "w")
+    for q, p in final_mapping.items():
+        final_file.write(f"{q.id};{p.id}\n")
+    final_file.close()
 
     register = QuantumRegister(circuit.num_qubits, "q")
     output_circuit = QuantumCircuit(register)
     for instr in circuit.data:
         new_instr = instr.replace(
-                    qubits=[
-                        Qubit(register, q._index)
-                        for q in instr.qubits
-                    ]
-                )
+            qubits=[Qubit(register, q._index) for q in instr.qubits]
+        )
         output_circuit.append(new_instr)
     circuit_file = open(file_path, "w")
     qasm2.dump(output_circuit, circuit_file)
