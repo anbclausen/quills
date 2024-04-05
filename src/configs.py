@@ -13,7 +13,16 @@ import synthesizers.sat.synthesizer as sat
 from synthesizers.sat.incr import IncrSynthesizer
 from synthesizers.sat.phys import PhysSynthesizer
 
-from platforms import TOY, TENERIFE, MELBOURNE, SYCAMORE, RIGETTI80, EAGLE, Platform
+from platforms import (
+    TOY,
+    TENERIFE,
+    MELBOURNE,
+    SYCAMORE,
+    RIGETTI80,
+    EAGLE,
+    TOY3,
+    Platform,
+)
 
 from synthesizers.planning.solvers import (
     MpC_EXISTS_STEPS_EXTENDED,
@@ -48,6 +57,7 @@ CONDITIONAL_PLANNING_SYNTHESIZERS = [
 
 platforms: dict[str, Platform] = {
     "toy": TOY,
+    "toy3": TOY3,
     "tenerife": TENERIFE,
     "melbourne": MELBOURNE,
     "sycamore": SYCAMORE,
