@@ -239,6 +239,8 @@ counts_cx = simulate(
 
 print()
 depth_processed = process_counts(counts_input, counts_depth)
-print(f"Depth: correct: {depth_processed[0]}, wrong: {depth_processed[1]}")
+depth_percent: float = depth_processed[0] / SIMULATIONS * 100
+print(f"Depth percentage correct: {depth_percent}%")
 cx_processed = process_counts(counts_input, counts_cx)
-print(f"CX-depth: correct: {cx_processed[0]}, wrong: {cx_processed[1]}")
+cx_percent: float = cx_processed[0] / SIMULATIONS * 100
+print(f"CX-depth percentage correct: {cx_percent}%")
