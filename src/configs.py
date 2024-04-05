@@ -33,7 +33,7 @@ from synthesizers.planning.solvers import (
 import pysat.solvers
 import atexit
 
-DEFAULT_TIME_LIMIT_S = 180
+DEFAULT_TIME_LIMIT_S = 600
 
 synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
     # "plan_cost_opt": CostBasedOptimalPlanningSynthesizer(),
