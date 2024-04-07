@@ -1,7 +1,6 @@
 import argparse
 from util.logger import Logger
 from qiskit import QuantumCircuit
-from qiskit import qasm2
 from util.circuits import remove_all_non_cx_gates, SynthesizerSolution, save_circuit
 from util.output_checker import check_qcec, connectivity_check, equality_check
 from synthesizers.planning.solvers import OPTIMAL

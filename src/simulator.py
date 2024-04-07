@@ -20,6 +20,7 @@ from util.circuits import (
     SynthesizerSolution,
     count_swaps,
     create_mapping_from_file,
+    make_final_mapping,
     remove_all_non_cx_gates,
     save_circuit,
 )
@@ -44,6 +45,9 @@ def simulate(
 
     if withNoise:
         noise_model = NoiseModel.from_backend(ibm_platform)
+        # print(f"Basis gates: {noise_model.basis_gates}")
+        # print(f"Instructions with noise: {noise_model.noise_instructions}")
+        # print(f"Qubits with noise: {noise_model.noise_qubits}")
     else:
         noise_model = None
 
@@ -101,25 +105,37 @@ parser.add_argument(
     help="the path to the input file",
 )
 
+parser.add_argument(
+    "-src",
+    "--sources",
+    type=str,
+    nargs="*",
+    help=f"whether to simulate the circuit as synthesized by other sources",
+)
+
+
 args = parser.parse_args()
 
 ANCILLARIES = True
 anc_string = "anc_" if ANCILLARIES else ""
 anc_output = " (with ancillary SWAPs)" if ANCILLARIES else ""
-DEFAULT_SYNTHESIZER = "sat_phys"
+
+DEFAULT_SYNTHESIZER = "sat"
 DEFAULT_SOLVER = "cadical153"
 synthesizer = synthesizers[DEFAULT_SYNTHESIZER]
 platform = platforms[args.platform]
 solver = solvers[DEFAULT_SOLVER]
 time_limit = 1800
+SIMULATIONS = 1000
+
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 input_circuit_only_cx = remove_all_non_cx_gates(input_circuit)
-SIMULATIONS = 100000
-input_name_stripped = args.input.split("/")[-1]
-file_name = f"{input_name_stripped.split('.')[0]}"
+
 logger = Logger(0)
 ibm_platforms = ["tokyo", "melbourne", "tenerife"]
 
+input_name_stripped = args.input.split("/")[-1]
+file_name = f"{input_name_stripped.split('.')[0]}"
 standard_path = f"output/{args.platform}/swap_{anc_string}synth"
 standard_file = f"{standard_path}/{input_name_stripped}"
 standard_final_file = f"{standard_path}/{input_name_stripped.split('.')[0]}_final.txt"
@@ -235,15 +251,62 @@ counts_cx = simulate(
     final_mapping=cx_final_mapping,
 )
 
+outside_counts = []
+if args.sources:
+    for outside_source in args.sources:
+        file_path = f"output/{args.platform}/{outside_source}/{input_name_stripped}"
+        init_file_path = f"output/{args.platform}/{outside_source}/{input_name_stripped.split('.')[0]}_init.txt"
+        final_file_path = f"output/{args.platform}/{outside_source}/{input_name_stripped.split('.')[0]}_final.txt"
+
+        if os.path.isfile(file_path):
+            outside_circuit = QuantumCircuit.from_qasm_file(file_path)
+            outside_circuit_only_cx = remove_all_non_cx_gates(outside_circuit)
+            if os.path.isfile(final_file_path):
+                outside_final_mapping = create_mapping_from_file(final_file_path)
+            else:
+                if os.path.isfile(init_file_path):
+                    initial_mapping = create_mapping_from_file(init_file_path)
+                    outside_final_mapping = make_final_mapping(
+                        outside_circuit, initial_mapping, ANCILLARIES
+                    )
+                else:
+                    print(
+                        f"Initial or final mapping file must exist for outside circuits (missing {init_file_path} or {final_file_path})."
+                    )
+                    exit()
+            print(
+                f"Simulating layout from {outside_source} with noise (depth {outside_circuit.depth()}, CX-depth {outside_circuit_only_cx.depth()}, {count_swaps(outside_circuit)} SWAPs)."
+            )
+            counts_outside = simulate(
+                outside_circuit,
+                platform,
+                SIMULATIONS,
+                f"simulations/{file_name}_{outside_source}.png",
+                withNoise=True,
+                final_mapping=outside_final_mapping,
+            )
+            outside_counts.append((outside_source, counts_outside))
+        else:
+            print(
+                f"Circuit file must exist for outside circuits (missing {file_path})."
+            )
+            exit()
+
+
 print()
 depth_processed = process_counts(counts_input, counts_depth)
 depth_percent: float = depth_processed[0] / SIMULATIONS * 100
+print(f"Depth percentage correct: {depth_percent}%")
 
 # print(f"Input: {counts_input}")
 # print(f"Depth: {counts_depth}")
 # print(f"CX: {counts_cx}")
 
-print(f"Depth percentage correct: {depth_percent}%")
 cx_processed = process_counts(counts_input, counts_cx)
 cx_percent: float = cx_processed[0] / SIMULATIONS * 100
 print(f"CX-depth percentage correct: {cx_percent}%")
+
+for outside_source, counts_outside in outside_counts:
+    outside_processed = process_counts(counts_input, counts_outside)
+    outside_percent: float = outside_processed[0] / SIMULATIONS * 100
+    print(f"{outside_source} percentage correct: {outside_percent}%")
