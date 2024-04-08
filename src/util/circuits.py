@@ -568,8 +568,9 @@ def create_mapping_from_file(file_string: str) -> dict[LogicalQubit, PhysicalQub
     result: dict[LogicalQubit, PhysicalQubit] = {}
     f = open(file_string, "r")
     for line in f.readlines():
-        logical = LogicalQubit(int(line.split(";")[0]))
-        physical = PhysicalQubit(int(line.split(";")[1]))
+        log, phys = line.split(" -> ")
+        logical = LogicalQubit(int(log))
+        physical = PhysicalQubit(int(phys))
         result[logical] = physical
     return result
 

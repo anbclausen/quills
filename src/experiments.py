@@ -9,6 +9,7 @@ from util.circuits import (
     SynthesizerNoSolution,
     SynthesizerTimeout,
     save_circuit,
+    save_initial_mapping,
 )
 from synthesizers.planning.solvers import SATISFYING
 from synthesizers.planning.synthesizer import PlanningSynthesizer
@@ -156,7 +157,8 @@ cache: dict[
             dict[
                 str,
                 dict[
-                    str, float | Literal["ERROR", "TO"] | int | tuple[float, float] | None
+                    str,
+                    float | Literal["ERROR", "TO"] | int | tuple[float, float] | None,
                 ],
             ],
         ],
@@ -227,7 +229,12 @@ def update_cache(
 def get_cache_key(
     input_file: str, synthesizer_name: str, solver_name: str, platform_name: str
 ) -> tuple[
-    float | Literal["ERROR", "TO"] | None, float, tuple[float, float] | None, int, int, int
+    float | Literal["ERROR", "TO"] | None,
+    float,
+    tuple[float, float] | None,
+    int,
+    int,
+    int,
 ]:
     result = (
         cache.get(input_file, {})
@@ -432,8 +439,14 @@ for input_file, platform_name in EXPERIMENTS:
                         anc = f"anc_" if ANCILLARIES else ""
                         option_string = f"{cx_opt}{swap_opt}{anc}synth"
                         stripped_input = input_file.split("/")[-1]
-                        file_string = f"output/{platform_name}/{option_string}/{stripped_input}"
-                        save_circuit(experiment.circuit, experiment.initial_mapping, file_string)
+                        file_string = (
+                            f"output/{platform_name}/{option_string}/{stripped_input}"
+                        )
+                        initial_mapping_string = f"{file_string}.initial_mapping"
+                        save_circuit(experiment.circuit, file_string)
+                        save_initial_mapping(
+                            experiment.initial_mapping, initial_mapping_string
+                        )
 
                     correct_connectivity = connectivity_check(
                         experiment.circuit, platform
@@ -461,15 +474,11 @@ for input_file, platform_name in EXPERIMENTS:
                             experiment.swaps,
                         )
                     else:
-                        print(
-                            "  ✗ Input and output circuits are not equivalent! ERROR"
-                        )
+                        print("  ✗ Input and output circuits are not equivalent! ERROR")
                         results[(synthesizer_name, solver_name)] = "ERROR"
 
                 case SynthesizerNoSolution():
-                    print(
-                        "  No solution found! ERROR"
-                    )
+                    print("  No solution found! ERROR")
                     results[(synthesizer_name, solver_name)] = "ERROR"
                 case SynthesizerTimeout():
                     results[(synthesizer_name, solver_name)] = "TO"
