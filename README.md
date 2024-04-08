@@ -51,7 +51,8 @@ The Black formatter is used for developing. Install the VS Code extension [Black
 ## Usage
 
 ```
-usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-cx] [-swap] [-anc] [-out] [-log {0,1}] input
+usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-out OUTPUT] [-init OUTPUT_INTIAL_MAPPING] [-cx] [-swap] [-anc] [-log {0,1}]
+            input
 
 Welcome to qt! A quantum circuit layout synthesis tool.
 
@@ -61,18 +62,21 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -t TIME_LIMIT, --time_limit TIME_LIMIT
-                        the time limit in seconds, default is 180s
+                        the time limit in seconds, default is 600s
   -m MODEL, --model MODEL
                         the synthesizer model to use: sat
   -p PLATFORM, --platform PLATFORM
-                        the target platform: toy, toy3, tenerife, melbourne, sycamore, rigetti80, eagle
+                        the target platform: toy, toy3, tenerife, melbourne, tokyo, sycamore, rigetti80, eagle
   -s SOLVER, --solver SOLVER
                         the underlying solver: MpC_exist_glucose, fd_ms, fd_bjolp, cadical153, glucose42, maple_cm, maple_chrono, minisat22
+  -out OUTPUT, --output OUTPUT
+                        path to save the output circuit
+  -init OUTPUT_INTIAL_MAPPING, --output_intial_mapping OUTPUT_INTIAL_MAPPING
+                        path to save the initial mapping of the output circuit
   -cx, --cx_optimal     whether to optimize for cx-depth
   -swap, --swap_optimal
                         whether to optimize for swap count after finding a depth-optimal circuit
   -anc, --ancillaries   whether to allow ancillary SWAPs or not
-  -out, --output_synth  whether to write the synthesized circuit to a file
   -log {0,1}, --log_level {0,1}
                         how much text to output during execution (0: silent, 1: default)
 ```

@@ -1,7 +1,12 @@
 import argparse
 from util.logger import Logger
 from qiskit import QuantumCircuit
-from util.circuits import remove_all_non_cx_gates, SynthesizerSolution, save_circuit
+from util.circuits import (
+    remove_all_non_cx_gates,
+    SynthesizerSolution,
+    save_circuit,
+    save_initial_mapping,
+)
 from util.output_checker import check_qcec, connectivity_check, equality_check
 from synthesizers.planning.solvers import OPTIMAL
 from configs import (
@@ -56,6 +61,22 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-out",
+    "--output",
+    type=str,
+    help=f"path to save the output circuit",
+    default=None,
+)
+
+parser.add_argument(
+    "-init",
+    "--output_intial_mapping",
+    type=str,
+    help=f"path to save the initial mapping of the output circuit",
+    default=None,
+)
+
+parser.add_argument(
     "-cx",
     "--cx_optimal",
     help=f"whether to optimize for cx-depth",
@@ -73,13 +94,6 @@ parser.add_argument(
     "-anc",
     "--ancillaries",
     help=f"whether to allow ancillary SWAPs or not",
-    action="store_true",
-)
-
-parser.add_argument(
-    "-out",
-    "--output_synth",
-    help=f"whether to write the synthesized circuit to a file",
     action="store_true",
 )
 
@@ -241,17 +255,18 @@ print(output)
 
 match output:
     case SynthesizerSolution():
-        if args.output_synth:
-            cx_opt = f"cx_" if args.cx_optimal else ""
-            swap_opt = f"swap_" if args.swap_optimal else ""
-            anc = f"anc_" if args.ancillaries else ""
-            option_string = f"{cx_opt}{swap_opt}{anc}synth"
-            stripped_input = args.input.split("/")[-1]
-            file_string = f"output/{args.platform}/{option_string}/{stripped_input}"
-            save_circuit(
-                output.circuit, output.initial_mapping, args.ancillaries, file_string
-            )
-            print(f"Saved synthesized circuit at '{file_string}'")
+        should_output_circuit = args.output != None
+        should_output_initial_mapping = args.output_intial_mapping != None
+        if should_output_circuit or should_output_initial_mapping:
+            print(f"{BOLD_START}SAVING{BOLD_END}")
+            if should_output_circuit:
+                save_circuit(output.circuit, args.output)
+                print(f"Saved synthesized circuit at '{args.output}'")
+            if should_output_initial_mapping:
+                save_initial_mapping(output.initial_mapping, args.output_intial_mapping)
+                print(
+                    f"Saved initial mapping of synthesized circuit at '{args.output_intial_mapping}'"
+                )
             print()
 
         print(f"{BOLD_START}TIME{BOLD_END}")

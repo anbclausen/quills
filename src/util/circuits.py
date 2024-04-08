@@ -576,24 +576,8 @@ def create_mapping_from_file(file_string: str) -> dict[LogicalQubit, PhysicalQub
 
 def save_circuit(
     circuit: QuantumCircuit,
-    initial_mapping: dict[LogicalQubit, PhysicalQubit],
-    ancillaries: bool,
     file_path: str,
 ):
-    path_string = "/".join(file_path.split("/")[:-1])
-    os.makedirs(path_string, exist_ok=True)
-
-    final_mapping: dict[LogicalQubit, PhysicalQubit] = make_final_mapping(
-        circuit, initial_mapping, ancillaries
-    )
-
-    file_name = file_path.split("/")[-1]
-    final_file_string = f"{path_string}/{file_name.split('.')[0]}_final.txt"
-    final_file = open(final_file_string, "w")
-    for q, p in final_mapping.items():
-        final_file.write(f"{q.id};{p.id}\n")
-    final_file.close()
-
     register = QuantumRegister(circuit.num_qubits, "q")
     output_circuit = QuantumCircuit(register)
     for instr in circuit.data:
@@ -604,3 +588,13 @@ def save_circuit(
     circuit_file = open(file_path, "w")
     qasm2.dump(output_circuit, circuit_file)
     circuit_file.close()
+
+
+def save_initial_mapping(
+    initial_mapping: dict[LogicalQubit, PhysicalQubit],
+    file_path: str,
+):
+    f = open(file_path, "w")
+    for logical, physical in initial_mapping.items():
+        f.write(f"{logical.id} -> {physical.id}\n")
+    f.close()
