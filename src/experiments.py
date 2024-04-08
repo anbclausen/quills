@@ -4,6 +4,7 @@ import json
 
 from qiskit import QuantumCircuit
 from typing import Literal
+from util.simulator import simulate, ACCEPTED_PLATFORMS
 from util.circuits import (
     SynthesizerSolution,
     SynthesizerNoSolution,
@@ -179,6 +180,7 @@ def update_cache(
     depth: int,
     cx_depth: int,
     swaps: int,
+    success_rate: float,
 ):
     if not cache.get(input_file):
         cache[input_file] = {}
@@ -201,6 +203,7 @@ def update_cache(
             "cx_depth": cx_depth,
             "swaps": swaps,
             "time_limit": EXPERIMENT_TIME_LIMIT_S,
+            "success_rate": success_rate,
         }
     else:
         cached_time_limit = cache[input_file][platform_name][synthesizer_name][
@@ -220,6 +223,7 @@ def update_cache(
                 "cx_depth": cx_depth,
                 "swaps": swaps,
                 "time_limit": EXPERIMENT_TIME_LIMIT_S,
+                "success_rate": success_rate,
             }
 
     with open(CACHE_FILE, "w") as f:
@@ -235,6 +239,7 @@ def get_cache_key(
     int,
     int,
     int,
+    float,
 ]:
     result = (
         cache.get(input_file, {})
@@ -248,15 +253,16 @@ def get_cache_key(
         optional_times = result.get("optional_times")
         time_limit = result.get("time_limit")
         if total_time in ["ERROR"]:
-            return None, 0, None, 0, 0, 0
+            return None, 0, None, 0, 0, 0, 0
         if total_time in ["TO"]:
             if isinstance(time_limit, int) and time_limit <= EXPERIMENT_TIME_LIMIT_S:
-                return None, 0, None, 0, 0, 0
-            return total_time, 0, None, 0, 0, 0
+                return None, 0, None, 0, 0, 0, 0
+            return total_time, 0, None, 0, 0, 0, 0
 
         depth = result.get("depth")
         cx_depth = result.get("cx_depth")
         swaps = result.get("swaps")
+        success_rate = result.get("success_rate")
 
         # to make the type checker happy
         if (
@@ -266,10 +272,19 @@ def get_cache_key(
             and isinstance(depth, int)
             and isinstance(cx_depth, int)
             and isinstance(swaps, int)
+            and isinstance(success_rate, float)
             and solver_time <= EXPERIMENT_TIME_LIMIT_S
         ):
-            return total_time, solver_time, optional_times, depth, cx_depth, swaps
-    return None, 0, None, 0, 0, 0
+            return (
+                total_time,
+                solver_time,
+                optional_times,
+                depth,
+                cx_depth,
+                swaps,
+                success_rate,
+            )
+    return None, 0, None, 0, 0, 0, 0
 
 
 def print_and_output_to_file(line: str):
@@ -290,7 +305,7 @@ def output_csv(
     model: str,
     solver: str,
     result: (
-        tuple[float, float, tuple[float, float] | None, int, int, int]
+        tuple[float, float, tuple[float, float] | None, int, int, int, float]
         | Literal["ERROR", "TO"]
     ),
 ):
@@ -304,6 +319,7 @@ def output_csv(
         depth = result[3]
         cx_depth = result[4]
         swaps = result[5]
+        success_rate = result[6]
 
         line += f"{total_time:.3f}{CSV_SEPARATOR}{solver_time:.3f}{CSV_SEPARATOR}"
         if optional_times == None:
@@ -312,13 +328,13 @@ def output_csv(
             depth_time = optional_times[0]
             swap_time = optional_times[1]
             line += f"{depth_time:.3f}{CSV_SEPARATOR}{swap_time:.3f}{CSV_SEPARATOR}"
-        line += f"{depth}{CSV_SEPARATOR}{cx_depth}{CSV_SEPARATOR}{swaps}"
+        line += f"{depth}{CSV_SEPARATOR}{cx_depth}{CSV_SEPARATOR}{swaps}{CSV_SEPARATOR}{success_rate:.3f}"
     with open(CSV_OUTPUT_FILE, "a") as f:
         f.write(line + "\n")
 
 
 if OUTPUT_CSV:
-    line = f"Input{CSV_SEPARATOR}Platform{CSV_SEPARATOR}Model{CSV_SEPARATOR}Solver{CSV_SEPARATOR}Total time (s){CSV_SEPARATOR}Total solver time (s){CSV_SEPARATOR}Depth solving time (s){CSV_SEPARATOR}SWAP solving time (s){CSV_SEPARATOR}Depth{CSV_SEPARATOR}CX depth{CSV_SEPARATOR}SWAPs"
+    line = f"Input{CSV_SEPARATOR}Platform{CSV_SEPARATOR}Model{CSV_SEPARATOR}Solver{CSV_SEPARATOR}Total time (s){CSV_SEPARATOR}Total solver time (s){CSV_SEPARATOR}Depth solving time (s){CSV_SEPARATOR}SWAP solving time (s){CSV_SEPARATOR}Depth{CSV_SEPARATOR}CX depth{CSV_SEPARATOR}SWAPs{CSV_SEPARATOR}Success rate"
     with open(CSV_OUTPUT_FILE, "a") as f:
         f.write(line + "\n")
 
@@ -361,7 +377,7 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
 for input_file, platform_name in EXPERIMENTS:
     results: dict[
         tuple[str, str],
-        tuple[float, float, tuple[float, float] | None, int, int, int]
+        tuple[float, float, tuple[float, float] | None, int, int, int, float]
         | Literal["ERROR", "TO"],
     ] = {}
     for synthesizer_name, solver_name in configurations:
@@ -387,6 +403,7 @@ for input_file, platform_name in EXPERIMENTS:
             cached_depth,
             cached_cx_depth,
             cached_swaps,
+            cached_success_rate,
         ) = get_cache_key(input_file, synthesizer_name, solver_name, platform_name)
         if cached_total is not None:
             if cached_total in ["ERROR", "TO"]:
@@ -399,6 +416,7 @@ for input_file, platform_name in EXPERIMENTS:
                     cached_depth,
                     cached_cx_depth,
                     cached_swaps,
+                    cached_success_rate,
                 )
             print(f"  Found cached result for '{synthesizer_name}' on '{solver_name}'.")
         else:
@@ -463,6 +481,18 @@ for input_file, platform_name in EXPERIMENTS:
                         experiment.initial_mapping,
                         ANCILLARIES,
                     )
+                    success_rate = (
+                        simulate(
+                            input_circuit,
+                            experiment.circuit,
+                            experiment.initial_mapping,
+                            platform,
+                            10000,
+                            ANCILLARIES,
+                        )
+                        if platform_name in ACCEPTED_PLATFORMS
+                        else -1.0
+                    )
                     if correct_connectivity and correct_output and correct_qcec:
                         print("  ✓ Input and output circuits are equivalent.")
                         results[(synthesizer_name, solver_name)] = (
@@ -472,6 +502,7 @@ for input_file, platform_name in EXPERIMENTS:
                             experiment.depth,
                             experiment.cx_depth,
                             experiment.swaps,
+                            success_rate,
                         )
                     else:
                         print("  ✗ Input and output circuits are not equivalent! ERROR")
@@ -496,6 +527,7 @@ for input_file, platform_name in EXPERIMENTS:
                 0,
                 0,
                 0,
+                0,
             )
         elif results[(synthesizer_name, solver_name)] == "TO":
             result_string = "  Timeout."
@@ -510,11 +542,18 @@ for input_file, platform_name in EXPERIMENTS:
                 0,
                 0,
                 0,
+                0,
             )
         else:
-            total_time, solver_time, optional_times, depth, cx_depth, swaps = results[
-                (synthesizer_name, solver_name)
-            ]
+            (
+                total_time,
+                solver_time,
+                optional_times,
+                depth,
+                cx_depth,
+                swaps,
+                success_rate,
+            ) = results[(synthesizer_name, solver_name)]
 
             # to make the type checker happy
             if (
@@ -524,6 +563,7 @@ for input_file, platform_name in EXPERIMENTS:
                 and isinstance(cx_depth, int)
                 and isinstance(depth, int)
                 and isinstance(swaps, int)
+                and isinstance(success_rate, float)
             ):
                 update_cache(
                     input_file,
@@ -536,6 +576,7 @@ for input_file, platform_name in EXPERIMENTS:
                     depth,
                     cx_depth,
                     swaps,
+                    success_rate,
                 )
 
             result_string = f"  Done in {solver_time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs."
@@ -570,7 +611,7 @@ for input_file, platform_name in EXPERIMENTS:
         result_str = (
             result
             if isinstance(result, str)
-            else f"{result[0]:.03f}s, {result[1]:.03f}s, {breakdown_str}{result[3]}, {result[4]}, {result[5]}"
+            else f"{result[0]:.03f}s, {result[1]:.03f}s, {breakdown_str}{result[3]}, {result[4]}, {result[5]}, {result[6]:.03f}%"
         )
         print_and_output_to_file(
             f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
