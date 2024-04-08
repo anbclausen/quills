@@ -2,6 +2,7 @@ import argparse
 from util.logger import Logger
 from qiskit import QuantumCircuit
 from util.circuits import (
+    SynthesizerNoSolution,
     remove_all_non_cx_gates,
     SynthesizerSolution,
     save_circuit,
@@ -305,5 +306,10 @@ match output:
             print("✓ Input and output circuits are equivalent (QCEC)")
         else:
             print("✗ Input and output circuits are not equivalent (QCEC)")
+    case SynthesizerNoSolution():
+        print(
+            f"Error. Perhaps you do not have the correct dependencies installed?\n"
+            f"Note dependencies for planning are only installed automatically when running the Docker image.\n"
+        )
     case _:
         print()
