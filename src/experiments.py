@@ -97,25 +97,20 @@ EXPERIMENTS = [
     ("adder.qasm", "toy"),
     ("or.qasm", "toy"),
     ("toffoli.qasm", "toy"),
-    ("toy_example.qasm", "toy"),
     # up to 5 qubits
     ("adder.qasm", "tenerife"),
     ("or.qasm", "tenerife"),
     ("toffoli.qasm", "tenerife"),
-    ("toy_example.qasm", "tenerife"),
     ("4gt13_92.qasm", "tenerife"),
     ("4mod5-v1_22.qasm", "tenerife"),
     ("mod5mils_65.qasm", "tenerife"),
-    ("qaoa5.qasm", "tenerife"),
     # up to 14 qubits
     ("adder.qasm", "melbourne"),
     ("or.qasm", "melbourne"),
     ("toffoli.qasm", "melbourne"),
-    ("toy_example.qasm", "melbourne"),
     ("4gt13_92.qasm", "melbourne"),
     ("4mod5-v1_22.qasm", "melbourne"),
     ("mod5mils_65.qasm", "melbourne"),
-    ("qaoa5.qasm", "melbourne"),
     ("qft_8.qasm", "melbourne"),
     ("barenco_tof_4.qasm", "melbourne"),
     ("barenco_tof_5.qasm", "melbourne"),
@@ -128,11 +123,9 @@ EXPERIMENTS = [
     ("adder.qasm", "sycamore"),
     ("or.qasm", "sycamore"),
     ("toffoli.qasm", "sycamore"),
-    ("toy_example.qasm", "sycamore"),
     ("4gt13_92.qasm", "sycamore"),
     ("4mod5-v1_22.qasm", "sycamore"),
     ("mod5mils_65.qasm", "sycamore"),
-    ("qaoa5.qasm", "sycamore"),
     ("qft_8.qasm", "sycamore"),
     ("barenco_tof_4.qasm", "sycamore"),
     ("barenco_tof_5.qasm", "sycamore"),
@@ -141,9 +134,6 @@ EXPERIMENTS = [
     ("tof_4.qasm", "sycamore"),
     ("tof_5.qasm", "sycamore"),
     ("vbe_adder_3.qasm", "sycamore"),
-    ("queko_05_0.qasm", "sycamore"),
-    ("queko_10_3.qasm", "sycamore"),
-    ("queko_15_1.qasm", "sycamore"),
 ]
 
 if not os.path.exists("tmp"):
@@ -180,7 +170,7 @@ def update_cache(
     depth: int,
     cx_depth: int,
     swaps: int,
-    success_rate: float,
+    success_rate: float | None,
 ):
     if not cache.get(input_file):
         cache[input_file] = {}
@@ -305,13 +295,13 @@ def output_csv(
     model: str,
     solver: str,
     result: (
-        tuple[float, float, tuple[float, float] | None, int, int, int, float]
+        tuple[float, float, tuple[float, float] | None, int, int, int, float | None]
         | Literal["ERROR", "TO"]
     ),
 ):
     line = f"{input}{CSV_SEPARATOR}{platform}{CSV_SEPARATOR}{model}{CSV_SEPARATOR}{solver}{CSV_SEPARATOR}"
     if isinstance(result, str):
-        line += f"{result}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}"
+        line += f"{result}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}{CSV_SEPARATOR}"
     else:
         total_time = result[0]
         solver_time = result[1]
@@ -328,13 +318,15 @@ def output_csv(
             depth_time = optional_times[0]
             swap_time = optional_times[1]
             line += f"{depth_time:.3f}{CSV_SEPARATOR}{swap_time:.3f}{CSV_SEPARATOR}"
-        line += f"{depth}{CSV_SEPARATOR}{cx_depth}{CSV_SEPARATOR}{swaps}{CSV_SEPARATOR}{success_rate:.3f}"
+        line += f"{depth}{CSV_SEPARATOR}{cx_depth}{CSV_SEPARATOR}{swaps}{CSV_SEPARATOR}"
+        if success_rate != None:
+            line += f"{success_rate:.3f}"
     with open(CSV_OUTPUT_FILE, "a") as f:
         f.write(line + "\n")
 
 
 if OUTPUT_CSV:
-    line = f"Input{CSV_SEPARATOR}Platform{CSV_SEPARATOR}Model{CSV_SEPARATOR}Solver{CSV_SEPARATOR}Total time (s){CSV_SEPARATOR}Total solver time (s){CSV_SEPARATOR}Depth solving time (s){CSV_SEPARATOR}SWAP solving time (s){CSV_SEPARATOR}Depth{CSV_SEPARATOR}CX depth{CSV_SEPARATOR}SWAPs{CSV_SEPARATOR}Success rate"
+    line = f"Input{CSV_SEPARATOR}Platform{CSV_SEPARATOR}Model{CSV_SEPARATOR}Solver{CSV_SEPARATOR}Total time (s){CSV_SEPARATOR}Total solver time (s){CSV_SEPARATOR}Depth solving time (s){CSV_SEPARATOR}SWAP solving time (s){CSV_SEPARATOR}Depth{CSV_SEPARATOR}CX depth{CSV_SEPARATOR}SWAPs{CSV_SEPARATOR}Success rate (%)"
     with open(CSV_OUTPUT_FILE, "a") as f:
         f.write(line + "\n")
 
@@ -377,7 +369,7 @@ for synthesizer_name, synthesizer_instance in synthesizers.items():
 for input_file, platform_name in EXPERIMENTS:
     results: dict[
         tuple[str, str],
-        tuple[float, float, tuple[float, float] | None, int, int, int, float]
+        tuple[float, float, tuple[float, float] | None, int, int, int, float | None]
         | Literal["ERROR", "TO"],
     ] = {}
     for synthesizer_name, solver_name in configurations:
@@ -476,7 +468,7 @@ for input_file, platform_name in EXPERIMENTS:
                         ANCILLARIES,
                     )
                     correct_qcec = check_qcec(
-                        input_circuit,
+                        input_circuit.copy(),
                         experiment.circuit,
                         experiment.initial_mapping,
                         ANCILLARIES,
@@ -491,7 +483,7 @@ for input_file, platform_name in EXPERIMENTS:
                             ANCILLARIES,
                         )
                         if platform_name in ACCEPTED_PLATFORMS
-                        else -1.0
+                        else None
                     )
                     if correct_connectivity and correct_output and correct_qcec:
                         print("  ✓ Input and output circuits are equivalent.")
@@ -527,7 +519,7 @@ for input_file, platform_name in EXPERIMENTS:
                 0,
                 0,
                 0,
-                0,
+                None,
             )
         elif results[(synthesizer_name, solver_name)] == "TO":
             result_string = "  Timeout."
@@ -542,7 +534,7 @@ for input_file, platform_name in EXPERIMENTS:
                 0,
                 0,
                 0,
-                0,
+                None,
             )
         else:
             (
@@ -563,7 +555,7 @@ for input_file, platform_name in EXPERIMENTS:
                 and isinstance(cx_depth, int)
                 and isinstance(depth, int)
                 and isinstance(swaps, int)
-                and isinstance(success_rate, float)
+                and (isinstance(success_rate, float) or success_rate == None)
             ):
                 update_cache(
                     input_file,
@@ -579,7 +571,8 @@ for input_file, platform_name in EXPERIMENTS:
                     success_rate,
                 )
 
-            result_string = f"  Done in {solver_time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs."
+            success_string = f" (success rate {success_rate:.03f}%)" if success_rate != None else ""
+            result_string = f"  Done in {solver_time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs{success_string}."
         print(result_string)
     print_and_output_to_file(
         "##############################################################"
@@ -608,11 +601,11 @@ for input_file, platform_name in EXPERIMENTS:
         breakdown_str = (
             "" if result[2] == None else f"{result[2][0]:.03f}s, {result[2][1]:.03f}s, "
         )
-        result_str = (
-            result
-            if isinstance(result, str)
-            else f"{result[0]:.03f}s, {result[1]:.03f}s, {breakdown_str}{result[3]}, {result[4]}, {result[5]}, {result[6]:.03f}%"
-        )
+        if isinstance(result, str):
+            result_str = result
+        else:
+            success_str = f", {result[6]:.03f}%" if result[6] != None else ""
+            result_str = f"{result[0]:.03f}s, {result[1]:.03f}s, {breakdown_str}{result[3]}, {result[4]}, {result[5]}{success_str}"
         print_and_output_to_file(
             f"  '{synthesizer_name}' on '{solver_name}': {result_str}"
         )

@@ -65,7 +65,7 @@ def simulate_single(
     result = backend.run(circuit, shots=shots).result()
 
     counts = result.get_counts(0)
-    plot_histogram(counts, filename="tmp/histogram.png")
+    #plot_histogram(counts, filename="tmp/histogram.png")
 
     return counts  # type: ignore
 
@@ -130,7 +130,7 @@ def simulate(
         with_noise=False,
     )
 
-    synthesized_initial_mapping = make_final_mapping(
+    synthesized_final_mapping = make_final_mapping(
         synthesized_circuit, synthesized_initial_mapping, synthesized_with_anicillaries
     )
     synthesized_circuit_counts = simulate_single(
@@ -138,7 +138,7 @@ def simulate(
         platform,
         shots,
         with_noise=True,
-        final_mapping=synthesized_initial_mapping,
+        final_mapping=synthesized_final_mapping,
     )
 
     correct, _ = process_counts(logical_circuit_counts, synthesized_circuit_counts)
