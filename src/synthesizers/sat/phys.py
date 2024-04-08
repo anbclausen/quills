@@ -253,28 +253,20 @@ class PhysSynthesizer(SATSynthesizer):
 
             # cnot connections
             for l, l_prime in lq_pairs:
-                problem_clauses.extend(
-                    andf(
-                        *[
-                            impl_conj(
-                                [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                                [[enabled[t][l][l_prime]]],
-                            )
-                            for p, p_prime in connectivity_graph
-                        ]
+                for p, p_prime in connectivity_graph:
+                    problem_clauses.extend(
+                        impl_conj(
+                            [mapped[t][l][p], mapped[t][l_prime][p_prime]],
+                            [[enabled[t][l][l_prime]]],
+                        )
                     )
-                )
-                problem_clauses.extend(
-                    andf(
-                        *[
-                            impl_conj(
-                                [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                                [[neg(enabled[t][l][l_prime])]],
-                            )
-                            for p, p_prime in inv_connectivity_graph
-                        ]
+                for p, p_prime in inv_connectivity_graph:
+                    problem_clauses.extend(
+                        impl_conj(
+                            [mapped[t][l][p], mapped[t][l_prime][p_prime]],
+                            [[neg(enabled[t][l][l_prime])]],
+                        )
                     )
-                )
 
             # gate stuff
             for g in gates:
@@ -615,7 +607,9 @@ class PhysSynthesizer(SATSynthesizer):
                 logical_circuit, output_circuit, initial_mapping, ancillaries
             )
 
-        output_circuit_with_cnots_as_swap = with_swaps_as_cnots(output_circuit, register_name="p")
+        output_circuit_with_cnots_as_swap = with_swaps_as_cnots(
+            output_circuit, register_name="p"
+        )
         depth = output_circuit_with_cnots_as_swap.depth()
         output_with_only_cnots = remove_all_non_cx_gates(
             output_circuit_with_cnots_as_swap
