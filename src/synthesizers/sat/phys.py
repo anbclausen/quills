@@ -365,6 +365,13 @@ class PhysSynthesizer(SATSynthesizer):
                                 ],
                             )
                         )
+                        for t_prime in [t, t - 1, t - 2]:
+                            problem_clauses.extend(
+                                impl(
+                                    swapping[t][p],
+                                    [[neg(usable[t_prime][p])]],
+                                )
+                            )
                     for l in lq:
                         problem_clauses.extend(
                             impl(
@@ -374,18 +381,6 @@ class PhysSynthesizer(SATSynthesizer):
                         )
                 for p, p_prime in connectivity_graph:
                     if p < p_prime:
-                        if t > 1:
-                            for t_prime in [t, t - 1, t - 2]:
-                                problem_clauses.extend(
-                                    impl(
-                                        swap[t][p, p_prime],
-                                        and_(
-                                            neg(usable[t_prime][p]),
-                                            neg(usable[t_prime][p_prime]),
-                                        ),
-                                    )
-                                )
-
                         for l in lq:
                             problem_clauses.extend(
                                 impl(
