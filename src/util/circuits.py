@@ -578,8 +578,12 @@ def create_mapping_from_file(file_string: str) -> dict[LogicalQubit, PhysicalQub
 def save_circuit(
     circuit: QuantumCircuit,
     file_path: str,
+    num_qubits: int | None = None,
 ):
-    register = QuantumRegister(circuit.num_qubits, "q")
+    if num_qubits == None:
+        register = QuantumRegister(circuit.num_qubits, "q")
+    else:
+        register = QuantumRegister(num_qubits, "q")
     output_circuit = QuantumCircuit(register)
     for instr in circuit.data:
         new_instr = instr.replace(
