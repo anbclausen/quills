@@ -1,5 +1,4 @@
 from qiskit import QuantumCircuit
-from synthesizers.sat.incr import IncrSynthesizer
 from synthesizers.sat.phys import PhysSynthesizer
 from util.circuits import (
     SynthesizerSolution,
@@ -23,7 +22,7 @@ import synthesizers.planning.solvers as planning
 
 TESTS = [
     # up to 4 qubits
-    ("toy_example.qasm", "toy"),
+    ("test/toy_example.qasm", "toy"),
     ("adder.qasm", "toy"),
     # up to 5 qubits
     ("4mod5-v1_22.qasm", "tenerife"),
@@ -119,19 +118,6 @@ for input_file, platform_name in TESTS:
                         swap_optimal=swap_opt,
                         ancillaries=anc,
                     )
-                case IncrSynthesizer(), _ if not isinstance(solver, planning.Solver):
-                    if anc:
-                        continue
-                    else:
-                        experiment = synthesizer.synthesize(
-                            input_circuit,
-                            platform,
-                            solver,
-                            DEFAULT_TIME_LIMIT_S,
-                            logger,
-                            cx_optimal=cx_opt,
-                            swap_optimal=swap_opt,
-                        )
                 case _:
                     raise ValueError(
                         f"Invalid synthesizer-solver combination: '{synthesizer_name}' on '{solver_name}'."
