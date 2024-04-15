@@ -1,4 +1,5 @@
 from qiskit import QuantumCircuit
+from synthesizers.sat.block import BlockSynthesizer
 from synthesizers.sat.phys import PhysSynthesizer
 from util.circuits import (
     SynthesizerSolution,
@@ -78,11 +79,7 @@ for input_file, platform_name in TESTS:
             (True, True, False),
             (True, True, True),
         ]:
-            print(
-                ".",
-                end="",
-                flush=True,
-            )
+            print(".", end="", flush=True)
 
             solver = solvers[solver_name]
             if not isinstance(solver, planning.Solver):
@@ -118,6 +115,20 @@ for input_file, platform_name in TESTS:
                         swap_optimal=swap_opt,
                         ancillaries=anc,
                     )
+                case BlockSynthesizer(), _ if not isinstance(solver, planning.Solver):
+                    if swap_opt:
+                        continue
+                    else:
+                        experiment = synthesizer.synthesize(
+                            input_circuit,
+                            platform,
+                            solver,
+                            DEFAULT_TIME_LIMIT_S,
+                            logger,
+                            cx_optimal=cx_opt,
+                            swap_optimal=swap_opt,
+                            ancillaries=anc,
+                        )
                 case _:
                     raise ValueError(
                         f"Invalid synthesizer-solver combination: '{synthesizer_name}' on '{solver_name}'."
