@@ -40,8 +40,7 @@ from util.sat import (
     reset,
 )
 import time
-from util.time_limit import time_limit, TimeoutException
-from multiprocessing import Process, Queue
+from threading import Timer
 
 
 class PhysSynthesizer(SATSynthesizer):
@@ -160,6 +159,7 @@ class PhysSynthesizer(SATSynthesizer):
         logger: Logger,
         swap_optimal: bool,
         ancillaries: bool,
+        time_limit_s: int,
     ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
 
@@ -452,9 +452,17 @@ class PhysSynthesizer(SATSynthesizer):
             asm.append(assumption[t])
 
             if t >= circuit_depth - 1:
+                timer = Timer(time_limit_s - overall_time, solver.interrupt)
+                timer.start()
+
                 before = time.time()
-                solver.solve(assumptions=asm)
+                res = solver.solve_limited(assumptions=asm, expect_interrupt=True)
                 after = time.time()
+                timer.cancel()
+
+                if res == None:
+                    raise TimeoutError("Timeout")
+
                 overall_time += after - before
                 model = solver.get_model()
                 solution = parse_sat_solution(model)
@@ -500,13 +508,22 @@ class PhysSynthesizer(SATSynthesizer):
                             ),
                         )
                         solver.append_formula(swap_asm_constraint)
+                        timer = Timer(time_limit_s - overall_time, solver.interrupt)
+                        timer.start()
+
                         before = time.time()
-                        solver.solve(
+                        res = solver.solve_limited(
                             assumptions=asm
                             + [neg(asm) for asm in previous_swap_asms]
-                            + [swap_asm]
+                            + [swap_asm],
+                            expect_interrupt=True,
                         )
                         after = time.time()
+                        timer.cancel()
+
+                        if res == None:
+                            raise TimeoutError("Timeout")
+
                         swap_time += after - before
                         overall_time += after - before
 
@@ -560,30 +577,18 @@ class PhysSynthesizer(SATSynthesizer):
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
         )
 
-        def f(queue: Queue):
-            queue.put(
-                self.create_solution(
-                    circuit, platform, solver, logger, swap_optimal, ancillaries
-                )
-            )
-
-        queue = Queue()
-        p = Process(target=f, args=(queue,))
-
         before = time.time()
         try:
-            with time_limit(time_limit_s):
-                p.start()
-
-                # hack since p.join hangs
-                while queue.empty():
-                    time.sleep(0.2)
-
-                out = queue.get()
-                queue.close()
-        except TimeoutException:
-            p.kill()
-            queue.close()
+            out = self.create_solution(
+                circuit,
+                platform,
+                solver,
+                logger,
+                swap_optimal,
+                ancillaries,
+                time_limit_s,
+            )
+        except TimeoutError:
             return SynthesizerTimeout()
         after = time.time()
         total_time = after - before
