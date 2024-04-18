@@ -157,6 +157,7 @@ class PhysSynthesizer(SATSynthesizer):
         platform: Platform,
         solver: Solver,
         logger: Logger,
+        cx_optimal: bool,
         swap_optimal: bool,
         ancillaries: bool,
         time_limit_s: int,
@@ -466,14 +467,14 @@ class PhysSynthesizer(SATSynthesizer):
                 overall_time += after - before
                 model = solver.get_model()
                 solution = parse_sat_solution(model)
-                logger.log(1, f"depth {t+1}", flush=True, end=", ")
+                logger.log(1, f"{'CX-' if cx_optimal else ''}depth {t+1}", flush=True, end=", ")
                 if solution:
                     depth_time = overall_time
                     swap_time = 0
                     if not swap_optimal:
                         logger.log(
                             1,
-                            f"found solution with depth {t+1} (after {overall_time:.03f}s).",
+                            f"found solution with {'CX-' if cx_optimal else ''}depth {t+1} (after {overall_time:.03f}s).",
                         )
                         return solution, overall_time, None
                     number_of_swaps = sum(
@@ -584,6 +585,7 @@ class PhysSynthesizer(SATSynthesizer):
                 platform,
                 solver,
                 logger,
+                cx_optimal,
                 swap_optimal,
                 ancillaries,
                 time_limit_s,
