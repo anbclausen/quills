@@ -22,6 +22,7 @@ from configs import (
     solvers,
     OPTIMAL_PLANNING_SYNTHESIZERS,
     CONDITIONAL_PLANNING_SYNTHESIZERS,
+    EXPERIMENTS,
 )
 from datetime import datetime
 from util.logger import Logger
@@ -92,52 +93,6 @@ CACHE_FILE = f"tmp/experiments_cache{cx_suffix}{swap_suffix}{anc_suffix}.json"
 OUTPUT_FILE = f"tmp/experiments{cx_suffix}{swap_suffix}{anc_suffix}.txt"
 logger = Logger(0)
 
-EXPERIMENTS = [
-    # up to 4 qubits
-    ("adder.qasm", "toy"),
-    ("or.qasm", "toy"),
-    ("toffoli.qasm", "toy"),
-    # up to 5 qubits
-    ("adder.qasm", "tenerife"),
-    ("or.qasm", "tenerife"),
-    ("toffoli.qasm", "tenerife"),
-    ("4gt13_92.qasm", "tenerife"),
-    ("4mod5-v1_22.qasm", "tenerife"),
-    ("mod5mils_65.qasm", "tenerife"),
-    ("qaoa5.qasm", "tenerife"),
-    # up to 14 qubits
-    ("adder.qasm", "melbourne"),
-    ("or.qasm", "melbourne"),
-    ("toffoli.qasm", "melbourne"),
-    ("4gt13_92.qasm", "melbourne"),
-    ("4mod5-v1_22.qasm", "melbourne"),
-    ("mod5mils_65.qasm", "melbourne"),
-    ("qaoa5.qasm", "melbourne"),
-    ("qft_8.qasm", "melbourne"),
-    ("barenco_tof_4.qasm", "melbourne"),
-    ("barenco_tof_5.qasm", "melbourne"),
-    ("mod_mult_55.qasm", "melbourne"),
-    ("rc_adder_6.qasm", "melbourne"),
-    ("tof_4.qasm", "melbourne"),
-    ("tof_5.qasm", "melbourne"),
-    ("vbe_adder_3.qasm", "melbourne"),
-    # up to 54 qubits
-    ("adder.qasm", "sycamore"),
-    ("or.qasm", "sycamore"),
-    ("toffoli.qasm", "sycamore"),
-    ("4gt13_92.qasm", "sycamore"),
-    ("4mod5-v1_22.qasm", "sycamore"),
-    ("mod5mils_65.qasm", "sycamore"),
-    ("qaoa5.qasm", "sycamore"),
-    ("qft_8.qasm", "sycamore"),
-    ("barenco_tof_4.qasm", "sycamore"),
-    ("barenco_tof_5.qasm", "sycamore"),
-    ("mod_mult_55.qasm", "sycamore"),
-    ("rc_adder_6.qasm", "sycamore"),
-    ("tof_4.qasm", "sycamore"),
-    ("tof_5.qasm", "sycamore"),
-    ("vbe_adder_3.qasm", "sycamore"),
-]
 
 if not os.path.exists("tmp"):
     os.makedirs("tmp")
@@ -574,7 +529,9 @@ for input_file, platform_name in EXPERIMENTS:
                     success_rate,
                 )
 
-            success_string = f" (success rate {success_rate:.03f}%)" if success_rate != None else ""
+            success_string = (
+                f" (success rate {success_rate:.03f}%)" if success_rate != None else ""
+            )
             result_string = f"  Done in {solver_time:.3f}s. Found depth {depth} and CX depth {cx_depth} with {swaps} SWAPs{success_string}."
         print(result_string)
     print_and_output_to_file(
