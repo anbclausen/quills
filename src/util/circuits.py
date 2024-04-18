@@ -1,6 +1,8 @@
+import math
 import os
 from qiskit import QuantumCircuit, QuantumRegister, qasm2
-from qiskit.circuit import Qubit
+from qiskit.circuit import Qubit, Instruction, CircuitInstruction
+from qiskit.circuit.library import U1Gate
 from itertools import takewhile
 
 
@@ -137,6 +139,22 @@ def gate_line_dependency_mapping(
         if name == "rx" or name == "rz":
             angle = instr.operation.params[0]
             name = f"{name}_{angle}"
+        if name.startswith("u"):
+            if name == "u" or name == "u3":
+                theta = instr.operation.params[0]
+                phi = instr.operation.params[1]
+                lam = instr.operation.params[2]
+                name = f"{name}_{theta}_{phi}_{lam}"
+            elif name == "u2":
+                theta = math.pi / 2
+                phi = instr.operation.params[0]
+                lam = instr.operation.params[1]
+                name = f"{name}_{phi}_{lam}"
+            elif name == "u1":
+                theta = 0.0
+                phi = 0.0
+                lam = instr.operation.params[0]
+                name = f"{name}_{lam}"
         mapping[i] = (name, input_idxs)
 
     return mapping
@@ -387,7 +405,8 @@ def reinsert_unary_gates(
         for line, gates in line_gate_mapping(cx_circuit).items()
     }
 
-    result_circuit = QuantumCircuit(QuantumRegister(cx_circuit.num_qubits, "p"))
+    register = QuantumRegister(cx_circuit.num_qubits, "p")
+    result_circuit = QuantumCircuit(register)
     mapping = {k.id: v.id for k, v in initial_mapping.items()}
     all_pqubits_in_mapping = len(set(mapping.values())) == len(mapping.values())
     all_lqubits_in_mapping = len(set(mapping.keys())) == len(mapping.keys())
@@ -421,11 +440,58 @@ def reinsert_unary_gates(
                     case "z":
                         result_circuit.z(physical_line)
                     case name if name.startswith("rx"):
-                        angle = float(name.split("_")[1])
-                        result_circuit.rx(angle, physical_line)
+                        theta = float(name.split("_")[1])
+                        result_circuit.rx(theta, physical_line)
                     case name if name.startswith("rz"):
-                        angle = float(name.split("_")[1])
-                        result_circuit.rz(angle, physical_line)
+                        phi = float(name.split("_")[1])
+                        result_circuit.rz(phi, physical_line)
+                    case name if name.startswith("u_"):
+                        theta = float(name.split("_")[1])
+                        phi = float(name.split("_")[2])
+                        lam = float(name.split("_")[3])
+                        result_circuit.u(theta, phi, lam, physical_line)
+                    case name if name.startswith("u3"):
+                        theta = float(name.split("_")[1])
+                        phi = float(name.split("_")[2])
+                        lam = float(name.split("_")[3])
+                        instr = CircuitInstruction(
+                            operation=Instruction(
+                                name="u3",
+                                num_qubits=1,
+                                num_clbits=0,
+                                params=[theta, phi, lam],
+                            ),
+                            qubits=(Qubit(register, physical_line),),
+                            clbits=(),
+                        )
+                        result_circuit.append(instr)
+                    case name if name.startswith("u2"):
+                        phi = float(name.split("_")[1])
+                        lam = float(name.split("_")[2])
+                        instr = CircuitInstruction(
+                            operation=Instruction(
+                                name="u2",
+                                num_qubits=1,
+                                num_clbits=0,
+                                params=[phi, lam],
+                            ),
+                            qubits=(Qubit(register, physical_line),),
+                            clbits=(),
+                        )
+                        result_circuit.append(instr)
+                    case name if name.startswith("u1"):
+                        lam = float(name.split("_")[1])
+                        instr = CircuitInstruction(
+                            operation=Instruction(
+                                name="u1",
+                                num_qubits=1,
+                                num_clbits=0,
+                                params=[lam],
+                            ),
+                            qubits=(Qubit(register, physical_line),),
+                            clbits=(),
+                        )
+                        result_circuit.append(instr)
                     case _:
                         raise ValueError(
                             f"Unknown unary gate: '{gate_name}'... Perhaps you should add it to the match statement?"
