@@ -104,6 +104,7 @@ EXPERIMENTS = [
     ("4gt13_92.qasm", "tenerife"),
     ("4mod5-v1_22.qasm", "tenerife"),
     ("mod5mils_65.qasm", "tenerife"),
+    ("qaoa5.qasm", "tenerife"),
     # up to 14 qubits
     ("adder.qasm", "melbourne"),
     ("or.qasm", "melbourne"),
@@ -111,6 +112,7 @@ EXPERIMENTS = [
     ("4gt13_92.qasm", "melbourne"),
     ("4mod5-v1_22.qasm", "melbourne"),
     ("mod5mils_65.qasm", "melbourne"),
+    ("qaoa5.qasm", "melbourne"),
     ("qft_8.qasm", "melbourne"),
     ("barenco_tof_4.qasm", "melbourne"),
     ("barenco_tof_5.qasm", "melbourne"),
@@ -126,6 +128,7 @@ EXPERIMENTS = [
     ("4gt13_92.qasm", "sycamore"),
     ("4mod5-v1_22.qasm", "sycamore"),
     ("mod5mils_65.qasm", "sycamore"),
+    ("qaoa5.qasm", "sycamore"),
     ("qft_8.qasm", "sycamore"),
     ("barenco_tof_4.qasm", "sycamore"),
     ("barenco_tof_5.qasm", "sycamore"),
