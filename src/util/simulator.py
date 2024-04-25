@@ -10,7 +10,7 @@ from util.circuits import (
     make_final_mapping,
 )
 
-ACCEPTED_PLATFORMS = ["tokyo", "melbourne", "tenerife", "cambridge"]
+ACCEPTED_PLATFORMS = ["tokyo", "tenerife", "cambridge"]
 
 
 def simulate_single(
@@ -37,8 +37,6 @@ def simulate_single(
     """
 
     match platform.name:
-        case "melbourne":
-            ibm_platform = FakeMelbourne()
         case "tenerife":
             ibm_platform = FakeTenerife()
         case "tokyo":

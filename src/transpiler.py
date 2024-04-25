@@ -1,11 +1,12 @@
 import argparse
 from qiskit import QuantumCircuit
 from qiskit.compiler import transpile
-from qiskit_ibm_runtime.fake_provider import FakeMelbourne, FakeTenerife, FakeTokyo
+from qiskit_ibm_runtime.fake_provider import FakeTenerife, FakeTokyo, FakeCambridge
 from configs import (
     platforms,
 )
 from util.circuits import save_circuit
+from util.simulator import ACCEPTED_PLATFORMS
 
 BOLD_START = "\033[1m"
 BOLD_END = "\033[0m"
@@ -27,7 +28,7 @@ parser.add_argument(
     help="the path to the synthesized output circuit (QASM)",
 )
 
-ibm_platforms = ["tokyo", "melbourne", "tenerife"]
+ibm_platforms = ACCEPTED_PLATFORMS
 
 parser.add_argument(
     "-p",
@@ -46,12 +47,12 @@ if args.platform not in ibm_platforms:
 
 platform = platforms[args.platform]
 match platform.name:
-    case "melbourne":
-        ibm_platform = FakeMelbourne()
     case "tenerife":
         ibm_platform = FakeTenerife()
     case "tokyo":
         ibm_platform = FakeTokyo()
+    case "cambridge":
+        ibm_platform = FakeCambridge()
     case _:
         print(f"Error: Platform '{platform.name}' not supported.")
         exit(1)
