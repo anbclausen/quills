@@ -417,7 +417,8 @@ def reinsert_unary_gates(
     while not all(len(gates) == 0 for gates in original_gate_list.values()):
         # insert unary gates
         for line in range(original_circuit.num_qubits):
-            unary_gates, rest = consume_line_until_binary_gate(original_gate_list[line])
+            original_line = original_gate_list[line] if line in original_gate_list.keys() else []
+            unary_gates, rest = consume_line_until_binary_gate(original_line)
             original_gate_list[line] = rest
             physical_line = mapping[line]
             for unary_gate in unary_gates:
