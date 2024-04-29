@@ -417,7 +417,9 @@ def reinsert_unary_gates(
     while not all(len(gates) == 0 for gates in original_gate_list.values()):
         # insert unary gates
         for line in range(original_circuit.num_qubits):
-            original_line = original_gate_list[line] if line in original_gate_list.keys() else []
+            original_line = (
+                original_gate_list[line] if line in original_gate_list.keys() else []
+            )
             unary_gates, rest = consume_line_until_binary_gate(original_line)
             original_gate_list[line] = rest
             physical_line = mapping[line]
@@ -440,6 +442,8 @@ def reinsert_unary_gates(
                         result_circuit.y(physical_line)
                     case "z":
                         result_circuit.z(physical_line)
+                    case "sx":
+                        result_circuit.sx(physical_line)
                     case name if name.startswith("rx"):
                         theta = float(name.split("_")[1])
                         result_circuit.rx(theta, physical_line)
