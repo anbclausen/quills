@@ -1,7 +1,7 @@
 from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
-from qiskit_ibm_runtime.fake_provider import FakeMelbourne, FakeTenerife, FakeTokyo, FakeCambridge
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupe, FakeTenerife, FakeTokyo, FakeCambridge
 
 from platforms import Platform
 from util.circuits import (
@@ -10,7 +10,7 @@ from util.circuits import (
     make_final_mapping,
 )
 
-ACCEPTED_PLATFORMS = ["tokyo", "tenerife", "cambridge"]
+ACCEPTED_PLATFORMS = ["tokyo", "tenerife", "cambridge", "guadalupe"]
 
 
 def simulate_single(
@@ -43,6 +43,8 @@ def simulate_single(
             ibm_platform = FakeTokyo()
         case "cambridge":
             ibm_platform = FakeCambridge()
+        case "guadalupe":
+            ibm_platform = FakeGuadalupe()
         case _:
             print(f"Error: Platform '{platform.name}' not supported.")
             exit(1)

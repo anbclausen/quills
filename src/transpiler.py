@@ -1,7 +1,7 @@
 import argparse
 from qiskit import QuantumCircuit
 from qiskit.compiler import transpile
-from qiskit_ibm_runtime.fake_provider import FakeTenerife, FakeTokyo, FakeCambridge
+from qiskit_ibm_runtime.fake_provider import FakeTenerife, FakeTokyo, FakeCambridge, FakeGuadalupe
 from configs import (
     platforms,
 )
@@ -53,6 +53,8 @@ match platform.name:
         ibm_platform = FakeTokyo()
     case "cambridge":
         ibm_platform = FakeCambridge()
+    case "guadalupe":
+        ibm_platform = FakeGuadalupe()
     case _:
         print(f"Error: Platform '{platform.name}' not supported.")
         exit(1)
