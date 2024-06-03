@@ -41,7 +41,7 @@ DEFAULT_TIME_LIMIT_S = 600
 
 synthesizers: dict[str, PlanningSynthesizer | SATSynthesizer] = {
     # "plan_cost_opt": CostBasedOptimalPlanningSynthesizer(),
-    # "plan_cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
+    "plan_cond_cost_opt": ConditionalCostBasedOptimalPlanningSynthesizer(),
     # "plan_lc_incr": LocalClockIncrementalPlanningSynthesizer(),
     "sat": PhysSynthesizer(),
     # "block": BlockSynthesizer(),
@@ -364,6 +364,7 @@ QUEKO_EXPERIMENTS = [
     ("queko/54QBT_40CYC_QSE_0.qasm", "eagle"),
     ("queko/54QBT_45CYC_QSE_0.qasm", "eagle"),
 ]
+
 
 def clean_up():
     for solver in solvers.values():

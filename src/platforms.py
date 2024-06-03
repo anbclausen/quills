@@ -132,7 +132,7 @@ GUADALUPE = Platform(
      |                   |
      03 - 05 - 08 - 11 - 14
                |
-               09"""
+               09""",
 )
 
 TOKYO = Platform(
@@ -525,7 +525,7 @@ RIGETTI80 = Platform(
         (78, 79),
         (79, 72),
     },
-    description="Rigetti Aspen M2",
+    description="Rigetti Aspen-M",
     connectivity_graph_drawing="""
   6  - 7        14 - 15       22 - 23       30 - 31       38 - 39
  /      \\      /      \\      /      \\      /      \\      /      \\
