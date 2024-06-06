@@ -1,8 +1,6 @@
 import math
-import os
 from qiskit import QuantumCircuit, QuantumRegister, qasm2
 from qiskit.circuit import Qubit, Instruction, CircuitInstruction
-from qiskit.circuit.library import U1Gate
 from itertools import takewhile
 
 

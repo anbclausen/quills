@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit
 from platforms import Platform
 from util.logger import Logger
-from util.sat import Atom
 from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
 
