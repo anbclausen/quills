@@ -1,7 +1,7 @@
 ![](assets/logo.png)
 ---         
 
-QuilLS is a tool for performing depth-optimal layout synthesis on quantum circuits. QuilLS consists of several synthesizers based on both classical planning and SAT solving.
+QuilLS is an efficient tool for performing depth-optimal layout synthesis on quantum circuits. QuilLS consists of several synthesizers based on both classical planning and SAT solving. The synthesizer based on SAT solving is by far the most efficient.
 
 QuilLS is able to find the optimal layout for several different objectives:
 
@@ -10,7 +10,9 @@ QuilLS is able to find the optimal layout for several different objectives:
 - Depth-optimal considering only CX gates
 - Depth-optimal considering only CX gates with local optimal number of SWAPs
 
-There is also an option to allow ancillary SWAPs or not.
+There is also an option to allow ancillary SWAPs or not for the SAT-based synthesizer.
+
+QuilLS automatically checks whether the output circuit it gives is functionally equivalent with the input circuit.
 
 QuilLS has been developed by [Anders Benjamin Clausen](https://github.com/anbclausen) and [Anna Blume Jakobsen](https://github.com/AnnaBlume99) at the Department of Computer Science, Aarhus University. Supervised by professor [Jaco van de Pol](https://www.au.dk/en/jaco@cs.au.dk) with the help of [Irfansha Shaik](https://github.com/irfansha).
 
@@ -20,7 +22,7 @@ QuilLS has been developed by [Anders Benjamin Clausen](https://github.com/anbcla
 
 QuilLS depends on external tools such as planners and SAT solvers. To make the planning-based synthesizers work, one must install external dependencies. However, all SAT-based synthesizers depend only on Python packages.
 
-### Simple installation (only works for SAT-based synthesizers)
+### Simple installation (only works for the SAT-based synthesizer)
 
 QuilLS uses [Poetry](https://python-poetry.org) for dependency management instead of `pip`. For the simple installation, follow the steps:
 
@@ -29,7 +31,7 @@ QuilLS uses [Poetry](https://python-poetry.org) for dependency management instea
 3. Clone the repository with `git clone https://github.com/anbclausen/quills`.
 4. In the root of the folder run `poetry install` and all Python dependencies will be installed.
 
-### Full installation with Docker
+### Full installation with Docker (works with all synthesizers)
 
 To make external dependency management easier, we have containerized the tool with [Docker](https://www.docker.com/products/docker-desktop/). For the full installation, follow the steps:
 
