@@ -62,11 +62,13 @@ options:
   -t TIME_LIMIT, --time_limit TIME_LIMIT
                         the time limit in seconds, default is 600s
   -m MODEL, --model MODEL
-                        the synthesizer model to use: plan_cost_opt, plan_cond_cost_opt, plan_lc_incr, sat
+                        the synthesizer model to use: plan_cost_opt, plan_cond_cost_opt, plan_lc_incr, sat -- default: sat
   -p PLATFORM, --platform PLATFORM
-                        the target platform: tenerife, melbourne, guadalupe, tokyo, cambridge, sycamore, rigetti80, eagle
+                        the target platform: tenerife, melbourne, guadalupe, tokyo, cambridge, sycamore, rigetti80, eagle -- default:
+                        tenerife
   -s SOLVER, --solver SOLVER
                         the underlying solver: MpC_exist_glucose, fd_ms, fd_bjolp, cadical153, glucose42, maple_cm, maple_chrono, minisat22
+                        -- default: cadical153
   -out OUTPUT, --output OUTPUT
                         path to save the output circuit
   -init OUTPUT_INTIAL_MAPPING, --output_intial_mapping OUTPUT_INTIAL_MAPPING

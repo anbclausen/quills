@@ -42,7 +42,7 @@ parser.add_argument(
     "-m",
     "--model",
     type=str,
-    help=f"the synthesizer model to use: {', '.join(synthesizers.keys())}",
+    help=f"the synthesizer model to use: {', '.join(synthesizers.keys())} -- default: sat",
     default="sat",
 )
 
@@ -50,7 +50,7 @@ parser.add_argument(
     "-p",
     "--platform",
     type=str,
-    help=f"the target platform: {', '.join(platforms.keys())}",
+    help=f"the target platform: {', '.join(platforms.keys())} -- default: tenerife",
     default="tenerife",
 )
 
@@ -58,7 +58,7 @@ parser.add_argument(
     "-s",
     "--solver",
     type=str,
-    help=f"the underlying solver: {', '.join(solvers.keys())}",
+    help=f"the underlying solver: {', '.join(solvers.keys())} -- default: cadical153",
     default="cadical153",
 )
 
