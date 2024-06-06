@@ -18,30 +18,6 @@ class Platform:
         )
 
 
-TOY = Platform(
-    "toy",
-    4,
-    {(0, 1), (1, 2), (1, 3)},
-    description="A simple proprietary platform designed to require one swap for 'benchmarks/toy_example.qasm'.",
-    connectivity_graph_drawing="""
-0 - 1 - 3
-    |
-    2""",
-)
-TOY2 = Platform(
-    "toy",
-    4,
-    {(0, 1), (1, 2), (2, 3), (3, 0)},
-    description="A simple platform designed to require no swaps for 'benchmarks/toy_example.qasm'.",
-)
-TOY3 = Platform(
-    "toy3",
-    5,
-    {(0, 1), (1, 2), (2, 3), (3, 4)},
-    description="A simple platform designed to require two swap for 'benchmarks/pareto.qasm', but one swap if depth is increased by 1.",
-    connectivity_graph_drawing="""
-0 - 1 - 2 - 3 - 4""",
-)
 TENERIFE = Platform(
     "tenerife",
     5,

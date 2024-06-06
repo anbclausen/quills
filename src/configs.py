@@ -14,7 +14,6 @@ from synthesizers.sat.phys import PhysSynthesizer
 from synthesizers.sat.block import BlockSynthesizer
 
 from platforms import (
-    TOY,
     TENERIFE,
     MELBOURNE,
     GUADALUPE,
@@ -23,7 +22,6 @@ from platforms import (
     SYCAMORE,
     RIGETTI80,
     EAGLE,
-    TOY3,
     Platform,
 )
 
@@ -59,8 +57,6 @@ CONDITIONAL_PLANNING_SYNTHESIZERS = [
 ]
 
 platforms: dict[str, Platform] = {
-    "toy": TOY,
-    "toy3": TOY3,
     "tenerife": TENERIFE,
     "melbourne": MELBOURNE,
     "guadalupe": GUADALUPE,
