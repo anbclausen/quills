@@ -1,39 +1,40 @@
-# Quantum Transformations (qt)          
+![](assets/logo.png)
+---         
 
-qt (pronounced "cutie") is a tool for performing depth-optimal layout synthesis on quantum circuits. qt consists of several synthesizers based on both classical planning and SAT solving.
+QuilLS is a tool for performing depth-optimal layout synthesis on quantum circuits. QuilLS consists of several synthesizers based on both classical planning and SAT solving.
 
-qt is able to find the optimal layout for several different objectives:
+QuilLS is able to find the optimal layout for several different objectives:
 
 - Depth-optimal
-- Depth-optimal with optimal number of SWAPs
+- Depth-optimal with local optimal number of SWAPs
 - Depth-optimal considering only CX gates
-- Depth-optimal considering only CX gates with optimal number of SWAPs
+- Depth-optimal considering only CX gates with local optimal number of SWAPs
 
-qt has been developed by [Anders Benjamin Clausen](https://github.com/anbclausen) and [Anna Blume Jakobsen](https://github.com/AnnaBlume99) as part of their Master's thesis in Computer Science at Aarhus University. 
+There is also an option to allow ancillary SWAPs or not.
 
-Supervised by professor [Jaco van de Pol](https://www.au.dk/en/jaco@cs.au.dk) with the help of [Irfansha Shaik](https://github.com/irfansha).
+QuilLS has been developed by [Anders Benjamin Clausen](https://github.com/anbclausen) and [Anna Blume Jakobsen](https://github.com/AnnaBlume99) at the Department of Computer Science, Aarhus University. Supervised by professor [Jaco van de Pol](https://www.au.dk/en/jaco@cs.au.dk) with the help of [Irfansha Shaik](https://github.com/irfansha).
 
 © 2024 Anders Benjamin Clausen & Anna Blume Jakobsen.
 
 ## Installation
 
-qt depends on external tools such as planners and SAT solvers. To make the planning-based synthesizers work, one must install external dependencies. However, all SAT-based synthesizers depend only on Python packages.
+QuilLS depends on external tools such as planners and SAT solvers. To make the planning-based synthesizers work, one must install external dependencies. However, all SAT-based synthesizers depend only on Python packages.
 
 ### Simple installation (only works for SAT-based synthesizers)
 
-qt uses [Poetry](https://python-poetry.org) for dependency management instead of `pip`. For the simple installation, follow the steps:
+QuilLS uses [Poetry](https://python-poetry.org) for dependency management instead of `pip`. For the simple installation, follow the steps:
 
 1. Install `python` and `pip` on your system.
 2. Install `poetry` with `pip install poetry`.
-3. Clone the repository with `git clone https://github.com/anbclausen/qt`.
+3. Clone the repository with `git clone https://github.com/anbclausen/quills`.
 4. In the root of the folder run `poetry install` and all Python dependencies will be installed.
 
 ### Full installation with Docker
 
-To make usage easy, we have containerized the tool with [Docker](https://www.docker.com/products/docker-desktop/). For the full installation, follow the steps:
+To make external dependency management easier, we have containerized the tool with [Docker](https://www.docker.com/products/docker-desktop/). For the full installation, follow the steps:
 
 1. [Download and install Docker](https://docs.docker.com/engine/install/). Make sure the docker engine is running.
-2. Clone the repository with `git clone https://github.com/anbclausen/qt`.
+2. Clone the repository with `git clone https://github.com/anbclausen/quills`.
 3. Open the repo in [VSCode](https://code.visualstudio.com/) with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed. 
 
 The container will be built automatically and you will be able to use the tool from the terminal.
@@ -44,17 +45,13 @@ The container will be built automatically and you will be able to use the tool f
 
 If you wish to do the full installation without Docker, it is possible (though not recommended) to install the required packages and dependencies directly on your own system. To do this, simply open the file `.devcontainer/Dockerfile` to see what commands are performed to install all dependencies.
 
-### Development tools
-
-The Black formatter is used for developing. Install the VS Code extension [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter).
-
 ## Usage
 
 ```
-usage: ./qt [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-out OUTPUT] [-init OUTPUT_INTIAL_MAPPING] [-cx] [-swap] [-anc] [-log {0,1}]
+usage: ./quills [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-out OUTPUT] [-init OUTPUT_INTIAL_MAPPING] [-cx] [-swap] [-anc] [-log {0,1}]
             input
 
-Welcome to qt! A quantum circuit layout synthesis tool.
+Welcome to QuilLS! A quantum circuit layout synthesis tool.
 
 positional arguments:
   input                 the path to the input file
@@ -86,18 +83,7 @@ options:
 Here is a sample run of the tool with its output:
 
 ```
-$ ./qt benchmarks/adder.qasm -p tenerife -m sat -s cadical153
-####################################################
-#                           __                     #
-#                   _______/  |_                   #
-#                  / ____/\   __\                  #
-#                 < <_|  | |  |                    #
-#                  \__   | |__|                    #
-#                     |__|                         #
-#                                                  #
-#    A tool for depth-optimal layout synthesis.    #
-####################################################
-
+$ ./quills benchmarks/adder.qasm -p tenerife -m sat -s cadical153
 INPUT CIRCUIT
 'benchmarks/adder.qasm'
      ┌───┐┌───┐            ┌───┐          ┌─────┐          ┌───┐     
@@ -156,13 +142,3 @@ VALIDATION
 ✓ Input and output circuits are equivalent (Proprietary Checker)
 ✓ Input and output circuits are equivalent (QCEC)
 ```
-
-## Experiments
-
-To run all combinations of the synthesizer model and solver on all experiments, run
-
-```
-./experiments
-```
-
-Output will be written to terminal and to `tmp/experiments.txt`.
