@@ -1,0 +1,8 @@
+#! /bin/sh
+if [ $# -ne 0 ]
+  then
+    poetry run python src/quills.py $@
+  else 
+    poetry run python src/quills.py
+fi
+

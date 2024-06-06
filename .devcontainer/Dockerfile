@@ -23,8 +23,8 @@ RUN wget https://research.ics.aalto.fi/software/sat/madagascar/MpC
 # Add dependencies to path
 ENV PATH="${PATH}:/dependencies/downward:/dependencies"
 
-# Add qt as python path
-ENV PYTHONPATH="${PYTHONPATH}:/workspaces/qt/src"
+# Add quills as python path
+ENV PYTHONPATH="${PYTHONPATH}:/workspaces/quills/src"
 
 # Make Madagascar executable
 RUN chmod +x M

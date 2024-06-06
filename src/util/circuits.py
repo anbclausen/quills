@@ -130,7 +130,7 @@ def gate_line_dependency_mapping(
 
         if len(input_idxs) > 1 and name != "cx" and name != "swap":
             raise ValueError(
-                f"Gate at index {i} is not a CX or SWAP but has multiple inputs. qt can not handle multiple input gates other than CX or SWAP."
+                f"Gate at index {i} is not a CX or SWAP but has multiple inputs. QuilLS can not handle multiple input gates other than CX or SWAP."
             )
 
         if any(idx is None for idx in input_idxs):

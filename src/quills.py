@@ -26,7 +26,8 @@ BOLD_START = "\033[1m"
 BOLD_END = "\033[0m"
 
 parser = argparse.ArgumentParser(
-    description="Welcome to qt! A quantum circuit layout synthesis tool.", prog="./qt"
+    description="Welcome to QuilLS! A quantum circuit layout synthesis tool.",
+    prog="./quills",
 )
 
 parser.add_argument(
