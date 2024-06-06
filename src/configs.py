@@ -11,7 +11,6 @@ from synthesizers.planning.local_clock_incremental_planning import (
 from synthesizers.sat.synthesizer import SATSynthesizer
 import synthesizers.sat.synthesizer as sat
 from synthesizers.sat.phys import PhysSynthesizer
-from synthesizers.sat.block import BlockSynthesizer
 
 from platforms import (
     TENERIFE,
