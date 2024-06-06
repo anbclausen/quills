@@ -186,3 +186,6 @@ GroundedDomain.pddl
 GroundedProblem.pddl
 quantum-circuit.*
 output.lifted
+
+# Mac
+.DS_Store
