@@ -123,18 +123,6 @@ time_limit = args.time_limit
 input_circuit = QuantumCircuit.from_qasm_file(args.input)
 logger = Logger(args.log_level)
 
-print("####################################################")
-print("#                           __                     #")
-print("#                   _______/  |_                   #")
-print("#                  / ____/\\   __\\                  #")
-print("#                 < <_|  | |  |                    #")
-print("#                  \\__   | |__|                    #")
-print("#                     |__|                         #")
-print("#                                                  #")
-print("#    A tool for depth-optimal layout synthesis.    #")
-print("####################################################")
-print(flush=True)
-
 if isinstance(solver, planning.Solver) and isinstance(synthesizer, PlanningSynthesizer):
     optimal_planner = args.model in OPTIMAL_PLANNING_SYNTHESIZERS
     if optimal_planner and solver.solver_class != OPTIMAL:
