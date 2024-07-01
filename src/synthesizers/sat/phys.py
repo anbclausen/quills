@@ -240,29 +240,27 @@ class PhysSynthesizer(SATSynthesizer):
             swapping[t] = {p: new_atom(f"swapping^{t}_{p}") for p in pq}
             assumption[t] = new_atom(f"asm^{t}")
 
-            problem_clauses: Formula = []
-
             # mappings and occupancy
             for l in lq:
-                problem_clauses.extend(exactly_one([mapped[t][l][p] for p in pq]))
+                solver.append_formula(exactly_one([mapped[t][l][p] for p in pq]))
             for p in pq:
-                problem_clauses.extend(at_most_one([mapped[t][l][p] for l in lq]))
+                solver.append_formula(at_most_one([mapped[t][l][p] for l in lq]))
             for p in pq:
-                problem_clauses.extend(
+                solver.append_formula(
                     iff_disj([mapped[t][l][p] for l in lq], occupied[t][p])
                 )
 
             # cnot connections
             for l, l_prime in lq_pairs:
                 for p, p_prime in connectivity_graph:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl_conj(
                             [mapped[t][l][p], mapped[t][l_prime][p_prime]],
                             [[enabled[t][l][l_prime]]],
                         )
                     )
                 for p, p_prime in inv_connectivity_graph:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl_conj(
                             [mapped[t][l][p], mapped[t][l_prime][p_prime]],
                             [[neg(enabled[t][l][l_prime])]],
@@ -271,40 +269,40 @@ class PhysSynthesizer(SATSynthesizer):
 
             # gate stuff
             for g in gates:
-                problem_clauses.extend(
+                solver.append_formula(
                     exactly_one([current[t][g], advanced[t][g], delayed[t][g]])
                 )
 
                 for g_prime in gate_direct_suc_map[g]:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl_disj([current[t][g], delayed[t][g]], delayed[t][g_prime])
                     )
                 for g_prime in gate_full_suc_map[g]:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl(current[t][g], [[neg(current[t][g_prime])]])
                     )
                 for g_prime in gate_direct_pre_map[g]:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl_disj([current[t][g], advanced[t][g]], advanced[t][g_prime])
                     )
                 for g_prime in gate_full_pre_map[g]:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl(current[t][g], [[neg(current[t][g_prime])]])
                     )
                 if t > 0:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         iff_disj(
                             [current[t - 1][g], advanced[t - 1][g]],
                             advanced[t][g],
                         )
                     )
-                    problem_clauses.extend(
+                    solver.append_formula(
                         iff_disj([current[t][g], delayed[t][g]], delayed[t - 1][g])
                     )
 
                 gate_name, lq_deps = gate_line_map[g]
                 if gate_name.startswith("cx"):
-                    problem_clauses.extend(
+                    solver.append_formula(
                         impl(
                             current[t][g],
                             [[enabled[t][lq_deps[0]][lq_deps[1]]]],
@@ -312,13 +310,13 @@ class PhysSynthesizer(SATSynthesizer):
                     )
 
                     for p in pq:
-                        problem_clauses.extend(
+                        solver.append_formula(
                             impl(
                                 current[t][g],
                                 impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
                             )
                         )
-                        problem_clauses.extend(
+                        solver.append_formula(
                             impl(
                                 current[t][g],
                                 impl(mapped[t][lq_deps[1]][p], [[usable[t][p]]]),
@@ -326,7 +324,7 @@ class PhysSynthesizer(SATSynthesizer):
                         )
                 else:
                     for p in pq:
-                        problem_clauses.extend(
+                        solver.append_formula(
                             impl(
                                 current[t][g],
                                 impl(mapped[t][lq_deps[0]][p], [[usable[t][p]]]),
@@ -336,7 +334,7 @@ class PhysSynthesizer(SATSynthesizer):
             # swap stuff
             if t > 0:
                 for p in pq:
-                    problem_clauses.extend(
+                    solver.append_formula(
                         iff_disj(
                             [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
                             + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]],
@@ -344,7 +342,7 @@ class PhysSynthesizer(SATSynthesizer):
                         )
                     )
                     if t > 1:
-                        problem_clauses.extend(
+                        solver.append_formula(
                             at_most_one(
                                 [swap[t][p_prime, p] for p_prime in conn_dict[p][0]]
                                 + [swap[t][p, p_prime] for p_prime in conn_dict[p][1]]
@@ -367,14 +365,14 @@ class PhysSynthesizer(SATSynthesizer):
                             )
                         )
                         for t_prime in [t, t - 1, t - 2]:
-                            problem_clauses.extend(
+                            solver.append_formula(
                                 impl(
                                     swapping[t][p],
                                     [[neg(usable[t_prime][p])]],
                                 )
                             )
                     for l in lq:
-                        problem_clauses.extend(
+                        solver.append_formula(
                             impl(
                                 neg(swapping[t][p]),
                                 iff(mapped[t - 1][l][p], mapped[t][l][p]),
@@ -383,7 +381,7 @@ class PhysSynthesizer(SATSynthesizer):
                 for p, p_prime in connectivity_graph:
                     if p < p_prime:
                         for l in lq:
-                            problem_clauses.extend(
+                            solver.append_formula(
                                 impl(
                                     swap[t][p, p_prime],
                                     andf(
@@ -394,14 +392,14 @@ class PhysSynthesizer(SATSynthesizer):
                             )
 
                         if ancillaries:
-                            problem_clauses.extend(
+                            solver.append_formula(
                                 impl(
                                     swap[t][p, p_prime],
                                     or_(occupied[t][p], occupied[t][p_prime]),
                                 )
                             )
                         else:
-                            problem_clauses.extend(
+                            solver.append_formula(
                                 impl(
                                     swap[t][p, p_prime],
                                     and_(occupied[t][p], occupied[t][p_prime]),
@@ -442,11 +440,9 @@ class PhysSynthesizer(SATSynthesizer):
                 )
 
             # goal
-            problem_clauses.extend(
+            solver.append_formula(
                 impl(assumption[t], and_(*[neg(delayed[t][g]) for g in gates]))
             )
-
-            solver.append_formula(problem_clauses)
 
             # assumptions
             asm = [neg(assumption[t_prime]) for t_prime in range(t)]
@@ -467,7 +463,9 @@ class PhysSynthesizer(SATSynthesizer):
                 overall_time += after - before
                 model = solver.get_model()
                 solution = parse_sat_solution(model)
-                logger.log(1, f"{'CX-' if cx_optimal else ''}depth {t+1}", flush=True, end=", ")
+                logger.log(
+                    1, f"{'CX-' if cx_optimal else ''}depth {t+1}", flush=True, end=", "
+                )
                 if solution:
                     depth_time = overall_time
                     swap_time = 0
