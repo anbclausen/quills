@@ -31,8 +31,10 @@ def reset():
     atom_names = {}
 
 
-def new_atom(name: str) -> Atom:
+def new_atom(name: str = "") -> Atom:
     """Create a new atom with the given name."""
+    if name == "":
+        return get_next_id()
     global atoms
     global atom_names
     id = get_next_id()

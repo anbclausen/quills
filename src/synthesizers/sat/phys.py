@@ -79,15 +79,15 @@ class PhysSynthesizer(SATSynthesizer):
                 return f"mapped: l={self.l}, p={self.p}, t={self.level}"
 
         def parse(name: str) -> Gate | Swap | Mapped:
-            if name.startswith("current"):
+            if name.startswith("c"):
                 time, id = name.split("^")[1].split("_")
                 return Gate(int(id), int(time))
-            elif name.startswith("swap"):
+            elif name.startswith("s"):
                 numbers = name.split("^")[1]
                 time = numbers.split("_")[0]
                 p, p_prime = numbers.split("_")[1].split(";")
                 return Swap(int(p), int(p_prime), int(time))
-            elif name.startswith("mapped"):
+            elif name.startswith("m"):
                 numbers = name.split("^")[1]
                 time = numbers.split("_")[0]
                 l, p = numbers.split("_")[1].split(";")
@@ -96,14 +96,7 @@ class PhysSynthesizer(SATSynthesizer):
                 raise ValueError(f"Cannot parse atom with name: {name}")
 
         relevant_atoms = [
-            atom_name
-            for atom_name in solver_solution
-            if not atom_name.startswith("~")
-            and (
-                atom_name.startswith("current")
-                or atom_name.startswith("swap^")
-                or atom_name.startswith("mapped")
-            )
+            atom_name for atom_name in solver_solution if not atom_name.startswith("~")
         ]
 
         # f = open("tmp/solution.txt", "w")
@@ -216,29 +209,22 @@ class PhysSynthesizer(SATSynthesizer):
         assumption: dict[int, Atom] = {}
 
         for t in range(max_depth + 1):
-            mapped[t] = {
-                l: {p: new_atom(f"mapped^{t}_{l};{p}") for p in pq} for l in lq
-            }
-            occupied[t] = {p: new_atom(f"occupied^{t}_{p}") for p in pq}
+            mapped[t] = {l: {p: new_atom(f"m^{t}_{l};{p}") for p in pq} for l in lq}
+            occupied[t] = {p: new_atom() for p in pq}
             enabled[t] = {
-                l: {
-                    l_prime: new_atom(f"enabled^{t}_{l}_{l_prime}")
-                    for l_prime in lq
-                    if l != l_prime
-                }
-                for l in lq
+                l: {l_prime: new_atom() for l_prime in lq if l != l_prime} for l in lq
             }
-            current[t] = {g: new_atom(f"current^{t}_{g}") for g in gates}
-            advanced[t] = {g: new_atom(f"advanced^{t}_{g}") for g in gates}
-            delayed[t] = {g: new_atom(f"delayed^{t}_{g}") for g in gates}
-            usable[t] = {p: new_atom(f"usable^{t}_{p}") for p in pq}
+            current[t] = {g: new_atom(f"c^{t}_{g}") for g in gates}
+            advanced[t] = {g: new_atom() for g in gates}
+            delayed[t] = {g: new_atom() for g in gates}
+            usable[t] = {p: new_atom() for p in pq}
             swap[t] = {
-                (p, p_prime): new_atom(f"swap^{t}_{p};{p_prime}")
+                (p, p_prime): new_atom(f"s^{t}_{p};{p_prime}")
                 for p, p_prime in connectivity_graph
                 if p < p_prime
             }
-            swapping[t] = {p: new_atom(f"swapping^{t}_{p}") for p in pq}
-            assumption[t] = new_atom(f"asm^{t}")
+            swapping[t] = {p: new_atom() for p in pq}
+            assumption[t] = new_atom()
 
             # mappings and occupancy
             for l in lq:
@@ -476,7 +462,7 @@ class PhysSynthesizer(SATSynthesizer):
                         )
                         return solution, overall_time, None
                     number_of_swaps = sum(
-                        1 for atom in solution if atom.startswith("swap^")
+                        1 for atom in solution if atom.startswith("s")
                     )
                     logger.log(
                         1,
@@ -533,7 +519,7 @@ class PhysSynthesizer(SATSynthesizer):
                         if solution:
                             previous_solution = solution
                             number_of_swaps = sum(
-                                1 for atom in solution if atom.startswith("swap^")
+                                1 for atom in solution if atom.startswith("s")
                             )
                             best_so_far = number_of_swaps
                             note = (
