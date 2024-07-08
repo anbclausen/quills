@@ -5,7 +5,7 @@ from util.logger import Logger
 from util.circuits import LogicalQubit, PhysicalQubit, SynthesizerOutput
 import pysat.solvers
 
-type Solver = pysat.solvers.Glucose42 | pysat.solvers.MapleCM | pysat.solvers.Cadical153 | pysat.solvers.MapleChrono | pysat.solvers.Minisat22
+type Solver = pysat.solvers.Glucose42 | pysat.solvers.MapleCM | pysat.solvers.Cadical153 | pysat.solvers.MapleChrono | pysat.solvers.Minisat22 | pysat.solvers.Cadical195
 
 
 class SATSynthesizer(ABC):

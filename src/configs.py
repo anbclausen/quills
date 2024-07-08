@@ -70,6 +70,7 @@ solvers: dict[str, Solver | sat.Solver] = {
     "fd_ms": FAST_DOWNWARD_MERGE_AND_SHRINK(),
     "fd_bjolp": FAST_DOWNWARD_BJOLP(),
     "cadical153": pysat.solvers.Cadical153(),
+    "cadical195": pysat.solvers.Cadical195(),
     "glucose42": pysat.solvers.Glucose42(),
     "maple_cm": pysat.solvers.MapleCM(),
     "maple_chrono": pysat.solvers.MapleChrono(),
