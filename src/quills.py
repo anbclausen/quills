@@ -109,12 +109,25 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-bound",
+    "--swap_bound",
+    type=int,
+    default=-1,
+    help="the maximum number of SWAPs to allow in the output circuit (default: -1 -- off)",
+)
+
+parser.add_argument(
     "input",
     type=str,
     help="the path to the input file",
 )
 
 args = parser.parse_args()
+
+if args.swap_bound != -1 and args.swap_optimal:
+    raise ValueError(
+        "Cannot specify both a SWAP bound and SWAP optimization. Choose one at maximum."
+    )
 
 synthesizer = synthesizers[args.model]
 platform = platforms[args.platform]
@@ -172,6 +185,17 @@ if (not isinstance(solver, planning.Solver)) and isinstance(
         f"Model '{args.model}' is a planning model, but solver '{args.solver}' is a SAT solver.\n"
         f"Please choose one of the following planning solvers: {', '.join(available_solvers)}"
     )
+
+if args.swap_bound != -1 and not isinstance(synthesizer, SATSynthesizer):
+    raise ValueError(
+        "Cannot specify a SWAP bound with a planning synthesizer. Please choose a SAT synthesizer."
+    )
+
+if args.swap_optimal and not isinstance(synthesizer, SATSynthesizer):
+    raise ValueError(
+        "Cannot specify SWAP optimization with a planning synthesizer. Please choose a SAT synthesizer."
+    )
+
 if platform.qubits < input_circuit.num_qubits:
     available_platforms = [
         p_str for p_str, p in platforms.items() if p.qubits >= input_circuit.num_qubits
@@ -211,7 +235,7 @@ print()
 
 print(f"{BOLD_START}OUTPUT CIRCUIT{BOLD_END}")
 print(
-    f"Synthesizing ({'CX-depth' if args.cx_optimal else 'depth'}-optimal{' and local SWAP-optimal' if args.swap_optimal else ''}{', allowing ancillary SWAPs' if args.ancillaries else ''})... ",
+    f"Synthesizing ({'CX-depth' if args.cx_optimal else 'depth'}-optimal{' and local SWAP-optimal' if args.swap_optimal else ''}{f' with SWAP bound {args.swap_bound}' if args.swap_bound != -1 else ''}{', allowing ancillary SWAPs' if args.ancillaries else ''})... ",
     end="",
     flush=True,
 )
@@ -235,6 +259,7 @@ match synthesizer, solver:
             cx_optimal=args.cx_optimal,
             swap_optimal=args.swap_optimal,
             ancillaries=args.ancillaries,
+            swap_bound=args.swap_bound,
         )
     case _:
         raise ValueError(
@@ -297,7 +322,8 @@ match output:
             print("✗ Input and output circuits are not equivalent (QCEC)")
     case SynthesizerNoSolution():
         print(
-            f"Error. Perhaps you do not have the correct dependencies installed?\n"
+            "\n"
+            f"If you are running a planning synthesizer, perhaps you do not have the correct dependencies installed?\n"
             f"Note dependencies for planning are only installed automatically when running the Docker image.\n"
         )
     case _:

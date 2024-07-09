@@ -31,6 +31,7 @@ class SATSynthesizer(ABC):
         cx_optimal: bool = False,
         swap_optimal: bool = False,
         ancillaries: bool = False,
+        swap_bound: int = -1,
     ) -> SynthesizerOutput:
         """
         Layout synthesis.

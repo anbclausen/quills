@@ -155,6 +155,7 @@ class PhysSynthesizer(SATSynthesizer):
         swap_optimal: bool,
         ancillaries: bool,
         time_limit_s: int,
+        swap_bound: int,
     ) -> tuple[list[str], float, tuple[float, float] | None] | None:
         reset()
 
@@ -208,6 +209,8 @@ class PhysSynthesizer(SATSynthesizer):
         swap: dict[int, dict[tuple[int, int], Atom]] = {}
         swapping: dict[int, dict[int, Atom]] = {}
         assumption: dict[int, Atom] = {}
+
+        previous_swap_asms: list[Atom] = []
 
         for t in range(max_depth + 1):
             mapped[t] = {l: {p: new_atom(f"m^{t}_{l};{p}") for p in pq} for l in lq}
@@ -434,11 +437,38 @@ class PhysSynthesizer(SATSynthesizer):
             asm.append(assumption[t])
 
             if t >= circuit_depth - 1:
+                if swap_bound != -1:
+                    swap_asm = new_atom()
+                    swap_asm_constraint = impl(
+                        swap_asm,
+                        at_most_n(
+                            swap_bound,
+                            [
+                                swap[t][p, p_prime]
+                                for t in range(t + 1)
+                                for p, p_prime in connectivity_graph
+                                if p < p_prime
+                            ],
+                        ),
+                    )
+                    solver.append_formula(swap_asm_constraint)
+
+                assumptions = (
+                    asm + [neg(asm) for asm in previous_swap_asms] + [swap_asm]
+                    if swap_bound != -1
+                    else asm
+                )
+
+                if swap_bound != -1:
+                    previous_swap_asms.append(swap_asm)
+
                 timer = Timer(time_limit_s - overall_time, solver.interrupt)
                 timer.start()
 
                 before = time.time()
-                res = solver.solve_limited(assumptions=asm, expect_interrupt=True)
+                res = solver.solve_limited(
+                    assumptions=assumptions, expect_interrupt=True
+                )
                 after = time.time()
                 timer.cancel()
 
@@ -478,7 +508,7 @@ class PhysSynthesizer(SATSynthesizer):
                     n_swaps = number_of_swaps // factor
                     while True:
                         logger.log(1, f"{n_swaps} SWAPs (", flush=True, end="")
-                        swap_asm = new_atom(f"swap_asm_{n_swaps}")
+                        swap_asm = new_atom()
                         swap_asm_constraint = impl(
                             swap_asm,
                             at_most_n(
@@ -556,6 +586,7 @@ class PhysSynthesizer(SATSynthesizer):
         cx_optimal: bool = False,
         swap_optimal: bool = False,
         ancillaries: bool = False,
+        swap_bound: int = -1,
     ) -> SynthesizerOutput:
         circuit = (
             remove_all_non_cx_gates(logical_circuit) if cx_optimal else logical_circuit
@@ -572,6 +603,7 @@ class PhysSynthesizer(SATSynthesizer):
                 swap_optimal,
                 ancillaries,
                 time_limit_s,
+                swap_bound,
             )
         except TimeoutError:
             return SynthesizerTimeout()

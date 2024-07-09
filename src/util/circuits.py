@@ -53,7 +53,7 @@ class SynthesizerTimeout(SynthesizerOutput):
 
 class SynthesizerNoSolution(SynthesizerOutput):
     def __str__(self):
-        return "No solution found. ERROR!"
+        return "No solution found."
 
 
 class SynthesizerSolution(SynthesizerOutput):

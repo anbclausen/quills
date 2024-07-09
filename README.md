@@ -115,9 +115,7 @@ If you wish to do the full installation without Docker, it is possible (though n
 ## Usage
 
 ```
-usage: ./quills [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-out OUTPUT] [-init OUTPUT_INTIAL_MAPPING] [-cx] [-swap] [-anc]
-                [-log {0,1}]
-                input
+usage: ./quills [-h] [-t TIME_LIMIT] [-m MODEL] [-p PLATFORM] [-s SOLVER] [-out OUTPUT] [-init OUTPUT_INTIAL_MAPPING] [-cx] [-swap] [-anc] [-log {0,1}] [-bound SWAP_BOUND] input
 
 Welcome to QuilLS! A quantum circuit layout synthesis tool.
 
@@ -131,11 +129,9 @@ options:
   -m MODEL, --model MODEL
                         the synthesizer model to use: plan_cost_opt, plan_cond_cost_opt, plan_lc_incr, sat -- default: sat
   -p PLATFORM, --platform PLATFORM
-                        the target platform: tenerife, melbourne, guadalupe, tokyo, cambridge, sycamore, rigetti80, eagle -- default:
-                        tenerife
+                        the target platform: tenerife, melbourne, guadalupe, tokyo, cambridge, sycamore, rigetti80, eagle -- default: tenerife
   -s SOLVER, --solver SOLVER
-                        the underlying solver: MpC_exist_glucose, fd_ms, fd_bjolp, cadical153, glucose42, maple_cm, maple_chrono, minisat22
-                        -- default: cadical153
+                        the underlying solver: MpC_exist_glucose, fd_ms, fd_bjolp, cadical153, cadical195, glucose42, maple_cm, maple_chrono, minisat22 -- default: cadical153
   -out OUTPUT, --output OUTPUT
                         path to save the output circuit
   -init OUTPUT_INTIAL_MAPPING, --output_intial_mapping OUTPUT_INTIAL_MAPPING
@@ -146,4 +142,6 @@ options:
   -anc, --ancillaries   whether to allow ancillary SWAPs or not
   -log {0,1}, --log_level {0,1}
                         how much text to output during execution (0: silent, 1: default)
+  -bound SWAP_BOUND, --swap_bound SWAP_BOUND
+                        the maximum number of SWAPs to allow in the output circuit (default: -1 -- off)
 ```
