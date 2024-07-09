@@ -672,3 +672,14 @@ def save_initial_mapping(
     for logical, physical in initial_mapping.items():
         f.write(f"{logical.id} -> {physical.id}\n")
     f.close()
+
+
+def get_lq_pairs(circuit: QuantumCircuit) -> list[tuple[int, int]]:
+    """
+    Returns a list of pairs of logical qubits that are involved in a CX gate.
+    """
+    lq_pairs = []
+    for instr in circuit.data:
+        if instr[0].name == "cx":
+            lq_pairs.append((instr[1][0]._index, instr[1][1]._index))
+    return lq_pairs

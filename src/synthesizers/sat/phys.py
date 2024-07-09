@@ -18,6 +18,7 @@ from util.circuits import (
     remove_all_non_cx_gates,
     reinsert_unary_gates,
     count_swaps,
+    get_lq_pairs,
 )
 from util.logger import Logger
 from util.sat import (
@@ -195,11 +196,11 @@ class PhysSynthesizer(SATSynthesizer):
         gate_full_suc_map = gate_successor_mapping(logical_circuit)
         gate_direct_suc_map = gate_direct_successor_mapping(logical_circuit)
 
-        lq_pairs = [(l, l_prime) for l in lq for l_prime in lq if l != l_prime]
+        lq_pairs = get_lq_pairs(logical_circuit)
 
         mapped: dict[int, dict[int, dict[int, Atom]]] = {}
         occupied: dict[int, dict[int, Atom]] = {}
-        enabled: dict[int, dict[int, dict[int, Atom]]] = {}
+        enabled: dict[int, dict[tuple[int, int], Atom]] = {}
         current: dict[int, dict[int, Atom]] = {}
         advanced: dict[int, dict[int, Atom]] = {}
         delayed: dict[int, dict[int, Atom]] = {}
@@ -211,9 +212,7 @@ class PhysSynthesizer(SATSynthesizer):
         for t in range(max_depth + 1):
             mapped[t] = {l: {p: new_atom(f"m^{t}_{l};{p}") for p in pq} for l in lq}
             occupied[t] = {p: new_atom() for p in pq}
-            enabled[t] = {
-                l: {l_prime: new_atom() for l_prime in lq if l != l_prime} for l in lq
-            }
+            enabled[t] = {(l, l_prime): new_atom() for l, l_prime in lq_pairs}
             current[t] = {g: new_atom(f"c^{t}_{g}") for g in gates}
             advanced[t] = {g: new_atom() for g in gates}
             delayed[t] = {g: new_atom() for g in gates}
@@ -242,14 +241,14 @@ class PhysSynthesizer(SATSynthesizer):
                     solver.append_formula(
                         impl_conj(
                             [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                            [[enabled[t][l][l_prime]]],
+                            [[enabled[t][l, l_prime]]],
                         )
                     )
                 for p, p_prime in inv_connectivity_graph:
                     solver.append_formula(
                         impl_conj(
                             [mapped[t][l][p], mapped[t][l_prime][p_prime]],
-                            [[neg(enabled[t][l][l_prime])]],
+                            [[neg(enabled[t][l, l_prime])]],
                         )
                     )
 
@@ -291,7 +290,7 @@ class PhysSynthesizer(SATSynthesizer):
                     solver.append_formula(
                         impl(
                             current[t][g],
-                            [[enabled[t][lq_deps[0]][lq_deps[1]]]],
+                            [[enabled[t][lq_deps[0], lq_deps[1]]]],
                         )
                     )
 
